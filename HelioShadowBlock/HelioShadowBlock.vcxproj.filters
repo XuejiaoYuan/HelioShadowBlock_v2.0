@@ -34,6 +34,9 @@
     <Filter Include="sdbkCalculator">
       <UniqueIdentifier>{77c31b3f-4b3c-46d7-9165-e66cea541709}</UniqueIdentifier>
     </Filter>
+    <Filter Include="FED">
+      <UniqueIdentifier>{854c0e5f-7b39-4351-9d6b-25f05b945e9f}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Common\global_function.h">
@@ -105,6 +108,9 @@
     <ClInclude Include="sdbkCalculator\sdbkCalculator.h">
       <Filter>sdbkCalculator</Filter>
     </ClInclude>
+    <ClInclude Include="FED\FED.h">
+      <Filter>FED</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DataStructure\Clip\Clipper\clipper.cpp">
@@ -166,6 +172,9 @@
     </ClCompile>
     <ClCompile Include="sdbkCalculator\sdbkCalculator.cpp">
       <Filter>sdbkCalculator</Filter>
+    </ClCompile>
+    <ClCompile Include="FED\FED.cpp">
+      <Filter>FED</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

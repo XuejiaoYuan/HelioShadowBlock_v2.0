@@ -132,6 +132,7 @@
     <ClInclude Include="DataStructure\SolarScene.h" />
     <ClInclude Include="DataStructure\SPA.h" />
     <ClInclude Include="DataStructure\SunRay.h" />
+    <ClInclude Include="FED\FED.h" />
     <ClInclude Include="LSPIA\LSPIA.h" />
     <ClInclude Include="sdbkCalculator\sdbkCalculator.h" />
   </ItemGroup>
@@ -153,6 +154,7 @@
     <ClCompile Include="DataStructure\SolarScene.cpp" />
     <ClCompile Include="DataStructure\SPA.cpp" />
     <ClCompile Include="DataStructure\SunRay.cpp" />
+    <ClCompile Include="FED\FED.cpp" />
     <ClCompile Include="LSPIA\LSPIA.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="sdbkCalculator\sdbkCalculator.cpp" />
