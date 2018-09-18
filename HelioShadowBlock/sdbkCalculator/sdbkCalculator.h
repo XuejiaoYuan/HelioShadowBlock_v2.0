@@ -16,10 +16,13 @@ public:
 	SdBkCalc(const FieldType& _field_type, SolarScene* _solar_scene) {
 		this->field_type = _field_type;
 		this->solar_scene = _solar_scene;
+		this->clipper_res_store.resize(2);
+		this->sample_clipper_res_store.resize(2);
 	}
 	vector<MatrixXf*> calcShadowBlock();
 	virtual void sample_calc_preprocess(const int sample_row_num, const int sample_col_num, bool calc_s = false, bool calc_f = false) = 0;
 	vector<MatrixXf*> calcSampleShadowBlock();
+	virtual void save_clipper_res(const string save_path, int month, int day, int hour, int minute) {};
 
 	FieldType field_type;
 	SolarScene* solar_scene;
@@ -28,6 +31,8 @@ public:
 	MatrixXf* sample_field_index;
 	vector<MatrixXf*> field_data;			// 定日镜场所有定日镜x与z坐标
 	vector<MatrixXf*> sample_field_data;		// 定日镜场采样定日镜x与z坐标
+	vector<MatrixXf*> clipper_res_store;
+	vector<MatrixXf*> sample_clipper_res_store;
 
 protected:
 	float helioClipper(Heliostat*helio, const Vector3f&dir, const set<vector<int>>& estimate_grid);
@@ -58,6 +63,7 @@ class CrossRectSdBkCalc :public SdBkCalc {
 public:
 	CrossRectSdBkCalc(SolarScene* _solar_scene) :SdBkCalc(CrossRectFieldType, _solar_scene) {}
 	void sample_calc_preprocess(const int sample_row_num, const int sample_col_num, bool calc_s = false, bool calc_f = false) {};
+	void save_clipper_res(const string save_path, int month, int day, int hour, int minute);
 
 private:
 	void get_row_col(const int index, int& r, int& c);

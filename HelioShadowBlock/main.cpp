@@ -12,9 +12,12 @@ int main(int argc, char** argv) {
 	//			-a_r 计算每个时刻下所有镜子的阴影遮挡结果（raytracing）;
 	//			-s_l 计算每个时刻下所有镜子的阴影遮挡结果（LSPIA）
 	// row col 镜场行列数
-	if (argc != 6) {
+	// outfile_options: -f 存储计算阴影遮挡的结果(clipper)
+	//					-o 不存储结果
+	// save_path 输出文件的存储地址
+	if (argc != 8) {
 		cout << argc << endl;
-		cout << "Usage: [scene_file] [sunray_file] [options] [row] [col]" << endl;
+		cout << "Usage: [scene_file] [sunray_file] [options] [row] [col] [outfile_options] [save_path]" << endl;
 		return -1;
 	}
 
@@ -24,6 +27,8 @@ int main(int argc, char** argv) {
 	string options = string(argv[3]);
 	int row = atoi(argv[4]);
 	int col = atoi(argv[5]);
+	string outfile_options = string(argv[6]);
+	string save_path = string(argv[7]);
 
 	SunRay sunray;
 	Vector3f sunray_dir = sunray.calcSunRay(sunray_filepath);
@@ -45,28 +50,31 @@ int main(int argc, char** argv) {
 	vector<vector<MatrixXf*>> gt_res;
 	vector<vector<MatrixXf*>> sample_res;
 	auto start = std::chrono::high_resolution_clock::now();
-	if (options == "-a_c")
-		for (int month = 1; month <= 12; month++) {
-			for (int day = 1; day < 29; day += 4) {
-				for (int hour = 8; hour < 18; hour++) {
-					for (int min = 0; min < 60; min += 15) {
-						time_param[0] = month;
-						time_param[1] = day;
-						time_param[2] = hour;
-						time_param[3] = min;
-						sunray_dir = sunray.changeSunRay(time_param);
-						solar_scene->changeSolarScene(sunray_dir);
-						if (options == "-a_c") {
-							gt_res.push_back(sdbk_calc->calcShadowBlock());
-						}
-						else if (options == "-a_r")
-							gt_res.push_back(sdbk_calc->calcShadowBlock());
-						else
-							sample_res.push_back(sdbk_calc->calcSampleShadowBlock());
+	for (int month = 1; month <= 12; month++) {
+		for (int day = 1; day < 29; day += 4) {
+			for (int hour = 8; hour < 18; hour++) {
+				for (int min = 0; min < 60; min += 15) {
+					time_param[0] = month;
+					time_param[1] = day;
+					time_param[2] = hour;
+					time_param[3] = min;
+					sunray_dir = sunray.changeSunRay(time_param);
+					solar_scene->changeSolarScene(sunray_dir);
+					if (options == "-a_c") {
+						gt_res.push_back(sdbk_calc->calcShadowBlock());
+						fstream outFile(save_path + "/gt_clipper_sd&bk_m" + to_string(month) + "_d" + to_string(day) + "_h" 
+							+ to_string(hour) + "_min" + to_string(min) + ".txt", ios_base::out);
+						outFile << row << ' ' << col << endl;
+						for(int i)
 					}
+					else if (options == "-a_r")
+						gt_res.push_back(sdbk_calc->calcShadowBlock());
+					else
+						sample_res.push_back(sdbk_calc->calcSampleShadowBlock());
 				}
 			}
 		}
+	}
 
 	//
 	// test

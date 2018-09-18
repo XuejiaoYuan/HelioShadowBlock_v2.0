@@ -12,7 +12,6 @@ void SdBkCalc::sample_calc_preprocess(const int sample_row_num, const int sample
 vector<MatrixXf*> SdBkCalc::calcSampleShadowBlock()
 {
 	vector<Receiver*> recvs = solar_scene->recvs;
-	vector<MatrixXf*> sample_data;
 	int row = sample_field_index->rows();
 	int col = sample_field_index->cols();
 	Vector3f focus_center = recvs[0]->recv_pos + Vector3f(recvs[0]->recv_normal.array() * recvs[0]->recv_size.array());
@@ -34,9 +33,9 @@ vector<MatrixXf*> SdBkCalc::calcSampleShadowBlock()
 			(*bk_sample_data)(i, j) = helioClipper(helio, reflect_dir, block_relative_grid_label_3ddda);
 		}
 	}
-	sample_data.push_back(sd_sample_data);
-	sample_data.push_back(bk_sample_data);
-	return sample_data;
+	sample_clipper_res_store[0] = sd_sample_data;
+	sample_clipper_res_store[1] = bk_sample_data;
+	return sample_clipper_res_store;
 }
 
 
@@ -466,10 +465,32 @@ vector<MatrixXf*> SdBkCalc::calcShadowBlock()
 
 #endif // OUTPUTRES
 
-	vector<MatrixXf*> clipper_res_store = { clipper_sh, clipper_bk };
+	clipper_res_store[0] = clipper_sh;
+	clipper_res_store[1] = clipper_bk;
 	return clipper_res_store;
 }
 
+
+void CrossRectSdBkCalc::save_clipper_res(const string save_path, int month, int day, int hour, int minute)
+{
+	fstream outFile(save_path + "clipper_m" + to_string(month) + "_d" + to_string(day) + "_h" + to_string(hour) + "_min" + to_string(minute) + ".txt", ios_base::out);
+	int row = clipper_res_store[0]->rows();
+	int col = clipper_res_store[0]->cols();
+	int tmp_col;
+	outFile << row << ' ' << col << endl;
+	int cnt = 0;
+	for (int i = 0; i < row; i++) {
+		if (i % 2) tmp_col = col - 1;
+		else tmp_col = col;
+		for (int j = 0; j < tmp_col; j++) {
+			outFile << solar_scene->helios[cnt]->helio_pos.x() << ' '
+				<< solar_scene->helios[cnt]->helio_pos.z() << ' '
+				<< (*clipper_res_store[0])(i, j) << ' '
+				<< (*clipper_res_store[1])(i, j) << endl;
+		}
+	}
+	outFile.close();
+}
 
 void CrossRectSdBkCalc::get_row_col(const int index, int & r, int & c)
 {
