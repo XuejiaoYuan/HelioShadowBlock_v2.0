@@ -1,0 +1,171 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="源文件">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="头文件">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="资源文件">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Common">
+      <UniqueIdentifier>{82efa8e6-f9c9-443f-9969-2e6bdd28d7e7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="DataStructure">
+      <UniqueIdentifier>{7312ad87-63f0-4dd8-8d80-c754485f97e6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="DataStructure\Clip">
+      <UniqueIdentifier>{8d7c1bec-81ce-4006-a4a2-ec05eb9cba7b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="DataStructure\Clip\Clipper">
+      <UniqueIdentifier>{fd1590ad-98d4-4ef9-a4dc-1fd4b1cf86b6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="DataStructure\Clip\PolyBool">
+      <UniqueIdentifier>{c938195c-c031-4231-bbd8-5058969e5e47}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="LSPIA">
+      <UniqueIdentifier>{d6e4c845-1d07-4ed0-99e0-1358da9b4379}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="sdbkCalculator">
+      <UniqueIdentifier>{77c31b3f-4b3c-46d7-9165-e66cea541709}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Common\global_function.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="Common\utils.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="DataStructure\Clip\Clipper\clipper.hpp">
+      <Filter>DataStructure\Clip\Clipper</Filter>
+    </ClInclude>
+    <ClInclude Include="DataStructure\Clip\PolyBool\err.h">
+      <Filter>DataStructure\Clip\PolyBool</Filter>
+    </ClInclude>
+    <ClInclude Include="DataStructure\Clip\PolyBool\graphadd.h">
+      <Filter>DataStructure\Clip\PolyBool</Filter>
+    </ClInclude>
+    <ClInclude Include="DataStructure\Clip\PolyBool\graphmat.h">
+      <Filter>DataStructure\Clip\PolyBool</Filter>
+    </ClInclude>
+    <ClInclude Include="DataStructure\Clip\PolyBool\graphmat++.h">
+      <Filter>DataStructure\Clip\PolyBool</Filter>
+    </ClInclude>
+    <ClInclude Include="DataStructure\Clip\PolyBool\nclip.h">
+      <Filter>DataStructure\Clip\PolyBool</Filter>
+    </ClInclude>
+    <ClInclude Include="DataStructure\Clip\PolyBool\patchlevel.h">
+      <Filter>DataStructure\Clip\PolyBool</Filter>
+    </ClInclude>
+    <ClInclude Include="DataStructure\Clip\PolyBool\poly.h">
+      <Filter>DataStructure\Clip\PolyBool</Filter>
+    </ClInclude>
+    <ClInclude Include="DataStructure\Clip\PolyBool\poly_io.h">
+      <Filter>DataStructure\Clip\PolyBool</Filter>
+    </ClInclude>
+    <ClInclude Include="DataStructure\Clip\PolyBool\posadder.h">
+      <Filter>DataStructure\Clip\PolyBool</Filter>
+    </ClInclude>
+    <ClInclude Include="DataStructure\Clip\PolyBool\primitives.h">
+      <Filter>DataStructure\Clip\PolyBool</Filter>
+    </ClInclude>
+    <ClInclude Include="DataStructure\Clip\PolyBool\set.h">
+      <Filter>DataStructure\Clip\PolyBool</Filter>
+    </ClInclude>
+    <ClInclude Include="DataStructure\Layout.h">
+      <Filter>DataStructure</Filter>
+    </ClInclude>
+    <ClInclude Include="DataStructure\SolarScene.h">
+      <Filter>DataStructure</Filter>
+    </ClInclude>
+    <ClInclude Include="DataStructure\SPA.h">
+      <Filter>DataStructure</Filter>
+    </ClInclude>
+    <ClInclude Include="DataStructure\SunRay.h">
+      <Filter>DataStructure</Filter>
+    </ClInclude>
+    <ClInclude Include="DataStructure\Heliostat.h">
+      <Filter>DataStructure</Filter>
+    </ClInclude>
+    <ClInclude Include="DataStructure\Receiver.h">
+      <Filter>DataStructure</Filter>
+    </ClInclude>
+    <ClInclude Include="LSPIA\LSPIA.h">
+      <Filter>LSPIA</Filter>
+    </ClInclude>
+    <ClInclude Include="Common\CommonFunc.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="sdbkCalculator\sdbkCalculator.h">
+      <Filter>sdbkCalculator</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="DataStructure\Clip\Clipper\clipper.cpp">
+      <Filter>DataStructure\Clip\Clipper</Filter>
+    </ClCompile>
+    <ClCompile Include="DataStructure\Clip\PolyBool\err.c">
+      <Filter>DataStructure\Clip\PolyBool</Filter>
+    </ClCompile>
+    <ClCompile Include="DataStructure\Clip\PolyBool\graphadd.cc">
+      <Filter>DataStructure\Clip\PolyBool</Filter>
+    </ClCompile>
+    <ClCompile Include="DataStructure\Clip\PolyBool\graphmat.c">
+      <Filter>DataStructure\Clip\PolyBool</Filter>
+    </ClCompile>
+    <ClCompile Include="DataStructure\Clip\PolyBool\graphmat++.cc">
+      <Filter>DataStructure\Clip\PolyBool</Filter>
+    </ClCompile>
+    <ClCompile Include="DataStructure\Clip\PolyBool\nclip.cc">
+      <Filter>DataStructure\Clip\PolyBool</Filter>
+    </ClCompile>
+    <ClCompile Include="DataStructure\Clip\PolyBool\poly.cc">
+      <Filter>DataStructure\Clip\PolyBool</Filter>
+    </ClCompile>
+    <ClCompile Include="DataStructure\Clip\PolyBool\poly_io.cc">
+      <Filter>DataStructure\Clip\PolyBool</Filter>
+    </ClCompile>
+    <ClCompile Include="DataStructure\Clip\PolyBool\posadder.cc">
+      <Filter>DataStructure\Clip\PolyBool</Filter>
+    </ClCompile>
+    <ClCompile Include="DataStructure\Clip\PolyBool\primitives.cc">
+      <Filter>DataStructure\Clip\PolyBool</Filter>
+    </ClCompile>
+    <ClCompile Include="DataStructure\Clip\PolyBool\templates.cc">
+      <Filter>DataStructure\Clip\PolyBool</Filter>
+    </ClCompile>
+    <ClCompile Include="DataStructure\Layout.cpp">
+      <Filter>DataStructure</Filter>
+    </ClCompile>
+    <ClCompile Include="DataStructure\SolarScene.cpp">
+      <Filter>DataStructure</Filter>
+    </ClCompile>
+    <ClCompile Include="DataStructure\SPA.cpp">
+      <Filter>DataStructure</Filter>
+    </ClCompile>
+    <ClCompile Include="DataStructure\SunRay.cpp">
+      <Filter>DataStructure</Filter>
+    </ClCompile>
+    <ClCompile Include="DataStructure\Heliostat.cpp">
+      <Filter>DataStructure</Filter>
+    </ClCompile>
+    <ClCompile Include="DataStructure\Receiver.cpp">
+      <Filter>DataStructure</Filter>
+    </ClCompile>
+    <ClCompile Include="LSPIA\LSPIA.cpp">
+      <Filter>LSPIA</Filter>
+    </ClCompile>
+    <ClCompile Include="main.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="sdbkCalculator\sdbkCalculator.cpp">
+      <Filter>sdbkCalculator</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>
