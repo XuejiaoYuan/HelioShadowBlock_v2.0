@@ -13,10 +13,10 @@ using namespace std;
 using namespace Eigen;
 
 #define Epsilon		1e-6
-#define VERTEXSCALE 100000
+#define VERTEXSCALE 1000000
 #define PI acos(float(-1))
 
-//#define DEBUG
+#define DEBUG
 //#define OUTPUTRES
 //#define READFILE
 #define CLIPPER

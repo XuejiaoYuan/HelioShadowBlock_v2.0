@@ -19,9 +19,9 @@ public:
 		this->clipper_res_store.resize(2);
 		this->sample_clipper_res_store.resize(2);
 	}
-	vector<MatrixXf*> calcShadowBlock();
+	MatrixXf* calcShadowBlock();
 	virtual void sample_calc_preprocess(const int sample_row_num, const int sample_col_num, bool calc_s = false, bool calc_f = false) = 0;
-	vector<MatrixXf*> calcSampleShadowBlock();
+	MatrixXf* calcSampleShadowBlock();
 	virtual void save_clipper_res(const string save_path, int month, int day, int hour, int minute) {};
 
 	FieldType field_type;
@@ -31,12 +31,16 @@ public:
 	MatrixXf* sample_field_index;
 	vector<MatrixXf*> field_data;			// 定日镜场所有定日镜x与z坐标
 	vector<MatrixXf*> sample_field_data;		// 定日镜场采样定日镜x与z坐标
+	MatrixXf* sd_bk_res;
 	vector<MatrixXf*> clipper_res_store;
+	MatrixXf* sample_sd_bk_res;
 	vector<MatrixXf*> sample_clipper_res_store;
 
 protected:
 	float helioClipper(Heliostat*helio, const Vector3f&dir, const set<vector<int>>& estimate_grid);
+	float helioClipper(Heliostat*helio, const vector<Vector3f>&dir, const vector<set<vector<int>>>& estimate_grid);
 	float calcAccurateIntersection(Heliostat* helio, const Vector3f&dir, set<vector<int>>&relative_grid_label);		// used ray tracing calculate accurate relative grids
+	float calcAccurateIntersection(Heliostat* helio, const vector<Vector3f>& dir);
 	void calcIntersection3DDDA(Heliostat* helio, const Vector3f&dir, set<vector<int>> & relative_grid_label);			// using 3DDDA for relative grid's prediction
 	float checkForRelativeHelio(const set<vector<int>>& accurate_grid, const set<vector<int>>& estimate_grid);
 	float calcIntersectionPoint(const Vector3f&orig, const Vector3f&dir, const Vector3f&A, const Vector3f&B, const Vector3f&C);

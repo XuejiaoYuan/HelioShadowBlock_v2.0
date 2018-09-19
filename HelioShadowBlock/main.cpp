@@ -62,10 +62,8 @@ int main(int argc, char** argv) {
 					solar_scene->changeSolarScene(sunray_dir);
 					if (options == "-a_c") {
 						gt_res.push_back(sdbk_calc->calcShadowBlock());
-						fstream outFile(save_path + "/gt_clipper_sd&bk_m" + to_string(month) + "_d" + to_string(day) + "_h" 
-							+ to_string(hour) + "_min" + to_string(min) + ".txt", ios_base::out);
-						outFile << row << ' ' << col << endl;
-						for(int i)
+						if(outfile_options=="-f")
+							sdbk_calc->save_clipper_res(save_path, month, day, hour, min);
 					}
 					else if (options == "-a_r")
 						gt_res.push_back(sdbk_calc->calcShadowBlock());

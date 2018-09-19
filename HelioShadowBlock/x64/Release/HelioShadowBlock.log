@@ -1,41 +1,59 @@
-﻿  main.cpp
-main.cpp(85): warning C4305: “初始化”: 从“double”到“float”截断
-  sdbkCalculator.cpp
+﻿  sdbkCalculator.cpp
+sdbkCalculator\sdbkCalculator.cpp(15): warning C4244: “初始化”: 从“Eigen::EigenBase<Derived>::Index”转换到“int”，可能丢失数据
+          with
+          [
+              Derived=Eigen::Matrix<float,-1,-1,0,-1,-1>
+          ]
 sdbkCalculator\sdbkCalculator.cpp(16): warning C4244: “初始化”: 从“Eigen::EigenBase<Derived>::Index”转换到“int”，可能丢失数据
           with
           [
               Derived=Eigen::Matrix<float,-1,-1,0,-1,-1>
           ]
-sdbkCalculator\sdbkCalculator.cpp(17): warning C4244: “初始化”: 从“Eigen::EigenBase<Derived>::Index”转换到“int”，可能丢失数据
+sdbkCalculator\sdbkCalculator.cpp(24): warning C4244: “初始化”: 从“float”转换到“int”，可能丢失数据
+sdbkCalculator\sdbkCalculator.cpp(53): warning C4244: “参数”: 从“float”转换到“ClipperLib::cInt”，可能丢失数据
+sdbkCalculator\sdbkCalculator.cpp(57): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
+sdbkCalculator\sdbkCalculator.cpp(61): warning C4244: “=”: 从“double”转换到“float”，可能丢失数据
+sdbkCalculator\sdbkCalculator.cpp(87): warning C4244: “参数”: 从“float”转换到“ClipperLib::cInt”，可能丢失数据
+sdbkCalculator\sdbkCalculator.cpp(102): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
+sdbkCalculator\sdbkCalculator.cpp(108): warning C4244: “=”: 从“double”转换到“float”，可能丢失数据
+sdbkCalculator\sdbkCalculator.cpp(143): warning C4244: “参数”: 从“float”转换到“ClipperLib::cInt”，可能丢失数据
+sdbkCalculator\sdbkCalculator.cpp(147): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
+sdbkCalculator\sdbkCalculator.cpp(151): warning C4244: “=”: 从“double”转换到“float”，可能丢失数据
+sdbkCalculator\sdbkCalculator.cpp(179): warning C4244: “参数”: 从“float”转换到“ClipperLib::cInt”，可能丢失数据
+sdbkCalculator\sdbkCalculator.cpp(195): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
+sdbkCalculator\sdbkCalculator.cpp(201): warning C4244: “=”: 从“double”转换到“float”，可能丢失数据
+sdbkCalculator\sdbkCalculator.cpp(242): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
+sdbkCalculator\sdbkCalculator.cpp(254): warning C4305: “初始化”: 从“int”到“float”截断
+sdbkCalculator\sdbkCalculator.cpp(297): warning C4244: “=”: 从“float”转换到“int”，可能丢失数据
+sdbkCalculator\sdbkCalculator.cpp(298): warning C4244: “=”: 从“float”转换到“int”，可能丢失数据
+sdbkCalculator\sdbkCalculator.cpp(322): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
+sdbkCalculator\sdbkCalculator.cpp(334): warning C4305: “初始化”: 从“int”到“float”截断
+sdbkCalculator\sdbkCalculator.cpp(463): warning C4244: “初始化”: 从“float”转换到“int”，可能丢失数据
+sdbkCalculator\sdbkCalculator.cpp(464): warning C4244: “初始化”: 从“float”转换到“int”，可能丢失数据
+sdbkCalculator\sdbkCalculator.cpp(466): warning C4244: “初始化”: 从“float”转换到“int”，可能丢失数据
+sdbkCalculator\sdbkCalculator.cpp(467): warning C4244: “初始化”: 从“float”转换到“int”，可能丢失数据
+sdbkCalculator\sdbkCalculator.cpp(468): warning C4244: “初始化”: 从“double”转换到“int”，可能丢失数据
+sdbkCalculator\sdbkCalculator.cpp(469): warning C4244: “初始化”: 从“double”转换到“int”，可能丢失数据
+sdbkCalculator\sdbkCalculator.cpp(572): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
+sdbkCalculator\sdbkCalculator.cpp(573): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
+sdbkCalculator\sdbkCalculator.cpp(643): warning C4244: “初始化”: 从“float”转换到“int”，可能丢失数据
+sdbkCalculator\sdbkCalculator.cpp(644): warning C4244: “初始化”: 从“float”转换到“int”，可能丢失数据
+sdbkCalculator\sdbkCalculator.cpp(696): warning C4244: “初始化”: 从“Eigen::EigenBase<Derived>::Index”转换到“int”，可能丢失数据
           with
           [
               Derived=Eigen::Matrix<float,-1,-1,0,-1,-1>
           ]
-sdbkCalculator\sdbkCalculator.cpp(25): warning C4244: “初始化”: 从“float”转换到“int”，可能丢失数据
-sdbkCalculator\sdbkCalculator.cpp(54): warning C4244: “参数”: 从“float”转换到“ClipperLib::cInt”，可能丢失数据
-sdbkCalculator\sdbkCalculator.cpp(58): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
-sdbkCalculator\sdbkCalculator.cpp(62): warning C4244: “=”: 从“double”转换到“float”，可能丢失数据
-sdbkCalculator\sdbkCalculator.cpp(88): warning C4244: “参数”: 从“float”转换到“ClipperLib::cInt”，可能丢失数据
-sdbkCalculator\sdbkCalculator.cpp(103): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
-sdbkCalculator\sdbkCalculator.cpp(109): warning C4244: “=”: 从“double”转换到“float”，可能丢失数据
-sdbkCalculator\sdbkCalculator.cpp(150): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
-sdbkCalculator\sdbkCalculator.cpp(162): warning C4305: “初始化”: 从“int”到“float”截断
-sdbkCalculator\sdbkCalculator.cpp(205): warning C4244: “=”: 从“float”转换到“int”，可能丢失数据
-sdbkCalculator\sdbkCalculator.cpp(206): warning C4244: “=”: 从“float”转换到“int”，可能丢失数据
-sdbkCalculator\sdbkCalculator.cpp(255): warning C4244: “初始化”: 从“float”转换到“int”，可能丢失数据
-sdbkCalculator\sdbkCalculator.cpp(256): warning C4244: “初始化”: 从“float”转换到“int”，可能丢失数据
-sdbkCalculator\sdbkCalculator.cpp(258): warning C4244: “初始化”: 从“float”转换到“int”，可能丢失数据
-sdbkCalculator\sdbkCalculator.cpp(259): warning C4244: “初始化”: 从“float”转换到“int”，可能丢失数据
-sdbkCalculator\sdbkCalculator.cpp(260): warning C4244: “初始化”: 从“double”转换到“int”，可能丢失数据
-sdbkCalculator\sdbkCalculator.cpp(261): warning C4244: “初始化”: 从“double”转换到“int”，可能丢失数据
-sdbkCalculator\sdbkCalculator.cpp(364): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
-sdbkCalculator\sdbkCalculator.cpp(365): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
-sdbkCalculator\sdbkCalculator.cpp(508): warning C4244: “=”: 从“unsigned int”转换到“float”，可能丢失数据
+sdbkCalculator\sdbkCalculator.cpp(697): warning C4244: “初始化”: 从“Eigen::EigenBase<Derived>::Index”转换到“int”，可能丢失数据
+          with
+          [
+              Derived=Eigen::Matrix<float,-1,-1,0,-1,-1>
+          ]
+sdbkCalculator\sdbkCalculator.cpp(749): warning C4244: “=”: 从“unsigned int”转换到“float”，可能丢失数据
   正在生成代码
 e:\xjyuan\003 zju\002 solar\004 codes\180911_solar\helioshadowblock\helioshadowblock\lspia\lspia.cpp(128): warning C4172: 返回局部变量或临时变量的地址: calc
-  119 of 4929 functions ( 2.4%) were compiled, the rest were copied from previous compilation.
-    4 functions were new in current compilation
-    24 functions had inline decision re-evaluated but remain unchanged
+  80 of 5213 functions ( 1.5%) were compiled, the rest were copied from previous compilation.
+    0 functions were new in current compilation
+    42 functions had inline decision re-evaluated but remain unchanged
   已完成代码的生成
   HelioShadowBlock.vcxproj -> E:\xjYuan\003 ZJU\002 Solar\004 Codes\180911_Solar\HelioShadowBlock\x64\Release\HelioShadowBlock.exe
   HelioShadowBlock.vcxproj -> E:\xjYuan\003 ZJU\002 Solar\004 Codes\180911_Solar\HelioShadowBlock\x64\Release\HelioShadowBlock.pdb (Full PDB)

@@ -1,9 +1,9 @@
 #include "LSPIA.h"
 
-void LSPIA::set_datas(vector<MatrixXf*> field_data, vector<MatrixXf*> sample_field_data, vector<vector<MatrixXf*>> sample_data)
+void LSPIA::set_datas(vector<MatrixXf*> field_data, vector<MatrixXf*> sample_field_data, vector<MatrixXf*> sd_bk_res)
 {
 	this->field_data = field_data;
-	this->sample_data = sample_data;
+	this->sd_bk_res = sd_bk_res;
 	this->sample_field_data = sample_field_data;
 }
 
@@ -82,7 +82,8 @@ vector<vector<MatrixXf*>> & LSPIA::LSPIA_surface(const vector<int>&ctrl_num, con
 	vector<MatrixXf*> f_Nik = { f_Nik_u_even, f_Nik_u_odd, f_Nik_v_even, f_Nik_v_odd };
 
 	// Step5. Calculate the fitting error and control points
-	vector<MatrixXf*> ctrl_sd(sample_data.size(), new MatrixXf(ctrl_num[0], ctrl_num[1]));
+	vector<MatrixXf*> ctrl_sd(sa
+		mple_data.size(), new MatrixXf(ctrl_num[0], ctrl_num[1]));
 	vector<MatrixXf*> ctrl_bk(sample_data.size(), new MatrixXf(ctrl_num[0], ctrl_num[1]));
 	vector<vector<MatrixXf*>> calc(sample_data.size());
 	for (int cnt = 0; cnt < sample_data.size(); cnt++) {
