@@ -602,7 +602,6 @@ MatrixXf* SdBkCalc::calcShadowBlock()
 	// clipper_res_store.resize(helios.size(), vector<float>(2));
 	int row = layouts[0]->layout_row_col.x();
 	int col = layouts[0]->layout_row_col.y();
-	int r = 0, c = 0;
 	//MatrixXf* clipper_sh = new MatrixXf(row, col);
 	//MatrixXf* clipper_bk = new MatrixXf(row, col);
 	sd_bk_res = new MatrixXf(row, col);
@@ -625,7 +624,7 @@ MatrixXf* SdBkCalc::calcShadowBlock()
 	for (int i = 0; i < helios.size(); i++) {
 		auto helio = helios[i];
 		set<vector<int>> shadow_relative_grid_label_3ddda, block_relative_grid_label_3ddda;
-
+		int r, c;
 		get_row_col(helio->helio_index, r, c);
 
 		// 3DDDA + clipper 
@@ -691,8 +690,10 @@ MatrixXf* SdBkCalc::calcShadowBlock()
 void CrossRectSdBkCalc::save_clipper_res(const string save_path, int month, int day, int hour, int minute)
 {
 	fstream outFile(save_path + "clipper_m" + to_string(month) + "_d" + to_string(day) + "_h" + to_string(hour) + "_min" + to_string(minute) + ".txt", ios_base::out);
-	int row = clipper_res_store[0]->rows();
-	int col = clipper_res_store[0]->cols();
+	int row = sd_bk_res->rows();
+	int col = sd_bk_res->cols();
+	//int row = clipper_res_store[0]->rows();
+	//int col = clipper_res_store[0]->cols();
 	int tmp_col;
 	outFile << row << ' ' << col << endl;
 	int cnt = 0;
@@ -702,8 +703,9 @@ void CrossRectSdBkCalc::save_clipper_res(const string save_path, int month, int 
 		for (int j = 0; j < tmp_col; j++) {
 			outFile << solar_scene->helios[cnt]->helio_pos.x() << ' '
 				<< solar_scene->helios[cnt]->helio_pos.z() << ' '
-				<< (*clipper_res_store[0])(i, j) << ' '
-				<< (*clipper_res_store[1])(i, j) << endl;
+				<< (*sd_bk_res)(i, j) << endl;
+				//<< (*clipper_res_store[0])(i, j) << ' '
+				//<< (*clipper_res_store[1])(i, j) << endl;
 			cnt++;
 		}
 	}

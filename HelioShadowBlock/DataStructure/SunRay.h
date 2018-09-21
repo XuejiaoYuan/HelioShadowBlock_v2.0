@@ -22,6 +22,7 @@ public:
     Vector3f calcSunRay(const string& spa_data_file);
 	Vector3f changeSunRay(const vector<int>& time_param);
 	Vector3f changeSunRay(const float&altitude, const float&azimuth);
+	Vector3i getSunSet();
 	float current_altitude, current_azimuth;
 
 private:

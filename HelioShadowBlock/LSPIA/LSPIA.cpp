@@ -3,7 +3,7 @@
 void LSPIA::set_datas(vector<MatrixXf*> field_data, vector<MatrixXf*> sample_field_data, vector<MatrixXf*> sd_bk_res)
 {
 	this->field_data = field_data;
-	this->sd_bk_res = sd_bk_res;
+	this->sample_sd_bk_res = sample_sd_bk_res;
 	this->sample_field_data = sample_field_data;
 }
 
@@ -82,48 +82,59 @@ vector<vector<MatrixXf*>> & LSPIA::LSPIA_surface(const vector<int>&ctrl_num, con
 	vector<MatrixXf*> f_Nik = { f_Nik_u_even, f_Nik_u_odd, f_Nik_v_even, f_Nik_v_odd };
 
 	// Step5. Calculate the fitting error and control points
-	vector<MatrixXf*> ctrl_sd(sa
-		mple_data.size(), new MatrixXf(ctrl_num[0], ctrl_num[1]));
-	vector<MatrixXf*> ctrl_bk(sample_data.size(), new MatrixXf(ctrl_num[0], ctrl_num[1]));
-	vector<vector<MatrixXf*>> calc(sample_data.size());
-	for (int cnt = 0; cnt < sample_data.size(); cnt++) {
+	vector<MatrixXf*> ctrl_sd_bk(sample_sd_bk_res.size(), new MatrixXf(ctrl_num[0], ctrl_num[1]));
+	vector<vector<MatrixXf*>> calc(sample_sd_bk_res.size());
+	//vector<MatrixXf*> ctrl_sd(sample_data.size(), new MatrixXf(ctrl_num[0], ctrl_num[1]));
+	//vector<MatrixXf*> ctrl_bk(sample_data.size(), new MatrixXf(ctrl_num[0], ctrl_num[1]));
+	//vector<vector<MatrixXf*>> calc(sample_data.size());
+	for (int cnt = 0; cnt < sample_sd_bk_res.size(); cnt++) {
 		// 1. Select the initial points of shadow and block 
 		for (int i = 0; i < ctrl_num[0] - 1; i++) {
 			int f_i = row*i / float(ctrl_num[0]);
 			for (int j = 0; j < ctrl_num[1] - 1; j++) {
 				int f_j = col*j / float(ctrl_num[1]);
-				(*ctrl_sd[cnt]) << (*sample_data[cnt][2])(f_i, f_j);
-				(*ctrl_bk[cnt]) << (*sample_data[cnt][3])(f_i, f_j);
+				(*ctrl_sd_bk[cnt]) << (*sample_sd_bk_res[cnt])(f_i, f_j);
+				//(*ctrl_sd[cnt]) << (*sample_data[cnt][2])(f_i, f_j);
+				//(*ctrl_bk[cnt]) << (*sample_data[cnt][3])(f_i, f_j);
 			}
-			(*ctrl_sd[cnt]) << (*sample_data[cnt][2])(f_i, sample_data[cnt][2]->cols() - 1);
-			(*ctrl_bk[cnt]) << (*sample_data[cnt][3])(f_i, sample_data[cnt][3]->cols() - 1);
+			(*ctrl_sd_bk[cnt]) << (*sample_sd_bk_res[cnt])(f_i, sample_sd_bk_res[cnt]->cols() - 1);
+			//(*ctrl_sd[cnt]) << (*sample_data[cnt][2])(f_i, sample_data[cnt][2]->cols() - 1);
+			//(*ctrl_bk[cnt]) << (*sample_data[cnt][3])(f_i, sample_data[cnt][3]->cols() - 1);
 		}
 		for (int j = 0; j < ctrl_num[1] - 1; j++) {
 			int f_j = col*j / float(ctrl_num[1]);
-			(*ctrl_sd[cnt]) << (*sample_data[cnt][2])(sample_data[cnt][2]->rows() - 1, f_j);
-			(*ctrl_bk[cnt]) << (*sample_data[cnt][3])(sample_data[cnt][3]->rows() - 1, f_j);
+			(*ctrl_sd_bk[cnt]) << (*sample_sd_bk_res[cnt])(sample_sd_bk_res[cnt]->rows() - 1, f_j);
+			//(*ctrl_sd[cnt]) << (*sample_data[cnt][2])(sample_data[cnt][2]->rows() - 1, f_j);
+			//(*ctrl_bk[cnt]) << (*sample_data[cnt][3])(sample_data[cnt][3]->rows() - 1, f_j);
 		}
-		(*ctrl_sd[cnt]) << sample_data[cnt][2]->bottomRightCorner<1, 1>();
-		(*ctrl_bk[cnt]) << sample_data[cnt][3]->bottomRightCorner<1, 1>();
+		(*ctrl_sd_bk[cnt]) << sample_sd_bk_res[cnt]->bottomRightCorner<1, 1>();
+		//(*ctrl_sd[cnt]) << sample_data[cnt][2]->bottomRightCorner<1, 1>();
+		//(*ctrl_bk[cnt]) << sample_data[cnt][3]->bottomRightCorner<1, 1>();
 
-		// 1.1 fitting shadow surface
-		float sd_error = surface_fitting(sample_data[cnt][0], ctrl_sd[cnt], Nik, miu, 0.3);
-		cout << "sd_error: " << sd_error << endl;
+		//// 1.1 fitting shadow surface
+		//float sd_error = surface_fitting(sample_data[cnt][0], ctrl_sd[cnt], Nik, miu, 0.3);
+		//cout << "sd_error: " << sd_error << endl;
 
-		// 1.2 fitting block surface
-		float bk_error = surface_fitting(sample_data[cnt][1], ctrl_bk[cnt], Nik, miu, 0.3);
-		cout << "bk_error: " << bk_error << endl;
+		//// 1.2 fitting block surface
+		//float bk_error = surface_fitting(sample_data[cnt][1], ctrl_bk[cnt], Nik, miu, 0.3);
+		//cout << "bk_error: " << bk_error << endl;
 
-		// 2. Calculate the fitting surface	
-		MatrixXf* calc_sd_even = new MatrixXf((*Nik[0]) * (*ctrl_sd[cnt]) * Nik[2]->transpose());
-		MatrixXf* calc_sd_odd = new MatrixXf((*Nik[1]) * (*ctrl_sd[cnt]) * Nik[3]->transpose());
+		// 1. fitting shadow&block surface
+		float sd_bk_error = surface_fitting(sample_sd_bk_res[cnt], ctrl_sd_bk[cnt], Nik, miu, 0.3);
 
-		MatrixXf* calc_bk_even = new MatrixXf((*Nik[0]) * (*ctrl_sd[cnt]) * Nik[2]->transpose());
-		MatrixXf* calc_bk_odd = new MatrixXf((*Nik[1]) * (*ctrl_sd[cnt]) * Nik[3]->transpose());
-		calc[cnt].push_back(calc_sd_even);
-		calc[cnt].push_back(calc_sd_odd);
-		calc[cnt].push_back(calc_bk_even);
-		calc[cnt].push_back(calc_bk_odd);
+		// 2. Calculate the fitting surface
+		MatrixXf* calc_sd_bk_even = new MatrixXf((*Nik[0]) * (*ctrl_sd_bk[cnt]) * Nik[2]->transpose());
+		MatrixXf* calc_sd_bk_odd = new MatrixXf((*Nik[1]) * (*ctrl_sd_bk[cnt]) * Nik[3]->transpose());
+		calc[cnt].push_back(calc_sd_bk_even);
+		calc[cnt].push_back(calc_sd_bk_odd);
+		//MatrixXf* calc_sd_even = new MatrixXf((*Nik[0]) * (*ctrl_sd[cnt]) * Nik[2]->transpose());
+		//MatrixXf* calc_sd_odd = new MatrixXf((*Nik[1]) * (*ctrl_sd[cnt]) * Nik[3]->transpose());
+		//MatrixXf* calc_bk_even = new MatrixXf((*Nik[0]) * (*ctrl_sd[cnt]) * Nik[2]->transpose());
+		//MatrixXf* calc_bk_odd = new MatrixXf((*Nik[1]) * (*ctrl_sd[cnt]) * Nik[3]->transpose());
+		//calc[cnt].push_back(calc_sd_even);
+		//calc[cnt].push_back(calc_sd_odd);
+		//calc[cnt].push_back(calc_bk_even);
+		//calc[cnt].push_back(calc_bk_odd);
 	}
 	
 	return calc;

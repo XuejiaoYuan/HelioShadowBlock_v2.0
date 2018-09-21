@@ -16,7 +16,7 @@ using namespace Eigen;
 #define VERTEXSCALE 1000000
 #define PI acos(float(-1))
 
-#define DEBUG
+//#define DEBUG
 //#define OUTPUTRES
 //#define READFILE
 #define CLIPPER

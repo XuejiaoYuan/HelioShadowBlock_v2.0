@@ -13,7 +13,7 @@ public:
 private:
 	vector<MatrixXf*> field_data;			// 定日镜场所有定日镜x与z坐标
 	vector<MatrixXf*> sample_field_data;		// 定日镜场采样定日镜x与z坐标
-	vector<vector<MatrixXf*>> sd_bk_res;	// 不同时刻下定日镜场采样定日镜阴影遮挡率
+	vector<MatrixXf*> sample_sd_bk_res;		// 不同时刻下定日镜场采样定日镜阴影遮挡率
 
 	float BaseFunction(const int i, const int k, const float u, const vector<float>&knot);
 	vector<float>& knot_vector(const int k, const vector<float>&param, const int N, const int M);

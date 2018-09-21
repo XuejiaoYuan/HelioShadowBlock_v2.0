@@ -5,7 +5,7 @@
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <LocalDebuggerCommandArguments>userData/field_data/cross_field/crossField_300x300/crossRectField_300_300_gap15.scn userData/SPAtest_ori.txt -a_c 300 300 -f crossField_res/300x300/res_g15/</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>userData/field_data/cross_field/crossField_300x300/crossRectField_300_300_gap15.5.scn userData/SPAtest_ori.txt -a_c 300 300 -f crossField_res/300x300/15.5/</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
