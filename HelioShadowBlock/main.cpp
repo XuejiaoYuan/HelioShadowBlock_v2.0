@@ -48,57 +48,76 @@ int main(int argc, char** argv) {
 
 	vector<int> time_param(4);
 	vector<MatrixXf*> gt_res;
-	vector<MatrixXf*> sample_res;
+	vector<MatrixXf*> sample_sd_bk_res;
 	auto start = std::chrono::high_resolution_clock::now();
-	//fstream outFile(save_path + "/sunray_dir.txt", ios_base::out);
-	for (int month = 1; month <= 12; month++) {
-		for (int day = 1; day < 29; day += 4) {
-			for (int hour = 8; hour < 13; hour++) {
-				for (int min = 0; min < 15; min += 15) {
-					time_param[0] = month;
-					time_param[1] = day;
-					time_param[2] = hour;
-					time_param[3] = min;
-					sunray_dir = sunray.changeSunRay(time_param);
-					solar_scene->changeSolarScene(sunray_dir);
-					//outFile << "month:" << month << ' ' << "day:" << day << " " << "hour:" << hour << ' ' << sunray_dir.x() << ' ' << sunray_dir.y() << ' ' << sunray_dir.z() << endl;
-					
-					if (options == "-a_c") {
-						gt_res.push_back(sdbk_calc->calcShadowBlock());
-						if(outfile_options=="-f")
-							sdbk_calc->save_clipper_res(save_path, month, day, hour, min);
-					}
-					else if (options == "-a_r")
-						gt_res.push_back(sdbk_calc->calcShadowBlock());
-					else
-						sample_res.push_back(sdbk_calc->calcSampleShadowBlock());
-				}
-			}
-			//Vector3i sunset = sunray.getSunSet();
-			//outFile << "sunset: " << sunset.x() << ":" << sunset.y() << ":" << sunset.z() << endl;
-			//outFile << endl;
-		}
-	}
-	//outFile.close();
-	//
-	// test
-	//
-	//time_param[0] = 1;
-	//time_param[1] = 1;
-	//time_param[2] = 8;
-	//time_param[3] = 0;
-	//sunray_dir = sunray.changeSunRay(time_param);
-	//solar_scene->changeSolarScene(sunray_dir);
-	//if (options == "-s_l")
-	//	sample_res.push_back(sdbk_calc->calcSampleShadowBlock());
-
-	//if (options == "-s_l") {
-	//	vector<int> ctrl_num = { 76, 76 };
-	//	float miu = 1e-4;
-	//	LSPIA* lspia = new LSPIA();
-	//	lspia->set_datas(sdbk_calc->field_data, sdbk_calc->sample_field_data, sample_res);
-	//	lspia->LSPIA_surface(ctrl_num, miu);
+	//for (int month = 1; month <= 12; month++) {
+	//	for (int day = 1; day < 29; day += 4) {
+	//		for (int hour = 8; hour < 13; hour++) {
+	//			for (int min = 0; min < 15; min += 15) {
+	//				time_param[0] = month;
+	//				time_param[1] = day;
+	//				time_param[2] = hour;
+	//				time_param[3] = min;
+	//				sunray_dir = sunray.changeSunRay(time_param);
+	//				solar_scene->changeSolarScene(sunray_dir);
+	//				
+	//				if (options == "-a_c") {
+	//					gt_res.push_back(sdbk_calc->calcShadowBlock());
+	//					if(outfile_options=="-f")
+	//						sdbk_calc->save_clipper_res(save_path, month, day, hour, min);
+	//				}
+	//				else if (options == "-a_r")
+	//					gt_res.push_back(sdbk_calc->calcShadowBlock());
+	//				else {
+	//					gt_res.push_back(sdbk_calc->calcShadowBlock());
+	//					sample_sd_bk_res.push_back(sdbk_calc->calcSampleShadowBlock());
+	//				}
+	//			}
+	//		}
+	//	}
 	//}
+
+
+
+	time_param[0] = 1;
+	time_param[1] = 1;
+	time_param[2] = 8;
+	time_param[3] = 0;
+	sunray_dir = sunray.changeSunRay(time_param);
+	solar_scene->changeSolarScene(sunray_dir);
+
+	if(options=="-s_l") {
+		gt_res.push_back(sdbk_calc->calcShadowBlock());
+		sample_sd_bk_res.push_back(sdbk_calc->calcSampleShadowBlock());
+	}
+
+	for (int i = 0; i < sdbk_calc->sample_field_data[0]->rows(); i++)
+		cout << (*sdbk_calc->sample_field_data[1])(i, 0) << endl;
+
+	vector<vector<MatrixXf*>> fitting_sd_bk_res;
+	if (options == "-s_l") {
+		LSPIA lspia;
+		lspia.set_datas(sdbk_calc->field_data, sdbk_calc->sample_field_data, sample_sd_bk_res);
+
+		vector<int> ctrl_nums = { 76,76 };
+		fitting_sd_bk_res = lspia.LSPIA_surface(ctrl_nums, 0.9);
+	}
+	//int sample_row_num = 30;
+	//int sample_col_num = 30;
+
+	//for (int i = 0; i < sample_row_num / 2 - 1; i++) {
+	//	int f_i = int(row*i / sample_row_num);
+	//	for (int k = 0; k < 2; k++) {
+	//		for (int j = 0; j < sample_col_num - 1; j++) {
+	//			int f_j = int(col*j / sample_col_num);
+	//			fstream outFile(save_path + "sample/h_fi" + to_string(f_i) + "_fj_" + to_string(f_j) + ".txt", ios_base::out);
+	//			for (int t = 0; t < gt_res.size(); t++) {
+	//				outFile << (*gt_res[t])(2 * f_i + k, f_j) << endl;
+	//			}
+	//		}
+	//	}
+	//}
+
 
 	auto elapsed = chrono::duration_cast<chrono::microseconds>(std::chrono::high_resolution_clock::now() - start);
 	auto time = double(elapsed.count())*chrono::microseconds::period::num / chrono::microseconds::period::den;

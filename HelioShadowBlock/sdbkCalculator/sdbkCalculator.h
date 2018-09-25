@@ -20,7 +20,7 @@ public:
 		//this->sample_clipper_res_store.resize(2);
 	}
 	MatrixXf* calcShadowBlock();
-	virtual void sample_calc_preprocess(const int sample_row_num, const int sample_col_num, bool calc_s = false, bool calc_f = false) = 0;
+	void sample_calc_preprocess(const int sample_row_num, const int sample_col_num, bool calc_s = false, bool calc_f = false);
 	MatrixXf* calcSampleShadowBlock();
 	virtual void save_clipper_res(const string save_path, int month, int day, int hour, int minute) {};
 
@@ -55,7 +55,7 @@ protected:
 class RectSdBkCalc :public SdBkCalc {
 public:
 	RectSdBkCalc(SolarScene* _solar_scene): SdBkCalc(RectFieldType, _solar_scene){}
-	void sample_calc_preprocess(const int sample_row_num, const int sample_col_num, bool calc_s = false, bool calc_f = false) {};
+	//void sample_calc_preprocess(const int sample_row_num, const int sample_col_num, bool calc_s = false, bool calc_f = false) {};
 private:
 	void get_row_col(const int index, int& r, int& c);
 	MatrixXf* field_data_pre() { return nullptr; }
@@ -66,7 +66,7 @@ private:
 class CrossRectSdBkCalc :public SdBkCalc {
 public:
 	CrossRectSdBkCalc(SolarScene* _solar_scene) :SdBkCalc(CrossRectFieldType, _solar_scene) {}
-	void sample_calc_preprocess(const int sample_row_num, const int sample_col_num, bool calc_s = false, bool calc_f = false) {};
+	//void sample_calc_preprocess(const int sample_row_num, const int sample_col_num, bool calc_s = false, bool calc_f = false) {};
 	void save_clipper_res(const string save_path, int month, int day, int hour, int minute);
 
 private:
@@ -78,7 +78,7 @@ private:
 class FermatSdBkCalc :public SdBkCalc {
 public:
 	FermatSdBkCalc(SolarScene* _solar_scene):SdBkCalc(FermatFieldType, _solar_scene){}
-	void sample_calc_preprocess(const int sample_row_num, const int sample_col_num, bool calc_s = false, bool calc_f = false) {};
+	//void sample_calc_preprocess(const int sample_row_num, const int sample_col_num, bool calc_s = false, bool calc_f = false) {};
 
 private:
 	void get_row_col(const int index, int& r, int& c) {}
@@ -90,7 +90,7 @@ private:
 class RadialFieldCalc :public SdBkCalc {
 public:
 	RadialFieldCalc(SolarScene* _solar_scene):SdBkCalc(RadialFieldType, _solar_scene){}
-	void sample_calc_preprocess(const int sample_row_num, const int sample_col_num, bool calc_s = false, bool calc_f = false) {};
+	//void sample_calc_preprocess(const int sample_row_num, const int sample_col_num, bool calc_s = false, bool calc_f = false) {};
 
 private:
 	void get_row_col(const int index, int& r, int& c) {}
