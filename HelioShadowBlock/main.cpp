@@ -48,7 +48,7 @@ int main(int argc, char** argv) {
 
 	vector<int> time_param(4);
 	vector<MatrixXf*> gt_res;
-	vector<MatrixXf*> sample_res;
+	vector<MatrixXf*> sample_sd_bk_res;
 	auto start = std::chrono::high_resolution_clock::now();
 	//fstream outFile(save_path + "/sunray_dir.txt", ios_base::out);
 	for (int month = 1; month <= 12; month++) {
@@ -71,7 +71,7 @@ int main(int argc, char** argv) {
 					else if (options == "-a_r")
 						gt_res.push_back(sdbk_calc->calcShadowBlock());
 					else
-						sample_res.push_back(sdbk_calc->calcSampleShadowBlock());
+						gt_res.push_back(sdbk_calc->calcSampleShadowBlock());
 				}
 			}
 			//Vector3i sunset = sunray.getSunSet();
@@ -83,22 +83,26 @@ int main(int argc, char** argv) {
 	//
 	// test
 	//
-	//time_param[0] = 1;
-	//time_param[1] = 1;
-	//time_param[2] = 8;
-	//time_param[3] = 0;
-	//sunray_dir = sunray.changeSunRay(time_param);
-	//solar_scene->changeSolarScene(sunray_dir);
-	//if (options == "-s_l")
-	//	sample_res.push_back(sdbk_calc->calcSampleShadowBlock());
+	time_param[0] = 1;
+	time_param[1] = 1;
+	time_param[2] = 8;
+	time_param[3] = 0;
+	sunray_dir = sunray.changeSunRay(time_param);
+	solar_scene->changeSolarScene(sunray_dir);
+	if (options == "-s_l")
+		sample_sd_bk_res.push_back(sdbk_calc->calcSampleShadowBlock());
 
-	//if (options == "-s_l") {
-	//	vector<int> ctrl_num = { 76, 76 };
-	//	float miu = 1e-4;
-	//	LSPIA* lspia = new LSPIA();
-	//	lspia->set_datas(sdbk_calc->field_data, sdbk_calc->sample_field_data, sample_res);
-	//	lspia->LSPIA_surface(ctrl_num, miu);
-	//}
+	for (int i = 0; i < sdbk_calc->sample_field_data[0]->rows(); i++)
+		cout << (*sdbk_calc->sample_field_data[1])(i, 0) << endl;
+
+	vector<vector<MatrixXf*>> fitting_sd_bk_res;
+	if (options == "-s_l") {
+		LSPIA lspia;
+		lspia.set_datas(sdbk_calc->field_data, sdbk_calc->sample_field_data, sample_sd_bk_res);
+
+		vector<int> ctrl_nums = { 76,76 };
+		fitting_sd_bk_res = lspia.LSPIA_surface(ctrl_nums, 0.9);
+	}
 
 	auto elapsed = chrono::duration_cast<chrono::microseconds>(std::chrono::high_resolution_clock::now() - start);
 	auto time = double(elapsed.count())*chrono::microseconds::period::num / chrono::microseconds::period::den;
