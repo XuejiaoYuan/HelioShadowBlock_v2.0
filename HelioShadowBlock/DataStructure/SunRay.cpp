@@ -84,6 +84,7 @@ Vector3f SunRay::changeSunRay(const vector<int>& time_param)
 	int res = spa_calculate(&spa);
 	current_altitude = 90 - spa.zenith;
 	current_azimuth = spa.azimuth;
+	calcDNI(time_param);
 
 	if (res == 0) {
 		double altitude = deg2rad(90 - spa.zenith);
@@ -99,7 +100,6 @@ Vector3f SunRay::changeSunRay(const vector<int>& time_param)
 
 Vector3f SunRay::changeSunRay(const float & altitude, const float & azimuth)
 {
-
 	float local_altitude = deg2rad(altitude);
 	float local_azimuth = deg2rad(azimuth - 90);
 	sunray_dir.x() = cos(local_altitude) * sin(local_azimuth);
@@ -116,4 +116,43 @@ Vector3i SunRay::getSunSet()
 	printf("Sunset:        %02d:%02d:%02d Local Time\n", (int)(spa.sunset), (int)min, (int)sec);
 	Vector3i sunset(int(spa.sunset), int(min), int(sec));
 	return sunset;
+}
+
+float SunRay::calcDNI(const vector<int>& time_param)
+{
+	if (this->current_altitude < 0)
+		return 0;
+
+	float ALT = 0.0;  // 当地海拔, 默认为0, 单位km
+	int day_count = calcDay(time_param);
+	float E0 = 1.353 + 0.045 * cos(2 * PI* (day_count + 10) / 365); // 太阳辐射进入地球大气之后单位面积的能量，单位kW / m2
+
+	float a = 0.4237 - 0.00821 * (6 - ALT) * (6 - ALT);
+	float b = 0.5055 + 0.00595 * (6.5 - ALT) * (6.5 - ALT);
+	float c = 0.2711 + 0.01858 * (2.5 - ALT) * (2.5 - ALT);
+
+	float fair = this->current_altitude * PI / 180.0;
+	// float DNI = 1000 * E0 * (a + b * math.exp(-c / math.sin(fair)))
+	double DNI = E0 * (a + b * exp(-c / sin(fair))) / 1000;  // 为减小数量级修改了计算式
+	this->current_DNI = DNI;
+	return DNI;
+}
+
+int SunRay::calcDay(const vector<int>& time_param)
+{
+	int year = 2018;
+	int month = time_param[0];
+	int day = time_param[1];
+	vector<int> Month = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
+	bool flag = false;
+	if ((year % 4 == 0 && year % 100 != 0) || (year % 400 == 0))
+		flag = true;
+
+	int cnt_day = 0;
+	for (int i = 0; i < month - 1; i++)
+		cnt_day += Month[i];
+	if (flag && month > 2)
+		cnt_day += 1;
+	cnt_day += day;
+	return cnt_day;
 }

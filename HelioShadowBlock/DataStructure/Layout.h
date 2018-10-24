@@ -15,6 +15,11 @@ typedef enum{
     RectLayoutType, CrossRectLayoutType, FermatLayoutType, RadialLayoutType
 }LayoutType;
 
+typedef enum {
+	Initial, GroundMode, ReceiverMode, LayoutMode, HeliostatMode
+}InputMode;
+
+
 class Layout {
 public:
     Layout(const LayoutType&_layout_type){
@@ -26,7 +31,8 @@ public:
         layout_size = Vector3f(0, 0, 0);
 		layout_row_col = Vector2i(0, 0);
     }
-	void setHelioLayout(vector<Heliostat*> helios);
+	void initLayout(fstream& inFile, InputMode& input_mode, int& helio_type);
+	virtual void setHelioLayout(vector<Heliostat*> helios);
 	Vector3f helio_interval;                  //Interval between heliostat's center
     int helio_num;                        //The number of heliostat in the field
     LayoutType layout_type;               //Heliostat field's layout type

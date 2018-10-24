@@ -1,9 +1,64 @@
-﻿  main.cpp
-main.cpp(104): warning C4305: “参数”: 从“double”到“const float”截断
+﻿  Layout.cpp
+DataStructure\Layout.cpp(35): warning C4244: “=”: 从“float”转换到“int”，可能丢失数据
+DataStructure\Layout.cpp(36): warning C4244: “=”: 从“float”转换到“int”，可能丢失数据
+DataStructure\Layout.cpp(43): warning C4244: “=”: 从“float”转换到“int”，可能丢失数据
+DataStructure\Layout.cpp(44): warning C4244: “=”: 从“float”转换到“int”，可能丢失数据
+  SolarScene.cpp
+DataStructure\SolarScene.cpp(111): warning C4267: “=”: 从“size_t”转换到“unsigned int”，可能丢失数据
+  main.cpp
+  sdbkCalculator.cpp
+sdbkCalculator\sdbkCalculator.cpp(15): warning C4244: “初始化”: 从“Eigen::EigenBase<Derived>::Index”转换到“int”，可能丢失数据
+          with
+          [
+              Derived=Eigen::Matrix<float,-1,-1,0,-1,-1>
+          ]
+sdbkCalculator\sdbkCalculator.cpp(16): warning C4244: “初始化”: 从“Eigen::EigenBase<Derived>::Index”转换到“int”，可能丢失数据
+          with
+          [
+              Derived=Eigen::Matrix<float,-1,-1,0,-1,-1>
+          ]
+sdbkCalculator\sdbkCalculator.cpp(23): warning C4244: “初始化”: 从“float”转换到“int”，可能丢失数据
+sdbkCalculator\sdbkCalculator.cpp(51): warning C4244: “参数”: 从“float”转换到“ClipperLib::cInt”，可能丢失数据
+sdbkCalculator\sdbkCalculator.cpp(55): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
+sdbkCalculator\sdbkCalculator.cpp(59): warning C4244: “=”: 从“double”转换到“float”，可能丢失数据
+sdbkCalculator\sdbkCalculator.cpp(85): warning C4244: “参数”: 从“float”转换到“ClipperLib::cInt”，可能丢失数据
+sdbkCalculator\sdbkCalculator.cpp(100): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
+sdbkCalculator\sdbkCalculator.cpp(106): warning C4244: “=”: 从“double”转换到“float”，可能丢失数据
+sdbkCalculator\sdbkCalculator.cpp(141): warning C4244: “参数”: 从“float”转换到“ClipperLib::cInt”，可能丢失数据
+sdbkCalculator\sdbkCalculator.cpp(145): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
+sdbkCalculator\sdbkCalculator.cpp(149): warning C4244: “=”: 从“double”转换到“float”，可能丢失数据
+sdbkCalculator\sdbkCalculator.cpp(177): warning C4244: “参数”: 从“float”转换到“ClipperLib::cInt”，可能丢失数据
+sdbkCalculator\sdbkCalculator.cpp(193): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
+sdbkCalculator\sdbkCalculator.cpp(199): warning C4244: “=”: 从“double”转换到“float”，可能丢失数据
+sdbkCalculator\sdbkCalculator.cpp(240): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
+sdbkCalculator\sdbkCalculator.cpp(252): warning C4305: “初始化”: 从“int”到“float”截断
+sdbkCalculator\sdbkCalculator.cpp(295): warning C4244: “=”: 从“float”转换到“int”，可能丢失数据
+sdbkCalculator\sdbkCalculator.cpp(296): warning C4244: “=”: 从“float”转换到“int”，可能丢失数据
+sdbkCalculator\sdbkCalculator.cpp(320): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
+sdbkCalculator\sdbkCalculator.cpp(332): warning C4305: “初始化”: 从“int”到“float”截断
+sdbkCalculator\sdbkCalculator.cpp(461): warning C4244: “初始化”: 从“float”转换到“int”，可能丢失数据
+sdbkCalculator\sdbkCalculator.cpp(462): warning C4244: “初始化”: 从“float”转换到“int”，可能丢失数据
+sdbkCalculator\sdbkCalculator.cpp(464): warning C4244: “初始化”: 从“float”转换到“int”，可能丢失数据
+sdbkCalculator\sdbkCalculator.cpp(465): warning C4244: “初始化”: 从“float”转换到“int”，可能丢失数据
+sdbkCalculator\sdbkCalculator.cpp(466): warning C4244: “初始化”: 从“double”转换到“int”，可能丢失数据
+sdbkCalculator\sdbkCalculator.cpp(467): warning C4244: “初始化”: 从“double”转换到“int”，可能丢失数据
+sdbkCalculator\sdbkCalculator.cpp(570): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
+sdbkCalculator\sdbkCalculator.cpp(571): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
+sdbkCalculator\sdbkCalculator.cpp(709): warning C4244: “初始化”: 从“Eigen::EigenBase<Derived>::Index”转换到“int”，可能丢失数据
+          with
+          [
+              Derived=Eigen::Matrix<float,-1,-1,0,-1,-1>
+          ]
+sdbkCalculator\sdbkCalculator.cpp(710): warning C4244: “初始化”: 从“Eigen::EigenBase<Derived>::Index”转换到“int”，可能丢失数据
+          with
+          [
+              Derived=Eigen::Matrix<float,-1,-1,0,-1,-1>
+          ]
+sdbkCalculator\sdbkCalculator.cpp(761): warning C4244: “=”: 从“unsigned int”转换到“float”，可能丢失数据
   正在生成代码
-  481 of 5022 functions ( 9.6%) were compiled, the rest were copied from previous compilation.
+  29 of 3793 functions ( 0.8%) were compiled, the rest were copied from previous compilation.
     2 functions were new in current compilation
-    51 functions had inline decision re-evaluated but remain unchanged
+    28 functions had inline decision re-evaluated but remain unchanged
   已完成代码的生成
   HelioShadowBlock.vcxproj -> E:\xjYuan\003 ZJU\002 Solar\004 Codes\180911_Solar\HelioShadowBlock\x64\Release\HelioShadowBlock.exe
   HelioShadowBlock.vcxproj -> E:\xjYuan\003 ZJU\002 Solar\004 Codes\180911_Solar\HelioShadowBlock\x64\Release\HelioShadowBlock.pdb (Full PDB)

@@ -119,27 +119,7 @@ bool SolarScene::initSolarScene(const string &scene_filepath, const Vector3f &su
                 LayoutCreator layout_creator;
                 line_stream >> layout_type;
                 layout = layout_creator.getLayout((LayoutType)layout_type);
-				while (getline(inFile, line)) {
-					line_stream.clear();
-					line_stream.str(line);
-					line_stream >> word;
-					if (word == "end") {
-						input_mode = Initial;
-						break;
-					}
-					else if (word == "pos")
-						line_stream >> layout->layout_bound_pos.x() >> layout->layout_bound_pos.y() >> layout->layout_bound_pos.z() ;
-					else if (word == "size")
-						line_stream >> layout->layout_size.x() >> layout->layout_size.y() >> layout->layout_size.z() ;
-					else if (word == "inter")
-						line_stream >> layout->helio_interval.x() >> layout->helio_interval.y() >> layout->helio_interval.z() ;
-					else if (word == "n")
-						line_stream >> layout->helio_num;
-					else
-						line_stream >> helio_type;
-				}
-				layout->layout_first_helio_center = layout->layout_bound_pos + 0.5 * layout->helio_interval;
-				//layout->layout_first_helio_center.y() = layout->layout_bound_pos.y() + ;
+				layout->initLayout(inFile, input_mode, helio_type);
                 layouts.push_back(layout);
                 layout = nullptr;
                 break;
@@ -149,7 +129,9 @@ bool SolarScene::initSolarScene(const string &scene_filepath, const Vector3f &su
         }
     }
     inFile.close();
-	layouts[0]->setHelioLayout(helios);
+	// layouts[0]->setHelioLayout(helios);
+	for (auto& layout : layouts)
+		layout->setHelioLayout(helios);
     return true;
 }
 

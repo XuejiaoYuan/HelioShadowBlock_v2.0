@@ -53,6 +53,12 @@ void Heliostat::changeSubHelio(const Vector3f & focus_center, const Vector3f & s
 
 }
 
+float Heliostat::calcSunHelioAngle(const Vector3f & sunray_dir)
+{
+	Vector3f reverse_sunray_dir = -sunray_dir;
+	return reverse_sunray_dir.dot(this->helio_normal);
+}
+
 void Heliostat::getSubHelioVertex(vector<Vector3f>& subhelio_vertex)
 {
 	if (helio_matrix.x() == 1 && helio_matrix.y() == 1)

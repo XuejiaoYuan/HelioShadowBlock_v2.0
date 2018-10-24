@@ -587,6 +587,28 @@ float SdBkCalc::checkForRelativeHelio(const set<vector<int>>& accurate_helio, co
 }
 
 
+float SdBkCalc::calcSingleShadowBlock(int helio_index)
+{
+	vector<Receiver*> recvs = solar_scene->recvs;
+
+	auto helio = this->solar_scene->helios[helio_index];
+	set<vector<int>> shadow_relative_grid_label_3ddda, block_relative_grid_label_3ddda;
+	Vector3f reverse_sunray_dir = -solar_scene->sunray_dir;
+	Vector3f focus_center = recvs[0]->recv_pos + Vector3f(recvs[0]->recv_normal.array() * recvs[0]->recv_size.array());
+
+	// 3DDDA + clipper 
+	//Calc the relative heliostats which cause shadowing
+	calcIntersection3DDDA(helio, reverse_sunray_dir, shadow_relative_grid_label_3ddda);
+
+	//Calc the relactive heliostats which cause blocking
+	Vector3f reflect_dir = (focus_center - helio->helio_pos).normalized();
+	calcIntersection3DDDA(helio, reflect_dir, block_relative_grid_label_3ddda);
+
+	vector<Vector3f> dir = { reverse_sunray_dir, reflect_dir };
+	vector<set<vector<int>>> estimate_grids = { shadow_relative_grid_label_3ddda, block_relative_grid_label_3ddda };
+	return helioClipper(helio, dir, estimate_grids);
+}
+
 MatrixXf* SdBkCalc::calcShadowBlock()
 {
 	vector<Heliostat*> helios = solar_scene->helios;

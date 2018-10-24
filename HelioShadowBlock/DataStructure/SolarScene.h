@@ -11,9 +11,6 @@
 #include "Receiver.h"
 
 
-typedef enum{
-    Initial, GroundMode, ReceiverMode, LayoutMode, HeliostatMode
-}InputMode;
 
 class SolarScene {
 public:

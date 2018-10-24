@@ -19,6 +19,7 @@ public:
 		//this->clipper_res_store.resize(2);
 		//this->sample_clipper_res_store.resize(2);
 	}
+	float calcSingleShadowBlock(int helio_index);
 	MatrixXf* calcShadowBlock();
 	void sample_calc_preprocess(const int sample_row_num, const int sample_col_num, bool calc_s = false, bool calc_f = false);
 	MatrixXf* calcSampleShadowBlock();

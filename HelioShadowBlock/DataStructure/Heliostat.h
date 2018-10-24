@@ -32,7 +32,7 @@ public:
 	bool initSurfaceNormal(const Vector3f& focus_center, const Vector3f& sunray_dir);   // Calculate the normal of heliostat surface
 	void changeSurfaceNormal(const Vector3f& focus_center, const Vector3f& sunray_dir);
 	void changeSubHelio(const Vector3f& focus_center, const Vector3f& sunray_dir);
-
+	float calcSunHelioAngle(const Vector3f& sunray_dir);
 	vector<Vector3f> vertex;		//Heliostat's vertex
 	vector<SubHelio*> subhelios;
 	HelioType helio_type;       //Heliostat's type

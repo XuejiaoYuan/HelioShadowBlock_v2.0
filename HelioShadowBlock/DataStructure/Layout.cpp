@@ -4,6 +4,31 @@
 
 #include "Layout.h"
 
+void Layout::initLayout(fstream& inFile, InputMode& input_mode, int& helio_type) {
+	stringstream line_stream;
+	string line, word;
+	while (getline(inFile, line)) {
+		line_stream.clear();
+		line_stream.str(line);
+		line_stream >> word;
+		if (word == "end") {
+			input_mode = Initial;
+			break;
+		}
+		else if (word == "pos")
+			line_stream >> layout_bound_pos.x() >> layout_bound_pos.y() >> layout_bound_pos.z();
+		else if (word == "size")
+			line_stream >> layout_size.x() >> layout_size.y() >> layout_size.z();
+		else if (word == "inter")
+			line_stream >> helio_interval.x() >> helio_interval.y() >> helio_interval.z();
+		else if (word == "n")
+			line_stream >> helio_num;
+		else
+			line_stream >> helio_type;
+	}
+	layout_first_helio_center = layout_bound_pos + 0.5 * helio_interval;
+}
+
 void Layout::setHelioLayout(vector<Heliostat*> helios)
 {
 	layout_first_helio_center.y() = helios[0]->helio_pos.y();
