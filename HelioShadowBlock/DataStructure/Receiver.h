@@ -9,11 +9,11 @@
 #ifndef HELIOSHADOW_RECEIVER_H
 #define HELIOSHADOW_RECEIVER_H
 
-//#include "../Common/global_function.h"
+#include "../Common/global_function.h"
 #include "../Common/CommonFunc.h"
 
 typedef enum {
-	RectangularRecvType, CylinderRecvType, CircularTruncatedConeRecvType
+	RectangularRecvType, CylinderRecvType, CircularTruncatedConeRecvType, PolyhedronRecvType
 }ReceiverType;
 
 class Receiver {
@@ -29,9 +29,15 @@ public:
 	ReceiverType recv_type;             //Receiver's type
 	Vector3f recv_pos;                      //The position of receiver's center
 	Vector3f recv_size;                     //Receiver's size
-	Vector3f recv_normal;                   //The normal of the receiver's face
+	Vector3f recv_normal;                   //The normal of the first receiver's face
+	vector<Vector3f> recv_normal_list;
+	vector<vector<Vector3f>> recv_vertex;
+	vector<Matrix4f> local2worldM_list;
+	vector<Matrix4f> world2localM_list;
 	int recv_face;                      //The index of the receiver's face
-
+	vector<Vector3f> focus_center;		//The focus center of the receiver
+	int mask_rows, mask_cols;
+	virtual void init_recv(fstream& inFile, InputMode& input_mode);
 };
 
 class RectangularRecv :public Receiver {
@@ -49,6 +55,14 @@ public:
 	CircularTruncatedConeRecv() :Receiver(CircularTruncatedConeRecvType) {};
 };
 
+class PolyhedronRecv :public Receiver {
+public:
+	PolyhedronRecv() : Receiver(PolyhedronRecvType) {};
+	int recv_face_num;
+	void init_recv(fstream& inFile, InputMode& input_mode);
+
+};
+
 class ReceiverCreator {
 public:
 	Receiver* getReceiver(const ReceiverType& recv_type) {
@@ -59,6 +73,8 @@ public:
 			return new CylinderRecv();
 		case CircularTruncatedConeRecvType:
 			return new CircularTruncatedConeRecv();
+		case PolyhedronRecvType:
+			return new PolyhedronRecv();
 		default:
 			return new RectangularRecv();
 		}

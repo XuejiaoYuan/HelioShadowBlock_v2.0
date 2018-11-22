@@ -14,7 +14,8 @@ MatrixXf* SdBkCalc::calcSampleShadowBlock()
 	vector<Receiver*> recvs = solar_scene->recvs;
 	int row = sample_field_index->rows();
 	int col = sample_field_index->cols();
-	Vector3f focus_center = recvs[0]->recv_pos + Vector3f(recvs[0]->recv_normal.array() * recvs[0]->recv_size.array());
+	// Vector3f focus_center = recvs[0]->recv_pos + Vector3f(recvs[0]->recv_normal.array() * recvs[0]->recv_size.array());
+	
 	Vector3f reverse_sunray_dir = -solar_scene->sunray_dir;
 	sample_sd_bk_res = new MatrixXf(row, col);
 
@@ -23,8 +24,9 @@ MatrixXf* SdBkCalc::calcSampleShadowBlock()
 			int index = (*sample_field_index)(i, j);
 			Heliostat* helio = solar_scene->helios[index];
 			set<vector<int>> shadow_relative_grid_label_3ddda, block_relative_grid_label_3ddda;
-			Vector3f reflect_dir = focus_center - helio->helio_pos;
-
+			// Vector3f reflect_dir = focus_center - helio->helio_pos;
+			int fc_index = solar_scene->helios[index]->focus_center_index;
+			Vector3f reflect_dir = recvs[0]->focus_center[fc_index] - helio->helio_pos;
 			calcIntersection3DDDA(helio, reverse_sunray_dir, shadow_relative_grid_label_3ddda);
 
 			calcIntersection3DDDA(helio, reflect_dir, block_relative_grid_label_3ddda);
@@ -156,10 +158,13 @@ float SdBkCalc::helioClipper(Heliostat * helio, const vector<Vector3f>& dir, con
 	for (int index = 0; index < 2; index++) {
 		Vector3f reverse_dir = Vector3f(-dir[index].x(), -dir[index].y(), -dir[index].z());
 		vector<Vector3f> pro(4);
+		set<Heliostat*> relative_helio_set;
 		for (auto iter = estimate_grids[index].begin(); iter != estimate_grids[index].end(); iter++) {
 			for (auto&relative_helio : solar_scene->layouts[0]->helio_layout[(*iter)[0]][(*iter)[1]]) {
-				if (relative_helio == helio)
+				if (relative_helio_set.count(relative_helio) || relative_helio == helio)
 					continue;
+				else
+					relative_helio_set.insert(relative_helio);
 				helio_v = relative_helio->vertex;
 				int cnt = 0;
 				for (int i = 0; i < helio_v.size(); i++) {
@@ -220,7 +225,6 @@ float SdBkCalc::helioClipper(Heliostat * helio, const vector<Vector3f>& dir, con
 
 	return res;
 }
-
 
 
 //	使用ray tracing方式计算blocking与shadowing
@@ -307,7 +311,7 @@ float SdBkCalc::calcAccurateIntersection(Heliostat * helio, const Vector3f & dir
 }
 
 
-float SdBkCalc::calcAccurateIntersection(Heliostat* helio, const vector<Vector3f>& dir) 
+float SdBkCalc::calcAccurateIntersection(Heliostat* helio, const vector<Vector3f>& dir, vector<set<vector<int>>>& relative_helio_label)
 {
 	int helio_inner_rows = 20;
 	int helio_inner_cols = 20;
@@ -315,13 +319,14 @@ float SdBkCalc::calcAccurateIntersection(Heliostat* helio, const vector<Vector3f
 	float total_sum = 0;
 	int cnt = 0;
 
-	vector<Vector3f> subhelio_v;
-	helio->getSubHelioVertex(subhelio_v);
-	int subHelio_num = subhelio_v.size() / 4;
-	for (int i = 0; i < subHelio_num; i++) {
-		vector<Vector3f> helio_v;
-		for (int k = 0; k < 4; k++)
-			helio_v.push_back(subhelio_v[4 * i + k]);
+	//vector<Vector3f> subhelio_v;
+	//helio->getSubHelioVertex(subhelio_v);
+	//int subHelio_num = subhelio_v.size() / 4;
+	for (int i = 0; i < helio->vertex.size(); i++) {
+		vector<Vector3f> helio_v = helio->vertex;
+		//vector<Vector3f> helio_v;
+		//for (int k = 0; k < 4; k++)
+		//	helio_v.push_back(subhelio_v[4 * i + k]);
 		Vector3f row_dir = (helio_v[1] - helio_v[0]) / helio_inner_rows;
 		Vector3f col_dir = (helio_v[3] - helio_v[0]) / helio_inner_cols;
 
@@ -370,6 +375,11 @@ float SdBkCalc::calcAccurateIntersection(Heliostat* helio, const vector<Vector3f
 					}
 				}
 				if (hNear != nullptr) {
+					vector<int> res(3);
+					res[0] = (hNear->helio_pos.z() - solar_scene->layouts[0]->layout_first_helio_center.z()) / solar_scene->layouts[0]->helio_interval.z();		// smaller x is, smaller col is
+					res[1] = (hNear->helio_pos.x() - solar_scene->layouts[0]->layout_first_helio_center.x()) / solar_scene->layouts[0]->helio_interval.x();		// bigger z is, smaller row is
+					res[2] = 0;
+					relative_helio_label[0].insert(res);
 					cnt++;
 				}
 				else {
@@ -411,7 +421,15 @@ float SdBkCalc::calcAccurateIntersection(Heliostat* helio, const vector<Vector3f
 							}
 						}
 					}
-					if (hNear != nullptr) cnt++;
+					if (hNear != nullptr) {
+						vector<int> res(3);
+						res[0] = (hNear->helio_pos.z() - solar_scene->layouts[0]->layout_first_helio_center.z()) / solar_scene->layouts[0]->helio_interval.z();		// smaller x is, smaller col is
+						res[1] = (hNear->helio_pos.x() - solar_scene->layouts[0]->layout_first_helio_center.x()) / solar_scene->layouts[0]->helio_interval.x();		// bigger z is, smaller row is
+						res[2] = 0;
+						relative_helio_label[1].insert(res);
+
+						cnt++;
+					}
 				}
 			}
 		}
@@ -420,7 +438,6 @@ float SdBkCalc::calcAccurateIntersection(Heliostat* helio, const vector<Vector3f
 
 	return res;
 }
-
 
 
 // 使用3DDDA计算产生阴影和遮挡的相关定日镜
@@ -436,8 +453,7 @@ void SdBkCalc::calcIntersection3DDDA(Heliostat * helio, const Vector3f & dir, se
 		project_helio_v.push_back(Vector2f(helio_v[i].x(), helio_v[i].z()));
 	}
 
-	Vector2f cellDimension = Vector2f(layouts[0]->helio_interval.x(), layouts[0]->helio_interval.z());
-
+	// 1. 確定光線在場地中y方向移動距離及最終離開網格的位置
 	float upper_y = layouts[0]->layout_size.y() + layouts[0]->layout_bound_pos.y();
 	Vector2f upper_v[4];
 	for (int i = 0; i < 4; i++) {
@@ -445,6 +461,7 @@ void SdBkCalc::calcIntersection3DDDA(Heliostat * helio, const Vector3f & dir, se
 		upper_v[i] = Vector2f(dis*dir.x(), dis*dir.z()) + project_helio_v[i];
 	}
 
+	// 2. 確定定日鏡反射光柱在鏡場中的矩形包圍盒範圍
 	vector<Vector2f> boundBox(2);
 	boundBox[0] = Vector2f(INT_MAX, INT_MAX);		// min boundary
 	boundBox[1] = Vector2f(INT_MIN, INT_MIN);		// max boundary
@@ -454,6 +471,17 @@ void SdBkCalc::calcIntersection3DDDA(Heliostat * helio, const Vector3f & dir, se
 		boundBox[1].x() = fmax(boundBox[1].x(), fmax(project_helio_v[i].x(), upper_v[i].x()));
 		boundBox[1].y() = fmax(boundBox[1].y(), fmax(project_helio_v[i].y(), upper_v[i].y()));
 	}
+	Vector2f ray_dir = Vector2f(dir.x(), dir.z()).normalized();
+	Vector2f deltaT;
+	Vector2f t;
+	Vector2f origs[2] = {
+		Vector2f(INT_MAX,INT_MAX),		// min vertex
+		Vector2f(INT_MIN,INT_MIN)		// max vertex
+	};
+
+	
+	// 3. 確定layout下各網格的矩陣間隔
+	Vector2f cellDimension = Vector2f(layouts[0]->helio_interval.x(), layouts[0]->helio_interval.z());
 
 	float colLength = boundBox[1].x() - boundBox[0].x();
 	float rowLength = boundBox[1].y() - boundBox[0].y();
@@ -470,16 +498,6 @@ void SdBkCalc::calcIntersection3DDDA(Heliostat * helio, const Vector3f & dir, se
 	minRow = max(0, minRow);
 	maxCol = min(layouts[0]->layout_row_col.y() - 1, maxCol);
 	maxRow = min(layouts[0]->layout_row_col.x() - 1, maxRow);
-
-	Vector2f ray_dir = Vector2f(dir.x(), dir.z()).normalized();
-	Vector2f deltaT;
-	Vector2f t;
-
-
-	Vector2f origs[2] = {
-		Vector2f(INT_MAX,INT_MAX),		// min vertex
-		Vector2f(INT_MIN,INT_MIN)		// max vertex
-	};
 
 	for (auto&orig : project_helio_v) {
 		Vector2f o_grid(
@@ -509,7 +527,7 @@ void SdBkCalc::calcIntersection3DDDA(Heliostat * helio, const Vector3f & dir, se
 		Vector2i grid_label(
 			(orig.y() - layouts[0]->layout_bound_pos.z()) / cellDimension.y(),	// smaller z is, smaller row is
 			(orig.x() - layouts[0]->layout_bound_pos.x()) / cellDimension.x()	// smaller x is, smaller col is
-		);		
+		);
 
 		while (1) {
 			if (grid_label.x() < minRow || grid_label.x() > maxRow ||
@@ -561,6 +579,68 @@ float SdBkCalc::calcIntersectionPoint(const Vector3f & orig, const Vector3f & di
 	return t;
 }
 
+// helio: 待计算定日镜
+// dir: 定日镜到接收器的反射光线方向
+float SdBkCalc::calcFluxMap(Heliostat * helio, const float DNI)
+{
+	//auto start = std::chrono::high_resolution_clock::now();
+
+
+	int fc_index = helio->focus_center_index;
+	vector<Receiver*> recvs = solar_scene->recvs;
+	Vector3f focus_center = recvs[0]->focus_center[fc_index];
+	Vector3f reverse_dir = helio->helio_pos - focus_center;		// The normal of image plane
+	float flux_sum = 0;
+	for (int i = 0; i < helio->cos_phi.size(); i++) {
+		if (helio->cos_phi[i] > 0) {
+			vector<Vector3f> proj_v;
+			for (auto& v : recvs[0]->recv_vertex[i]) {
+				Vector3f inter_v = GeometryFunc::calcIntersection(reverse_dir, focus_center, v, reverse_dir);
+				proj_v.push_back(GeometryFunc::mulMatrix(inter_v, recvs[0]->world2localM_list[i]));
+			}
+			flux_sum += _calc_flux_sum(proj_v, recvs[0]->mask_rows, recvs[0]->mask_cols, helio, helio->cos_phi[i], DNI);
+		}
+	}
+	//auto elapsed = chrono::duration_cast<chrono::microseconds>(std::chrono::high_resolution_clock::now() - start);
+	//auto time = double(elapsed.count())*chrono::microseconds::period::num / chrono::microseconds::period::den;
+	//std::cout << "Calculate flux sum time: " << time << "s." << endl;
+	
+	return flux_sum;
+}
+
+inline float SdBkCalc::_calc_flux_sum(vector<Vector3f>& proj_v,const int rows, const int cols, Heliostat * helio, const float cos_phi, const float DNI)
+{
+
+	//auto start = std::chrono::high_resolution_clock::now();
+
+	MatrixXf mask_x(rows, cols), mask_y(rows, cols);
+	//Vector3f col_gap = (proj_v[2] - proj_v[1]) / cols;		// 矩阵列方向变化率
+	//Vector3f row_gap = (proj_v[0] - proj_v[1]) / rows;		// 矩阵行方向变化率
+	float row_gap = (proj_v[0] - proj_v[1]).z() / rows;
+	float col_gap = (proj_v[2] - proj_v[1]).x() / cols;
+	for (int i = 0; i < rows; i++) {
+		float start_v = proj_v[1].x() + i* col_gap;
+		float end_v = proj_v[2].x() + i*col_gap;
+		mask_x.row(i).setLinSpaced(cols, start_v/helio->sigma, end_v/helio->sigma);
+	}
+
+	for (int i = 0; i < cols; i++) {
+		float start_v = proj_v[1].z() + i * row_gap;
+		float end_v = proj_v[0].z() + i* row_gap;
+		mask_y.col(i).setLinSpaced(rows, helio->l_w_ratio * start_v/helio->sigma, helio->l_w_ratio * end_v/helio->sigma);
+	}
+
+	
+	float flux_sum = (-0.5 / pow(helio->sigma, 2)) * (mask_x.array().pow(2) + mask_y.array().pow(2)).array().exp().sum();
+	flux_sum = flux_sum * helio->flux_param * (1 - helio->sd_bk) * DNI;
+
+	//auto elapsed = chrono::duration_cast<chrono::microseconds>(std::chrono::high_resolution_clock::now() - start);
+	//auto time = double(elapsed.count())*chrono::microseconds::period::num / chrono::microseconds::period::den;
+	//std::cout << "Calculate flux sum time: " << time << "s." << endl;
+
+	return flux_sum;
+}
+
 
 // 以光线跟踪计算结果为groundtruth，检测预测结果是否包含准确结果
 // version: CPU
@@ -594,14 +674,16 @@ float SdBkCalc::calcSingleShadowBlock(int helio_index)
 	auto helio = this->solar_scene->helios[helio_index];
 	set<vector<int>> shadow_relative_grid_label_3ddda, block_relative_grid_label_3ddda;
 	Vector3f reverse_sunray_dir = -solar_scene->sunray_dir;
-	Vector3f focus_center = recvs[0]->recv_pos + Vector3f(recvs[0]->recv_normal.array() * recvs[0]->recv_size.array());
+	// Vector3f focus_center = recvs[0]->recv_pos + Vector3f(recvs[0]->recv_normal.array() * recvs[0]->recv_size.array());
+	int fc_index = solar_scene->helios[helio_index]->focus_center_index;
+	Vector3f reflect_dir = recvs[0]->focus_center[fc_index] - helio->helio_pos;
 
 	// 3DDDA + clipper 
 	//Calc the relative heliostats which cause shadowing
 	calcIntersection3DDDA(helio, reverse_sunray_dir, shadow_relative_grid_label_3ddda);
 
 	//Calc the relactive heliostats which cause blocking
-	Vector3f reflect_dir = (focus_center - helio->helio_pos).normalized();
+	// Vector3f reflect_dir = (focus_center - helio->helio_pos).normalized();
 	calcIntersection3DDDA(helio, reflect_dir, block_relative_grid_label_3ddda);
 
 	vector<Vector3f> dir = { reverse_sunray_dir, reflect_dir };
@@ -609,25 +691,21 @@ float SdBkCalc::calcSingleShadowBlock(int helio_index)
 	return helioClipper(helio, dir, estimate_grids);
 }
 
-MatrixXf* SdBkCalc::calcShadowBlock()
+
+void SdBkCalc::calcShadowBlock(const float DNI)
 {
 	vector<Heliostat*> helios = solar_scene->helios;
 	vector<Layout*> layouts = solar_scene->layouts;
 	vector<Receiver*> recvs = solar_scene->recvs;
 
-	// clipper_res_store.resize(helios.size(), vector<float>(2));
-	int row = layouts[0]->layout_row_col.x();
-	int col = layouts[0]->layout_row_col.y();
-	//MatrixXf* clipper_sh = new MatrixXf(row, col);
-	//MatrixXf* clipper_bk = new MatrixXf(row, col);
-	sd_bk_res = new MatrixXf(row, col);
+	//int row = layouts[0]->layout_row_col.x();
+	//int col = layouts[0]->layout_row_col.y();
+	//sd_bk_res = new MatrixXf(row, col);
 
-#ifdef DEBUG
-	MatrixXf* raytracing_store = new MatrixXf(row, col);
-#endif // DEBUG
+//#ifdef DEBUG
+//	MatrixXf* raytracing_store = new MatrixXf(row, col);
+//#endif // DEBUG
 
-	auto start = std::chrono::high_resolution_clock::now();
-	Vector3f focus_center = recvs[0]->recv_pos + Vector3f(recvs[0]->recv_normal.array() * recvs[0]->recv_size.array());
 
 #ifdef READFILE
 	fstream inFile("shadowblock_gt_save.txt", ios_base::in);
@@ -635,41 +713,53 @@ MatrixXf* SdBkCalc::calcShadowBlock()
 		cout << "Can't open the file!" << endl;
 #endif // READFILE
 
+	auto start = std::chrono::high_resolution_clock::now();
+
 	Vector3f reverse_sunray_dir = -solar_scene->sunray_dir;
 #pragma omp parallel for
 	for (int i = 0; i < helios.size(); i++) {
+
 		auto helio = helios[i];
 		set<vector<int>> shadow_relative_grid_label_3ddda, block_relative_grid_label_3ddda;
-		int r, c;
-		get_row_col(helio->helio_index, r, c);
+		//int r, c;
+		//get_row_col(helio->helio_index, r, c);
 
 		// 3DDDA + clipper 
 		//Calc the relative heliostats which cause shadowing
 		calcIntersection3DDDA(helio, reverse_sunray_dir, shadow_relative_grid_label_3ddda);
-		//(*clipper_sh)(r, c) = helioClipper(helio, reverse_sunray_dir, shadow_relative_grid_label_3ddda);
 
 		//Calc the relactive heliostats which cause blocking
-		Vector3f reflect_dir = (focus_center - helio->helio_pos).normalized();
+		// Vector3f reflect_dir = (focus_center - helio->helio_pos).normalized();
+		int fc_index = helio->focus_center_index;
+		Vector3f reflect_dir = (recvs[0]->focus_center[fc_index] - helio->helio_pos).normalized();
+
 		calcIntersection3DDDA(helio, reflect_dir, block_relative_grid_label_3ddda);
-		//(*clipper_bk)(r, c) = helioClipper(helio, reflect_dir, block_relative_grid_label_3ddda);
 
 		vector<Vector3f> dir = { reverse_sunray_dir, reflect_dir };
-		vector<set<vector<int>>> estimate_grids = { shadow_relative_grid_label_3ddda, block_relative_grid_label_3ddda };
-		(*sd_bk_res)(r, c) = helioClipper(helio, dir, estimate_grids);
-
+		if (shadow_relative_grid_label_3ddda.size() != 0 || block_relative_grid_label_3ddda.size() != 0) {
+			vector<set<vector<int>>> estimate_grids = { shadow_relative_grid_label_3ddda, block_relative_grid_label_3ddda };
+			helio->sd_bk = helioClipper(helio, dir, estimate_grids);
+		}
+		else
+			helio->sd_bk = 0;
+		//(*sd_bk_res)(r, c) = helioClipper(helio, dir, estimate_grids);
+		helio->flux_sum = calcFluxMap(helio, DNI);
 
 #ifdef DEBUG
 		// Ray tracing
+		vector<set<vector<int>>> ray_relative_grids(2);
 		int helio_col = (helio->helio_pos.x() - layouts[0]->layout_first_helio_center.x()) / layouts[0]->helio_interval.x();			// smaller x is, smaller col is
 		int helio_row = (helio->helio_pos.z() - layouts[0]->layout_first_helio_center.z()) / layouts[0]->helio_interval.z();
-		//set<vector<int>> tmp_shadow_relative_grid_label, tmp_block_relative_grid_label;
 
 		std::cout << "Heliostat: " << helio->helio_index << endl;
-		//raytracing_store[helio->helio_index][0] = calcAccurateIntersection(helio, reverse_sunray_dir, tmp_shadow_relative_grid_label);;
-		//raytracing_store[helio->helio_index][1] = calcAccurateIntersection(helio, reflect_dir, tmp_block_relative_grid_label);
 
-		(*raytracing_store)(r,c) = calcAccurateIntersection(helio, dir);
-		cout << (*raytracing_store)(r, c) - (*sd_bk_res)(r, c) << endl;
+		float ray_res = calcAccurateIntersection(helio, dir, ray_relative_grids);
+		cout << ray_res - helio->sd_bk << endl;
+		int r1 = (helio->helio_pos.z() - solar_scene->layouts[0]->layout_first_helio_center.z()) / solar_scene->layouts[0]->helio_interval.z();		// smaller x is, smaller col is
+		int c1 = (helio->helio_pos.x() - solar_scene->layouts[0]->layout_first_helio_center.x()) / solar_scene->layouts[0]->helio_interval.x();		// bigger z is, smaller row is
+		cout << r1 << ' ' << c1 << endl;
+		//(*raytracing_store)(r,c) = calcAccurateIntersection(helio, dir);
+		//cout << (*raytracing_store)(r, c) - (*sd_bk_res)(r, c) << endl;
 		//for (auto&label : tmp_block_relative_grid_label) {
 		//	if (block_relative_grid_label_3ddda.count(label) == 0) {
 		//		cout << helio_col << ' ' << helio_row << ' ' << helio->helio_index << endl;
@@ -686,6 +776,7 @@ MatrixXf* SdBkCalc::calcShadowBlock()
 		gt_field_block_ratio += raytracing_store[i][1];
 #endif // READFILE
 	}
+
 	auto elapsed = chrono::duration_cast<chrono::microseconds>(std::chrono::high_resolution_clock::now() - start);
 	auto time = double(elapsed.count())*chrono::microseconds::period::num / chrono::microseconds::period::den;
 	std::cout << "Heliostat clipper time: " << time << "s." << endl;
@@ -699,33 +790,32 @@ MatrixXf* SdBkCalc::calcShadowBlock()
 
 #endif // OUTPUTRES
 
-	return sd_bk_res;
+	//return sd_bk_res;
 }
-
 
 void CrossRectSdBkCalc::save_clipper_res(const string save_path, int month, int day, int hour, int minute)
 {
-	fstream outFile(save_path + "clipper_m" + to_string(month) + "_d" + to_string(day) + "_h" + to_string(hour) + "_min" + to_string(minute) + ".txt", ios_base::out);
-	int row = sd_bk_res->rows();
-	int col = sd_bk_res->cols();
-	//int row = clipper_res_store[0]->rows();
-	//int col = clipper_res_store[0]->cols();
-	int tmp_col;
-	outFile << row << ' ' << col << endl;
-	int cnt = 0;
-	for (int i = 0; i < row; i++) {
-		if (i % 2) tmp_col = col - 1;
-		else tmp_col = col;
-		for (int j = 0; j < tmp_col; j++) {
-			outFile << solar_scene->helios[cnt]->helio_pos.x() << ' '
-				<< solar_scene->helios[cnt]->helio_pos.z() << ' '
-				<< (*sd_bk_res)(i, j) << endl;
-				//<< (*clipper_res_store[0])(i, j) << ' '
-				//<< (*clipper_res_store[1])(i, j) << endl;
-			cnt++;
-		}
-	}
-	outFile.close();
+	//fstream outFile(save_path + "clipper_m" + to_string(month) + "_d" + to_string(day) + "_h" + to_string(hour) + "_min" + to_string(minute) + ".txt", ios_base::out);
+	//int row = sd_bk_res->rows();
+	//int col = sd_bk_res->cols();
+	////int row = clipper_res_store[0]->rows();
+	////int col = clipper_res_store[0]->cols();
+	//int tmp_col;
+	//outFile << row << ' ' << col << endl;
+	//int cnt = 0;
+	//for (int i = 0; i < row; i++) {
+	//	if (i % 2) tmp_col = col - 1;
+	//	else tmp_col = col;
+	//	for (int j = 0; j < tmp_col; j++) {
+	//		outFile << solar_scene->helios[cnt]->helio_pos.x() << ' '
+	//			<< solar_scene->helios[cnt]->helio_pos.z() << ' '
+	//			<< (*sd_bk_res)(i, j) << endl;
+	//			//<< (*clipper_res_store[0])(i, j) << ' '
+	//			//<< (*clipper_res_store[1])(i, j) << endl;
+	//		cnt++;
+	//	}
+	//}
+	//outFile.close();
 }
 
 void CrossRectSdBkCalc::get_row_col(const int index, int & r, int & c)
@@ -735,6 +825,7 @@ void CrossRectSdBkCalc::get_row_col(const int index, int & r, int & c)
 	r = 2 * (index / g_cnts) + (index%g_cnts) / col;
 	c = index%g_cnts%col;
 }
+
 
 MatrixXf* CrossRectSdBkCalc::field_data_pre() {
 	vector<Heliostat*>& helios = solar_scene->helios;
@@ -859,3 +950,15 @@ void RectSdBkCalc::get_row_col(const int index, int& r, int & c)
 	r = index / col;
 	c = index%col;
 }
+
+
+void FermatSdBkCalc::save_clipper_res(const string save_path, int month, int day, int hour, int minute)
+{
+	fstream outFile(save_path + "clipper_m" + to_string(month) + "_d" + to_string(day) + "_h" + to_string(hour) + "_min" + to_string(minute) + ".txt", ios_base::out);
+	for (auto&h : solar_scene->helios) {
+		outFile << h->helio_pos.x() << ' ' << h->helio_pos.z() << ' ' << h->sd_bk << endl;
+	}
+	outFile.close();
+}
+
+

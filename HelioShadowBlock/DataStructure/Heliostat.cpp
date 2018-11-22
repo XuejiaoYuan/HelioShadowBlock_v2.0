@@ -3,38 +3,47 @@
 //
 #include "Heliostat.h"
 
-bool Heliostat::initSurfaceNormal(const Vector3f &focus_center, const Vector3f &sunray_dir) {
-	if (focus_center.x() == 0 && focus_center.y() == 0 && focus_center.z() == 0) {
-		cerr << "Please input receiver's data first!" << endl;
-		return false;
+bool Heliostat::initSurfaceNormal(const vector<Vector3f> &focus_center, const Vector3f &sunray_dir) {
+	float dis_min = INT_MAX;
+	for (int i = 0; i < focus_center.size(); i++) {
+		float dis = (focus_center[i] - helio_pos).norm();
+		if (dis < dis_min) {
+			dis_min = dis;
+			focus_center_index = i;
+		}
 	}
-	Vector3f reflectray_dir = focus_center - helio_pos;
+	Vector3f reflectray_dir = focus_center[focus_center_index] - helio_pos;
 	reflectray_dir = reflectray_dir.normalized();
 	helio_normal = (reflectray_dir - sunray_dir).normalized();
 
-	getMatrixs();
-	// calculate root heliostat's vertex
-	setLoacalVertex();
-	setWorldVertex();
+	GeometryFunc::setWorldVertex(helio_size, vertex, helio_normal, helio_pos, local2worldM, world2localM, true);
 
-	initializeSubHelio(focus_center, sunray_dir);
+	// getMatrixs(true);
+	// calculate root heliostat's vertex
+	// setLoacalVertex();
+	// setWorldVertex();
+
+	// initializeSubHelio(focus_center, sunray_dir);
 
 	return true;
 }
 
-void Heliostat::changeSurfaceNormal(const Vector3f & focus_center, const Vector3f & sunray_dir)
+void Heliostat::changeSurfaceNormal(const vector<Vector3f>& focus_center, const Vector3f & sunray_dir)
 {
-	Vector3f reflectray_dir = focus_center - helio_pos;
+	Vector3f reflectray_dir = focus_center[focus_center_index] - helio_pos;
 	reflectray_dir = reflectray_dir.normalized();
 	helio_normal = (reflectray_dir - sunray_dir).normalized();
+	cos_w = (-sunray_dir).dot(helio_normal);
 
-	getMatrixs(true);
-	// calculate root heliostat's vertex
-	setLoacalVertex();
-	setWorldVertex();
+	GeometryFunc::setWorldVertex(helio_size, vertex, helio_normal, helio_pos, local2worldM, world2localM, true);
 
-	changeSubHelio(focus_center, sunray_dir);
-
+	calc_flux_param(focus_center[focus_center_index]);
+	//getMatrixs(true);
+	//setLoacalVertex();
+	//setWorldVertex();
+	
+	// calc_l_w_ratio(reflectray_dir, focus_center[focus_center_index]);
+	// changeSubHelio(focus_center, sunray_dir);
 }
 
 void Heliostat::changeSubHelio(const Vector3f & focus_center, const Vector3f & sunray_dir)
@@ -59,6 +68,28 @@ float Heliostat::calcSunHelioAngle(const Vector3f & sunray_dir)
 	return reverse_sunray_dir.dot(this->helio_normal);
 }
 
+void Heliostat::initHeliostat(stringstream& line_stream, fstream& inFile, LayoutType layout_type, const Vector2f& helio_gap,
+	const Vector2i& helio_matrix, const vector<Vector3f>& focus_center, const Vector3f& sunray_dir)
+{
+	string line;
+	if (layout_type == FermatLayoutType) {
+		line_stream >> helio_poly_pos.x() >> helio_poly_pos.y() >> helio_poly_pos.z();
+		helio_pos.x() = cos(helio_poly_pos.x())*helio_poly_pos.z();
+		helio_pos.z() = sin(helio_poly_pos.x())*helio_poly_pos.z();
+		helio_pos.y() = helio_poly_pos.y();
+	}
+	else
+		line_stream >> helio_pos.x() >> helio_pos.y() >> helio_pos.z();
+	getline(inFile, line);
+	line_stream.clear();
+	line_stream.str(line);
+	line_stream >> helio_size.x() >> helio_size.y() >> helio_size.z();
+	this->helio_gap = helio_gap;
+	this->helio_matrix = helio_matrix;
+	if(sunray_dir != Vector3f(0,0,0))
+		bool flag = initSurfaceNormal(focus_center, sunray_dir);
+}
+
 void Heliostat::getSubHelioVertex(vector<Vector3f>& subhelio_vertex)
 {
 	if (helio_matrix.x() == 1 && helio_matrix.y() == 1)
@@ -70,58 +101,103 @@ void Heliostat::getSubHelioVertex(vector<Vector3f>& subhelio_vertex)
 	}
 }
 
-void Heliostat::getMatrixs(bool init)
+//void Heliostat::getMatrixs(bool init)
+//{
+//	// calcMatrix(helio_normal, helio_pos, local2worldM, world2localM);
+//	Vector3f u[3];	// could be shared
+//
+//	u[1] = helio_normal;
+//
+//	if (abs(u[1].x()) > abs(u[1].z()))
+//	{
+//		u[2] = u[1].cross(Vector3f(0.0f, 1.0f, 0.0f)).normalized();
+//		u[0] = u[1].cross(u[2]).normalized();
+//	}
+//	else
+//	{
+//		Vector3f tmp_u(0.0f, 1.0f, 0.0f);
+//		u[0] = tmp_u.cross(u[1]).normalized();
+//		u[2] = u[0].cross(u[1]).normalized();
+//	}
+//	for (int i = 0; i < 3; i++) {
+//		local2worldM(i, 0) = u[i].x();
+//		local2worldM(i, 1) = u[i].y();
+//		local2worldM(i, 2) = u[i].z();
+//		local2worldM(i, 3) = 0;
+//	}
+//	local2worldM(3, 0) = helio_pos.x();
+//	local2worldM(3, 1) = helio_pos.y();
+//	local2worldM(3, 2) = helio_pos.z();
+//	local2worldM(3, 3) = 1;
+//
+//	world2localM = local2worldM.inverse();
+//}
+//
+//void Heliostat::setLoacalVertex()
+//{
+//	float xlength = helio_size.x() / 2;
+//	//float ylength = helio_size.y() / 2;
+//	float zlength = helio_size.z() / 2;
+//	vertex.clear();
+//	vertex.push_back(Vector3f(-xlength, 0, -zlength));
+//	vertex.push_back(Vector3f(-xlength, 0, +zlength));
+//	vertex.push_back(Vector3f(+xlength, 0, +zlength));
+//	vertex.push_back(Vector3f(+xlength, 0, -zlength));
+//}
+//
+//void Heliostat::setWorldVertex()
+//{
+//	Vector3f tmp[4] = { vertex[0], vertex[1],vertex[2],vertex[3] };
+//	vertex[0] = GeometryFunc::mulMatrix(vertex[0], local2worldM);
+//	vertex[1] = GeometryFunc::mulMatrix(vertex[1], local2worldM);
+//	vertex[2] = GeometryFunc::mulMatrix(vertex[2], local2worldM);
+//	vertex[3] = GeometryFunc::mulMatrix(vertex[3], local2worldM);
+//
+//}
+
+void Heliostat::calc_flux_param(const Vector3f& focus_center)
 {
-	// calcMatrix(helio_normal, helio_pos, local2worldM, world2localM);
-	Vector3f u[3];	// could be shared
-
-	u[1] = helio_normal;
-
-	if (abs(u[1].x()) > abs(u[1].z()))
-	{
-		u[2] = u[1].cross(Vector3f(0.0f, 1.0f, 0.0f)).normalized();
-		u[0] = u[1].cross(u[2]).normalized();
-	}
-	else
-	{
-		Vector3f tmp_u(0.0f, 1.0f, 0.0f);
-		u[0] = tmp_u.cross(u[1]).normalized();
-		u[2] = u[0].cross(u[1]).normalized();
-	}
+	float t[3];
+	vector<Vector3f> inter_v(3);
+	Vector3f reverse_dir = (helio_pos - focus_center).normalized();
 	for (int i = 0; i < 3; i++) {
-		local2worldM(i, 0) = u[i].x();
-		local2worldM(i, 1) = u[i].y();
-		local2worldM(i, 2) = u[i].z();
-		local2worldM(i, 3) = 0;
+		// ¼ÆËãimage plane¶¥µã
+		inter_v[i] = GeometryFunc::calcIntersection(reverse_dir, focus_center, vertex[i], -reverse_dir);
 	}
-	local2worldM(3, 0) = helio_pos.x();
-	local2worldM(3, 1) = helio_pos.y();
-	local2worldM(3, 2) = helio_pos.z();
-	local2worldM(3, 3) = 1;
+	float ip_w = (vertex[1] - vertex[0]).norm();
+	float ip_l = (vertex[2] - vertex[1]).norm();
+	l_w_ratio = ip_l / ip_w;
 
-	world2localM = local2worldM.inverse();
+	flux_param = 0.5 * S * cos_w * rou * mAA * l_w_ratio / PI / sigma/ sigma;
 }
 
-void Heliostat::setLoacalVertex()
+float Heliostat::set_focus_center_index(const vector<Receiver*>& recvs)
 {
-	float xlength = helio_size.x() / 2;
-	//float ylength = helio_size.y() / 2;
-	float zlength = helio_size.z() / 2;
-	vertex.clear();
-	vertex.push_back(Vector3f(-xlength, 0, -zlength));
-	vertex.push_back(Vector3f(-xlength, 0, +zlength));
-	vertex.push_back(Vector3f(+xlength, 0, +zlength));
-	vertex.push_back(Vector3f(+xlength, 0, -zlength));
-}
+	int recv_index = 0;
+	int ret_index = 0;
+	float min_d = INT_MAX;
+	for (int i = 0; i < recvs.size(); i++) {
+		for (int j = 0; j < recvs[i]->focus_center.size(); j++) {
+			Vector3f fc = recvs[i]->focus_center[j];
+			float dis = pow(fc.x() - helio_pos.x(), 2) 
+				+ pow(fc.z() - helio_pos.z(), 2);
+			if (dis < min_d) {
+				recv_index = i;
+				min_d = dis;
+				ret_index = j;
+			}
+		}
+	}
+	focus_center_index = ret_index;
 
-void Heliostat::setWorldVertex()
-{
-	Vector3f tmp[4] = { vertex[0], vertex[1],vertex[2],vertex[3] };
-	vertex[0] = GeometryFunc::mulMatrix(vertex[0], local2worldM);
-	vertex[1] = GeometryFunc::mulMatrix(vertex[1], local2worldM);
-	vertex[2] = GeometryFunc::mulMatrix(vertex[2], local2worldM);
-	vertex[3] = GeometryFunc::mulMatrix(vertex[3], local2worldM);
+	Vector3f image_plane_normal = (helio_pos - recvs[recv_index]->focus_center[ret_index]).normalized();
+	for (int i = 0; i < recvs.size(); i++) {
+		for (int j = 0; j < recvs[i]->focus_center.size(); j++) {
+			cos_phi.push_back(recvs[i]->recv_normal_list[j].dot(image_plane_normal));
+		}
+	}
 
+	return min_d;
 }
 
 void Heliostat::initializeSubHelio(const Vector3f&focus_center, const Vector3f&sunray_dir)
@@ -176,9 +252,7 @@ void SubHelio::setVertex(const Heliostat* root_helio, const vector<Vector3f>&roo
 		helio_normal = (reflectray_dir - sunray_dir).normalized();
 	}
 
-	getMatrixs(init);
-	// calculate root heliostat's vertex
-	setLoacalVertex();
-	setWorldVertex();
+	// TODO: consider sub helios
+	//GeometryFunc::setWorldVertex();
 
 }

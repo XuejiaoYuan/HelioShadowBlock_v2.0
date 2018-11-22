@@ -20,7 +20,7 @@ public:
 		//this->sample_clipper_res_store.resize(2);
 	}
 	float calcSingleShadowBlock(int helio_index);
-	MatrixXf* calcShadowBlock();
+	void calcShadowBlock(const float DNI);
 	void sample_calc_preprocess(const int sample_row_num, const int sample_col_num, bool calc_s = false, bool calc_f = false);
 	MatrixXf* calcSampleShadowBlock();
 	virtual void save_clipper_res(const string save_path, int month, int day, int hour, int minute) {};
@@ -32,7 +32,7 @@ public:
 	MatrixXf* sample_field_index;
 	vector<MatrixXf*> field_data;			// 定日镜场所有定日镜x与z坐标
 	vector<MatrixXf*> sample_field_data;		// 定日镜场采样定日镜x与z坐标
-	MatrixXf* sd_bk_res;
+	//MatrixXf* sd_bk_res;
 	//vector<MatrixXf*> clipper_res_store;
 	MatrixXf* sample_sd_bk_res;
 	//vector<MatrixXf*> sample_clipper_res_store;
@@ -41,15 +41,17 @@ protected:
 	float helioClipper(Heliostat*helio, const Vector3f&dir, const set<vector<int>>& estimate_grid);
 	float helioClipper(Heliostat*helio, const vector<Vector3f>&dir, const vector<set<vector<int>>>& estimate_grid);
 	float calcAccurateIntersection(Heliostat* helio, const Vector3f&dir, set<vector<int>>&relative_grid_label);		// used ray tracing calculate accurate relative grids
-	float calcAccurateIntersection(Heliostat* helio, const vector<Vector3f>& dir);
+	float calcAccurateIntersection(Heliostat* helio, const vector<Vector3f>& dir, vector<set<vector<int>>>& relative_helio_label);
 	void calcIntersection3DDDA(Heliostat* helio, const Vector3f&dir, set<vector<int>> & relative_grid_label);			// using 3DDDA for relative grid's prediction
 	float checkForRelativeHelio(const set<vector<int>>& accurate_grid, const set<vector<int>>& estimate_grid);
 	float calcIntersectionPoint(const Vector3f&orig, const Vector3f&dir, const Vector3f&A, const Vector3f&B, const Vector3f&C);
-
+	float calcFluxMap(Heliostat*helio, const float DNI);
+	float _calc_flux_sum(vector<Vector3f>& proj_v, const int rows, const int cols, Heliostat* helio, const float cos_phi, const float DNI);
 	virtual void get_row_col(const int index, int& r, int& c) = 0;
 	// 采样计算预处理操作
 	virtual MatrixXf* field_data_pre() = 0;
 	virtual MatrixXf* sample_field_data_pre(const int sample_row_num, const int sample_col_num) = 0;
+	
 
 };
 
@@ -79,6 +81,7 @@ private:
 class FermatSdBkCalc :public SdBkCalc {
 public:
 	FermatSdBkCalc(SolarScene* _solar_scene):SdBkCalc(FermatFieldType, _solar_scene){}
+	void save_clipper_res(const string save_path, int month, int day, int hour, int minute);
 	//void sample_calc_preprocess(const int sample_row_num, const int sample_col_num, bool calc_s = false, bool calc_f = false) {};
 
 private:

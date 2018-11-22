@@ -18,13 +18,12 @@ int main(int argc, char** argv) {
 	// options: -a_c 计算每个时刻下所有镜子的阴影遮挡结果(clipper);
 	//			-a_r 计算每个时刻下所有镜子的阴影遮挡结果（raytracing）;
 	//			-s_l 计算每个时刻下所有镜子的阴影遮挡结果（LSPIA）
-	// row col 镜场行列数
 	// outfile_options: -f 存储计算阴影遮挡的结果(clipper)
 	//					-o 不存储结果
 	// save_path 输出文件的存储地址
-	if (argc != 8) {
+	if (argc != 6) {
 		cout << argc << endl;
-		cout << "Usage: [scene_file] [sunray_file] [options] [row] [col] [outfile_options] [save_path]" << endl;
+		cout << "Usage: [scene_file] [sunray_file] [options] [outfile_options] [save_path]" << endl;
 		return -1;
 	}
 
@@ -32,26 +31,49 @@ int main(int argc, char** argv) {
 	string scene_filepath = string(argv[1]);
 	string sunray_filepath = string(argv[2]);
 	string options = string(argv[3]);
-	int row = atoi(argv[4]);
-	int col = atoi(argv[5]);
-	string outfile_options = string(argv[6]);
-	string save_path = string(argv[7]);
+	string outfile_options = string(argv[4]);
+	string save_path = string(argv[5]);
 
 	SunRay sunray;
 	Vector3f sunray_dir = sunray.calcSunRay(sunray_filepath);
 	MatrixXf a;
 
 	SolarScene* solar_scene = new SolarScene();
-	bool flag = solar_scene->initSolarScene(scene_filepath, sunray_dir);
-	if (!flag) {
-		cout << "Solar scene initialize failed!" << endl;
-		return -1;
+	solar_scene->initFieldParam(scene_filepath);
+
+	// TODO 镜场参数优化
+	int cnt;
+	vector<vector<float>*> field_args;
+	switch (solar_scene->layouts[0]->layout_type)
+	{
+	case CrossRectFieldType:
+	case RectLayoutType:
+		field_args.push_back(new vector<float>{10, 10, 10});			// 定日镜间隔
+		field_args.push_back(new vector<float>{ -80 });					// 第一行定日镜与接收器之间的距离
+		field_args.push_back(new vector<float>{ 300 });					// 定日镜行数
+		field_args.push_back(new vector<float>{ 300 });					// 定日镜列数
+		break;
+	case FermatLayoutType:
+		field_args.push_back(new vector<float>{ float(0.1) });			// 定日镜包围盒安全距离
+		field_args.push_back(new vector<float>{ float( 114.9417 )});	// 第一个同心圆与接收器之间的距离(Campo: 114.9417)
+		field_args.push_back(new vector<float>{ 0.866f });				// 第一个同心环中定日镜的分布间隔
+		field_args.push_back(new vector<float>{ 1.4f });				// 第二个同心环中定日镜的分布间隔
+		field_args.push_back(new vector<float>{ 2.0f});					// 第三个同心环中定日镜的分布间隔
+		break;
+	default:
+		break;
 	}
+	solar_scene->adjustFieldParam(field_args);
+	//bool flag = solar_scene->initSolarScene(scene_filepath, sunray_dir);
+	//if (!flag) {
+	//	cout << "Solar scene initialize failed!" << endl;
+	//	return -1;
+	//}
 
 	SdBkCalcCreator sdbk_calc_creator;
 	SdBkCalc* sdbk_calc = sdbk_calc_creator.getSdBkCalc(solar_scene);
-	if (options == "-s_l")
-		sdbk_calc->sample_calc_preprocess(100, 100, true, true);
+	//if (options == "-s_l")
+	//	sdbk_calc->sample_calc_preprocess(100, 100, true, true);
 
 
 	// 最小二乘拟合数据
@@ -121,7 +143,6 @@ int main(int argc, char** argv) {
 	vector<MatrixXf*> gt_res;
 	vector<MatrixXf*> sample_sd_bk_res;
 	auto start = std::chrono::high_resolution_clock::now();
-	//fstream outFile(save_path + "/sunray_dir.txt", ios_base::out);
 	vector<int> time_param(4, 0);
 	for (int month = 1; month <= 12; month++) {
 		for (int day = 1; day < 29; day += 4) {
@@ -133,25 +154,22 @@ int main(int argc, char** argv) {
 					time_param[3] = min;
 					sunray_dir = sunray.changeSunRay(time_param);
 					solar_scene->changeSolarScene(sunray_dir);
-					//outFile << "month:" << month << ' ' << "day:" << day << " " << "hour:" << hour << ' ' << sunray_dir.x() << ' ' << sunray_dir.y() << ' ' << sunray_dir.z() << endl;
-					
+
 					if (options == "-a_c") {
-						gt_res.push_back(sdbk_calc->calcShadowBlock());
-						if(outfile_options=="-f")
+						//gt_res.push_back(sdbk_calc->calcShadowBlock());
+						sdbk_calc->calcShadowBlock(sunray.current_DNI);
+						if (outfile_options == "-f")
 							sdbk_calc->save_clipper_res(save_path, month, day, hour, min);
 					}
 					else if (options == "-a_r")
-						gt_res.push_back(sdbk_calc->calcShadowBlock());
+						//gt_res.push_back(sdbk_calc->calcShadowBlock());
+						sdbk_calc->calcShadowBlock(sunray.current_DNI);
 					else
 						gt_res.push_back(sdbk_calc->calcSampleShadowBlock());
 				}
 			}
-			//Vector3i sunset = sunray.getSunSet();
-			//outFile << "sunset: " << sunset.x() << ":" << sunset.y() << ":" << sunset.z() << endl;
-			//outFile << endl;
 		}
 	}
-	//outFile.close();
 	////
 	//// test
 	////

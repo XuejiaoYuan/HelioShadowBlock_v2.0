@@ -1,0 +1,21 @@
+
+# Grid attributes
+Scene 2
+type 0
+end
+
+# Receiver attributes
+Recv 3
+pos 0.0 140.0 0.0
+size 12.000 9.000000 0.000000
+num 4
+norm 0.000000 0.0000000 1.000000
+face -1
+end
+
+# Heliostats attributes
+gap 0.100000 0.100000
+matrix 4 2
+pos	0.0000000 9.7520000 0.000000
+size 12.305000 0.000000 9.4030000
+end
