@@ -2,6 +2,7 @@
 #include "./sdbkCalculator/sdbkCalculator.h"
 #include "./DataStructure/SunRay.h"
 #include "./LSPIA/LSPIA.h"
+#include "./GaussLegendre/GaussLegendre.h"
 #include <iomanip>
 
 int get_index(int r, int c) {
@@ -41,6 +42,12 @@ int main(int argc, char** argv) {
 	SolarScene* solar_scene = new SolarScene();
 	solar_scene->initFieldParam(scene_filepath);
 
+	// Gauss-Legendre参数预计算
+	int N = solar_scene->recvs[0]->recv_size.x() / RECEIVER_SLICE;
+	int M = solar_scene->recvs[0]->recv_size.z() / RECEIVER_SLICE;
+	GaussLegendre* gl = new GaussLegendre();
+	gl->calcNodeWeight(N, M);
+
 	// TODO 镜场参数优化
 	int cnt;
 	vector<vector<float>*> field_args;
@@ -71,7 +78,7 @@ int main(int argc, char** argv) {
 	//}
 
 	SdBkCalcCreator sdbk_calc_creator;
-	SdBkCalc* sdbk_calc = sdbk_calc_creator.getSdBkCalc(solar_scene);
+	SdBkCalc* sdbk_calc = sdbk_calc_creator.getSdBkCalc(solar_scene, gl);
 	//if (options == "-s_l")
 	//	sdbk_calc->sample_calc_preprocess(100, 100, true, true);
 

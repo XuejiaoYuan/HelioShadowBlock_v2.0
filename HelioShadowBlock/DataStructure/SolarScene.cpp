@@ -116,6 +116,8 @@ bool SolarScene::changeSolarScene(const Vector3f & sunray_dir)
 #pragma omp parallel for
 	for (int i = 0; i < helios.size(); i++)
 		helios[i]->changeSurfaceNormal(recvs[0]->focus_center, sunray_dir);
+
+	layouts[0]->setHelioLayout(helios);
 	
 	return true;
 }

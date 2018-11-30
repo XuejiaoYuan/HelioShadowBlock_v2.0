@@ -143,7 +143,7 @@ float SdBkCalc::helioClipper(Heliostat * helio, const vector<Vector3f>& dir, con
 		subj[0] << IntPoint(VERTEXSCALE*local_v[i].x(), VERTEXSCALE*local_v[i].z());
 	}
 
-	float total_area = 0;
+	long long total_area = 0;
 	int subj_v_num = subj[0].size();
 	for (int j = 0; j < subj_v_num; j++)
 		total_area += (subj[0][j].X*subj[0][(j + 1) % subj_v_num].Y)
@@ -579,6 +579,8 @@ float SdBkCalc::calcIntersectionPoint(const Vector3f & orig, const Vector3f & di
 	return t;
 }
 
+
+ 
 // helio: 待计算定日镜
 // dir: 定日镜到接收器的反射光线方向
 float SdBkCalc::calcFluxMap(Heliostat * helio, const float DNI)
@@ -589,16 +591,29 @@ float SdBkCalc::calcFluxMap(Heliostat * helio, const float DNI)
 	int fc_index = helio->focus_center_index;
 	vector<Receiver*> recvs = solar_scene->recvs;
 	Vector3f focus_center = recvs[0]->focus_center[fc_index];
-	Vector3f reverse_dir = helio->helio_pos - focus_center;		// The normal of image plane
+	Vector3f reverse_dir = (helio->helio_pos - focus_center).normalized();		// The normal of image plane
 	float flux_sum = 0;
+
+	Matrix4f word2localM, local2worldM;
+	GeometryFunc::getMatrixs(reverse_dir, focus_center, local2worldM, word2localM);
+
 	for (int i = 0; i < helio->cos_phi.size(); i++) {
 		if (helio->cos_phi[i] > 0) {
-			vector<Vector3f> proj_v;
+			vector<Vector2d> proj_v;
 			for (auto& v : recvs[0]->recv_vertex[i]) {
 				Vector3f inter_v = GeometryFunc::calcIntersection(reverse_dir, focus_center, v, reverse_dir);
-				proj_v.push_back(GeometryFunc::mulMatrix(inter_v, recvs[0]->world2localM_list[i]));
+				//cout << "pos: " << v.x() << ' ' << v.y()<< ' ' << v.z() << endl;
+				//cout << "inter: " << inter_v.x() << ' ' <<inter_v.y() << ' '  << inter_v.z() << endl;
+				
+				inter_v = GeometryFunc::mulMatrix(inter_v, word2localM);
+				proj_v.push_back(Vector2d(inter_v.x(), inter_v.z()));
+				//cout << "proj: " << inter_v.x() << ' ' << inter_v.z() << endl;
+
 			}
-			flux_sum += _calc_flux_sum(proj_v, recvs[0]->mask_rows, recvs[0]->mask_cols, helio, helio->cos_phi[i], DNI);
+			// flux_sum += _calc_flux_sum(proj_v, recvs[0]->mask_rows, recvs[0]->mask_cols, helio, helio->cos_phi[i], DNI);
+			float _flux_sum_grid1 = _calc_flux_sum(proj_v, recvs[0]->mask_rows, recvs[0]->mask_cols, helio, helio->cos_phi[i], DNI);
+			float _flux_sum_grid2 = _calc_flux_sum(proj_v, helio, helio->cos_phi[i], DNI);
+			// cout << _flux_sum_grid1 << ' ' << _flux_sum_grid2 << endl;
 		}
 	}
 	//auto elapsed = chrono::duration_cast<chrono::microseconds>(std::chrono::high_resolution_clock::now() - start);
@@ -608,37 +623,113 @@ float SdBkCalc::calcFluxMap(Heliostat * helio, const float DNI)
 	return flux_sum;
 }
 
-inline float SdBkCalc::_calc_flux_sum(vector<Vector3f>& proj_v,const int rows, const int cols, Heliostat * helio, const float cos_phi, const float DNI)
+///
+// 对接收器投影面进行均匀分割，统计每个分割面的flux分布结果，并求和
+///
+inline float SdBkCalc::_calc_flux_sum(vector<Vector2d>& proj_v,const int rows, const int cols, Heliostat * helio, const float cos_phi, const float DNI)
 {
 
-	//auto start = std::chrono::high_resolution_clock::now();
+	auto start = std::chrono::high_resolution_clock::now();
 
 	MatrixXf mask_x(rows, cols), mask_y(rows, cols);
-	//Vector3f col_gap = (proj_v[2] - proj_v[1]) / cols;		// 矩阵列方向变化率
-	//Vector3f row_gap = (proj_v[0] - proj_v[1]) / rows;		// 矩阵行方向变化率
-	float row_gap = (proj_v[0] - proj_v[1]).z() / rows;
-	float col_gap = (proj_v[2] - proj_v[1]).x() / cols;
+	float row_gap = (proj_v[2] - proj_v[1]).y() / rows;			// 矩阵列方向变化率
+	float col_gap = (proj_v[0] - proj_v[1]).x() / cols;			// 矩阵行方向变化率
 	for (int i = 0; i < rows; i++) {
 		float start_v = proj_v[1].x() + i* col_gap;
 		float end_v = proj_v[2].x() + i*col_gap;
-		mask_x.row(i).setLinSpaced(cols, start_v/helio->sigma, end_v/helio->sigma);
+		mask_x.row(i).setLinSpaced(cols, start_v, end_v);
 	}
 
 	for (int i = 0; i < cols; i++) {
-		float start_v = proj_v[1].z() + i * row_gap;
-		float end_v = proj_v[0].z() + i* row_gap;
-		mask_y.col(i).setLinSpaced(rows, helio->l_w_ratio * start_v/helio->sigma, helio->l_w_ratio * end_v/helio->sigma);
+		float start_v = proj_v[1].y() + i * row_gap;
+		float end_v = proj_v[0].y() + i* row_gap;
+		mask_y.col(i).setLinSpaced(rows, 1/ helio->l_w_ratio * start_v, 1/ helio->l_w_ratio * end_v);
 	}
 
-	
-	float flux_sum = (-0.5 / pow(helio->sigma, 2)) * (mask_x.array().pow(2) + mask_y.array().pow(2)).array().exp().sum();
-	flux_sum = flux_sum * helio->flux_param * (1 - helio->sd_bk) * DNI;
+	float flux_sum = (-0.5 / pow(helio->sigma, 2) * (mask_x.array().pow(2) + mask_y.array().pow(2))).array().exp().sum();
+	cout << "grid: " << flux_sum << endl;
+	flux_sum = flux_sum * helio->flux_param * (1 - helio->sd_bk) * DNI * cos_phi;
 
-	//auto elapsed = chrono::duration_cast<chrono::microseconds>(std::chrono::high_resolution_clock::now() - start);
-	//auto time = double(elapsed.count())*chrono::microseconds::period::num / chrono::microseconds::period::den;
-	//std::cout << "Calculate flux sum time: " << time << "s." << endl;
+	auto elapsed = chrono::duration_cast<chrono::microseconds>(std::chrono::high_resolution_clock::now() - start);
+	auto time = double(elapsed.count())*chrono::microseconds::period::num / chrono::microseconds::period::den;
+	// std::cout << "Calculate flux sum time: " << time << "s." << endl;
 
 	return flux_sum;
+}
+
+///
+// 对接收器投影面进行Gauss-Legendre数值积分
+///
+inline float SdBkCalc::_calc_flux_sum(vector<Vector2d>& proj_v, Heliostat * helio, const float cos_phi, const float DNI)
+{
+	auto start = std::chrono::high_resolution_clock::now();
+
+	vector<VectorXd> weight = gl->getW();
+	vector<VectorXd> node = gl->getX();
+	double k1 = INFINITY;
+	double k2 = INFINITY;
+	double u1, u2, v1, v2;
+	if (abs(proj_v[1].x() - proj_v[0].x()) < Epsilon) {
+		u1 = proj_v[0].x();
+		u2 = proj_v[3].x();
+	}
+	else {
+		k1 = (proj_v[1].y() - proj_v[0].y()) / (proj_v[1].x() - proj_v[0].x());
+		u1 = k1*proj_v[0].x() + proj_v[0].y();
+		u2 = k1*proj_v[3].x() + proj_v[3].y();
+	}
+	if (abs(proj_v[2].x() - proj_v[1].x()) < Epsilon) {
+		v1 = proj_v[0].x();
+		v2 = proj_v[1].x();
+	}
+	else {
+		k2 = (proj_v[2].y() - proj_v[1].y()) / (proj_v[2].x() - proj_v[1].x());
+		v1 = k2*proj_v[0].x() + proj_v[0].y();
+		v2 = k2*proj_v[1].x() + proj_v[1].y();
+	}
+
+	double a = min(u1, u2);
+	double b = max(u1, u2);
+	double c = min(v1, v2);
+	double d = max(v1, v2);
+	double alpha = (d - c) / 2;
+	double beta = (b - a) / 2;
+	double item1 = (b + a) / 2;
+	double item2 = (d + c) / 2;
+
+	double sum = 0;
+	double u, v;
+	double mute = 1.0;
+	for (int i = 0; i < weight[0].size(); i++)
+		cout << weight[0](i) << endl;
+	cout << endl;
+	for (int i = 0; i < weight[1].size(); i++)
+		cout << weight[1](i) << endl;
+	for (int i = 0; i < node[0].size(); i++) {
+		for (int j = 0; j < node[1].size(); j++) {
+			u = node[0](i)*beta + item1;
+			v = node[1](j)*alpha + item2;
+			if (k1 == INFINITY && abs(k2) > Epsilon) {
+				v = v - k2*u;
+			}
+			else {
+				mute = k1 - k2;
+				v = (u - v) / (k1 - k2);
+				u = (k1*v - k2*u) / (k1 - k2);
+			}
+			// cout << v << ' ' << u << endl;
+			sum+= mute * alpha* beta* weight[0](i)*weight[1](j)
+				*exp(-0.5 / pow(helio->sigma, 2)*(pow(u, 2) + pow(v/helio->l_w_ratio, 2)));
+		}
+	}
+	cout << "integer: " << sum << endl;
+	sum = sum * helio->flux_param * (1 - helio->sd_bk) * DNI * cos_phi;
+	auto elapsed = chrono::duration_cast<chrono::microseconds>(std::chrono::high_resolution_clock::now() - start);
+	auto time = double(elapsed.count())*chrono::microseconds::period::num / chrono::microseconds::period::den;
+	// std::cout << "Calculate flux sum time: " << time << "s." << endl;
+
+
+	return sum;
 }
 
 
@@ -742,8 +833,9 @@ void SdBkCalc::calcShadowBlock(const float DNI)
 		}
 		else
 			helio->sd_bk = 0;
-		//(*sd_bk_res)(r, c) = helioClipper(helio, dir, estimate_grids);
-		helio->flux_sum = calcFluxMap(helio, DNI);
+		
+		if(gl!=NULL)
+			helio->flux_sum = calcFluxMap(helio, DNI);
 
 #ifdef DEBUG
 		// Ray tracing

@@ -132,8 +132,8 @@ float SunRay::calcDNI(const vector<int>& time_param)
 	float c = 0.2711 + 0.01858 * (2.5 - ALT) * (2.5 - ALT);
 
 	float fair = this->current_altitude * PI / 180.0;
-	// float DNI = 1000 * E0 * (a + b * math.exp(-c / math.sin(fair)))
-	double DNI = E0 * (a + b * exp(-c / sin(fair))) / 1000;  // 为减小数量级修改了计算式
+	float DNI = 1000 * E0 * (a + b * exp(-c / sin(fair)));
+	// double DNI = E0 * (a + b * exp(-c / sin(fair)));  // 为减小数量级修改了计算式
 	this->current_DNI = DNI;
 	return DNI;
 }

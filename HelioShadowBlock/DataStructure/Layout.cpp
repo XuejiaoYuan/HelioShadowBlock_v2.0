@@ -42,7 +42,7 @@ void Layout::setHelioLayout(vector<Heliostat*> helios)
 		for (auto&v : helio->vertex) {
 			row_col[0] = (v.z() - layout_bound_pos.z()) / helio_interval.z();	// smaller z is, smaller row is
 			row_col[1] = (v.x() - layout_bound_pos.x()) / helio_interval.x();	// smaller x is, smaller col is
-			pos.find(row_col);
+			// pos.find(row_col);
 			if (pos.count(row_col) == 0) {
 				pos.insert(row_col);
 				helio_layout[row_col[0]][row_col[1]].push_back(helio);
@@ -92,7 +92,7 @@ void Layout::adjustHelioLayout(vector<Heliostat*>& helios, const vector<vector<f
 	}
 
 	// 3. 调整helio在layout中的排布参数
-	setHelioLayout(helios);
+	// setHelioLayout(helios);
 
 }
 
@@ -105,10 +105,10 @@ void Layout::calc_param(Heliostat * helio, const vector<Receiver*>& recvs)
 		helio->mAA = exp(-0.0001106 * dis);
 
 	Vector3f reverse_sunray_dir = (helio->helio_pos - recvs[0]->focus_center[helio->focus_center_index]).normalized();
-	helio->S = helio->helio_size.x() * helio->helio_size.y();
+	helio->S = helio->helio_size.x() * helio->helio_size.z();
 
 	// TODO: set helio sigma
-	helio->sigma = 0;
+	helio->sigma = 1.31;
 }
 
 
@@ -152,7 +152,7 @@ void CrossRectLayout::adjustHelioLayout(vector<Heliostat*>& helios, const vector
 	}
 
 	// 3. 调整helio在layout中的排布参数
-	setHelioLayout(helios);
+	// setHelioLayout(helios);
 }
 
 void FermatLayout::adjustHelioLayout(vector<Heliostat*>& helios, const vector<vector<float>*>& field_args, const vector<Receiver*>& recvs)
@@ -192,7 +192,7 @@ void FermatLayout::adjustHelioLayout(vector<Heliostat*>& helios, const vector<ve
 	setCircleHelios(helio_recv_dis3, helio_gap3, n_row3, angle_delta3, helios, recvs);
 
 	// 调整helio在layout中的排布参数
-	setHelioLayout(helios);
+	// setHelioLayout(helios);
 
 #ifdef DEBUG
 	fstream outFile("fermat_helio.scn", ios_base::out);

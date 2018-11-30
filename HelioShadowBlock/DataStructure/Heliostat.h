@@ -29,6 +29,7 @@ public:
 		helio_normal = Vector3f(0, 0, 0);
 		sd_bk = 0;
 		rou = HELIOSTAT_REFLECTIVITY;
+		sigma = 1.31;	// TODO: update
 	};
 	~Heliostat() {
 		for (auto&sub : subhelios) {

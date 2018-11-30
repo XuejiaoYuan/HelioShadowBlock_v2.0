@@ -37,6 +37,9 @@
     <Filter Include="FED">
       <UniqueIdentifier>{854c0e5f-7b39-4351-9d6b-25f05b945e9f}</UniqueIdentifier>
     </Filter>
+    <Filter Include="GaussLegendre">
+      <UniqueIdentifier>{797f27cd-9a62-4223-a4d1-f667edf03bd9}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Common\global_function.h">
@@ -111,6 +114,9 @@
     <ClInclude Include="FED\FED.h">
       <Filter>FED</Filter>
     </ClInclude>
+    <ClInclude Include="GaussLegendre\GaussLegendre.h">
+      <Filter>GaussLegendre</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DataStructure\Clip\Clipper\clipper.cpp">
@@ -175,6 +181,9 @@
     </ClCompile>
     <ClCompile Include="FED\FED.cpp">
       <Filter>FED</Filter>
+    </ClCompile>
+    <ClCompile Include="GaussLegendre\GaussLegendre.cpp">
+      <Filter>GaussLegendre</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

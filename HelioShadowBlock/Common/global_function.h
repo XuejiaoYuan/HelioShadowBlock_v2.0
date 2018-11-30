@@ -87,6 +87,7 @@ namespace GeometryFunc
 			u[0] = tmp_u.cross(u[1]).normalized();
 			u[2] = u[0].cross(u[1]).normalized();
 		}
+
 		for (int i = 0; i < 3; i++) {
 			local2worldM(i, 0) = u[i].x();
 			local2worldM(i, 1) = u[i].y();
@@ -113,6 +114,16 @@ namespace GeometryFunc
 		vertex[3] = GeometryFunc::mulMatrix(vertex[3], local2worldM);
 	}
 
+	inline void sortVertex(vector<Vector2d>& vertex) {
+		Vector2d tmp_v;
+		for (int i = 0; i < 4; i++) {
+			if (vertex[0].x() < vertex[3].x() && vertex[0].y() < vertex[1].y())
+				break;
+			tmp_v = vertex.front();
+			vertex.erase(vertex.begin());
+			vertex.push_back(tmp_v);
+		}
+	}
 };
 
 #endif // GEOMETRY_FUNC_H

@@ -32,8 +32,8 @@ public:
 	Vector3f recv_normal;                   //The normal of the first receiver's face
 	vector<Vector3f> recv_normal_list;
 	vector<vector<Vector3f>> recv_vertex;
-	vector<Matrix4f> local2worldM_list;
-	vector<Matrix4f> world2localM_list;
+	//vector<Matrix4f> local2worldM_list;		// Receiver vertexes' transform matrixs
+	//vector<Matrix4f> world2localM_list;
 	int recv_face;                      //The index of the receiver's face
 	vector<Vector3f> focus_center;		//The focus center of the receiver
 	int mask_rows, mask_cols;
