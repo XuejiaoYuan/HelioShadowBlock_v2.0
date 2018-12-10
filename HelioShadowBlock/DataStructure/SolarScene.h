@@ -21,22 +21,22 @@ public:
         helios.clear();
         recvs.clear();
     }
-	bool initSolarScene(const string&scene_filepath, const Vector3f&sunray_dir);
-	bool changeSolarScene(const Vector3f&sunray_dir);		//change the surface normal of heiliostats
+	bool initSolarScene(const string&scene_filepath, const Vector3d&sunray_dir);
+	bool changeSolarScene(const Vector3d&sunray_dir);		//change the surface normal of heiliostats
 
 	// function for parameter optimisim
 	bool initFieldParam(const string&file_name);
-	bool adjustFieldParam(const vector<vector<float>*>& field_args);
+	bool adjustFieldParam(const vector<vector<double>*>& field_args);
 
 
-    float scene_length;           //heliostat ground's length and width
-    float scene_width;
+    double scene_length;           //heliostat ground's length and width
+    double scene_width;
 
     vector<Layout*>  layouts;
     vector<Heliostat*> helios;
 	// vector<vector<Heliostat*>> helios;
 	vector<Receiver*> recvs;
-	Vector3f sunray_dir;
+	Vector3d sunray_dir;
 };
 
 #endif //HELIOSHADOW_SOLARSCENE_H

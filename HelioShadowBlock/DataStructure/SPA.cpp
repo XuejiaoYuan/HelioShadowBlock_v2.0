@@ -92,7 +92,7 @@
 //         Put a limit on observer hour angle, so result is between 0 and 360.
 // Revised 13-NOV-2006 Andreas
 //         Corrected calculation of topocentric sun declination.
-//         Converted all floating point inputs in spa structure to doubles.
+//         Converted all doubleing point inputs in spa structure to doubles.
 // Revised 27-FEB-2007 Andreas
 //         Minor correction made as to when atmos. refraction correction is set to zero.
 // Revised 21-JAN-2008 Andreas

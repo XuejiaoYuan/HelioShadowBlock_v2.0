@@ -7,23 +7,23 @@ class LSPIA
 {
 public:
 	LSPIA() {};
-	void set_datas(vector<MatrixXf*> field_data, vector<MatrixXf*> sample_field_data, vector<MatrixXf*> sd_bk_res);
-	vector<vector<MatrixXf*>> LSPIA_surface(const vector<int>&ctrl_num, const float miu);
+	void set_datas(vector<MatrixXd*> field_data, vector<MatrixXd*> sample_field_data, vector<MatrixXd*> sd_bk_res);
+	vector<vector<MatrixXd*>> LSPIA_surface(const vector<int>&ctrl_num, const double miu);
 
 private:
-	vector<MatrixXf*> field_data;			// 定日镜场所有定日镜x与z坐标
-	vector<MatrixXf*> sample_field_data;		// 定日镜场采样定日镜x与z坐标
-	vector<MatrixXf*> sample_sd_bk_res;		// 不同时刻下定日镜场采样定日镜阴影遮挡率
-	MatrixXf* delta_even_uv;
-	MatrixXf* delta_odd_uv;
-	MatrixXf* delta;
+	vector<MatrixXd*> field_data;			// 定日镜场所有定日镜x与z坐标
+	vector<MatrixXd*> sample_field_data;		// 定日镜场采样定日镜x与z坐标
+	vector<MatrixXd*> sample_sd_bk_res;		// 不同时刻下定日镜场采样定日镜阴影遮挡率
+	MatrixXd* delta_even_uv;
+	MatrixXd* delta_odd_uv;
+	MatrixXd* delta;
 
-	float BaseFunction(const int i, const int k, const float u, const vector<float>&knot);
-	vector<float> knot_vector(const int k, const vector<float>&param, const int N, const int M);
-	float surface_fitting(const MatrixXf*D, MatrixXf&P,
-		const vector<MatrixXf*>&Nik, const float miu, const float threashold);
-	float surface_adjusting_control_points(const vector<MatrixXf*>&D_even_odd, MatrixXf&P,
-		const vector <MatrixXf*>&Nik, const float miu);
+	double BaseFunction(const int i, const int k, const double u, const vector<double>&knot);
+	vector<double> knot_vector(const int k, const vector<double>&param, const int N, const int M);
+	double surface_fitting(const MatrixXd*D, MatrixXd&P,
+		const vector<MatrixXd*>&Nik, const double miu, const double threashold);
+	double surface_adjusting_control_points(const vector<MatrixXd*>&D_even_odd, MatrixXd&P,
+		const vector <MatrixXd*>&Nik, const double miu);
 };
 
 #endif //LSPIA_H

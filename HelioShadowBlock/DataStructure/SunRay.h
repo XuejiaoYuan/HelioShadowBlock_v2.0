@@ -19,17 +19,17 @@
 class SunRay {
 public:
     SunRay()= default;
-    Vector3f calcSunRay(const string& spa_data_file);
-	Vector3f changeSunRay(const vector<int>& time_param);
-	Vector3f changeSunRay(const float&altitude, const float&azimuth);
+    Vector3d calcSunRay(const string& spa_data_file);
+	Vector3d changeSunRay(const vector<int>& time_param);
+	Vector3d changeSunRay(const double&altitude, const double&azimuth);
 	Vector3i getSunSet();
-	float calcDNI(const vector<int>& time_param);
-	float current_altitude, current_azimuth;
+	double calcDNI(const vector<int>& time_param);
+	double current_altitude, current_azimuth;
 	double current_DNI;
 private:
 	int calcDay(const vector<int>& time_param);
 	spa_data spa;
-    Vector3f sunray_dir;			// From sun to ground
+    Vector3d sunray_dir;			// From sun to ground
 };
 
 

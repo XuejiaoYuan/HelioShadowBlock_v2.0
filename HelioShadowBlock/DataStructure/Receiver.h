@@ -20,22 +20,22 @@ class Receiver {
 public:
 	Receiver(const ReceiverType&_recv_type) {
 		recv_type = _recv_type;
-		recv_pos = Vector3f(0, 0, 0);
-		recv_size = Vector3f(0, 0, 0);
-		recv_normal = Vector3f(0, 0, 0);
+		recv_pos = Vector3d(0, 0, 0);
+		recv_size = Vector3d(0, 0, 0);
+		recv_normal = Vector3d(0, 0, 0);
 		recv_face = 0;
 	}
 
 	ReceiverType recv_type;             //Receiver's type
-	Vector3f recv_pos;                      //The position of receiver's center
-	Vector3f recv_size;                     //Receiver's size
-	Vector3f recv_normal;                   //The normal of the first receiver's face
-	vector<Vector3f> recv_normal_list;
-	vector<vector<Vector3f>> recv_vertex;
-	//vector<Matrix4f> local2worldM_list;		// Receiver vertexes' transform matrixs
-	//vector<Matrix4f> world2localM_list;
+	Vector3d recv_pos;                      //The position of receiver's center
+	Vector3d recv_size;                     //Receiver's size
+	Vector3d recv_normal;                   //The normal of the first receiver's face
+	vector<Vector3d> recv_normal_list;
+	vector<vector<Vector3d>> recv_vertex;
+	//vector<Matrix4d> local2worldM_list;		// Receiver vertexes' transform matrixs
+	//vector<Matrix4d> world2localM_list;
 	int recv_face;                      //The index of the receiver's face
-	vector<Vector3f> focus_center;		//The focus center of the receiver
+	vector<Vector3d> focus_center;		//The focus center of the receiver
 	int mask_rows, mask_cols;
 	virtual void init_recv(fstream& inFile, InputMode& input_mode);
 };

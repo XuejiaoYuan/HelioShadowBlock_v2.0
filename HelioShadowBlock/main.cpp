@@ -36,8 +36,8 @@ int main(int argc, char** argv) {
 	string save_path = string(argv[5]);
 
 	SunRay sunray;
-	Vector3f sunray_dir = sunray.calcSunRay(sunray_filepath);
-	MatrixXf a;
+	Vector3d sunray_dir = sunray.calcSunRay(sunray_filepath);
+	MatrixXd a;
 
 	SolarScene* solar_scene = new SolarScene();
 	solar_scene->initFieldParam(scene_filepath);
@@ -46,26 +46,28 @@ int main(int argc, char** argv) {
 	int N = solar_scene->recvs[0]->recv_size.x() / RECEIVER_SLICE;
 	int M = solar_scene->recvs[0]->recv_size.z() / RECEIVER_SLICE;
 	GaussLegendre* gl = new GaussLegendre();
+	/*N = 100;
+	M = 100;*/
 	gl->calcNodeWeight(N, M);
 
 	// TODO 镜场参数优化
 	int cnt;
-	vector<vector<float>*> field_args;
+	vector<vector<double>*> field_args;
 	switch (solar_scene->layouts[0]->layout_type)
 	{
 	case CrossRectFieldType:
 	case RectLayoutType:
-		field_args.push_back(new vector<float>{10, 10, 10});			// 定日镜间隔
-		field_args.push_back(new vector<float>{ -80 });					// 第一行定日镜与接收器之间的距离
-		field_args.push_back(new vector<float>{ 300 });					// 定日镜行数
-		field_args.push_back(new vector<float>{ 300 });					// 定日镜列数
+		field_args.push_back(new vector<double>{10, 10, 10});			// 定日镜间隔
+		field_args.push_back(new vector<double>{ -80 });					// 第一行定日镜与接收器之间的距离
+		field_args.push_back(new vector<double>{ 300 });					// 定日镜行数
+		field_args.push_back(new vector<double>{ 300 });					// 定日镜列数
 		break;
 	case FermatLayoutType:
-		field_args.push_back(new vector<float>{ float(0.1) });			// 定日镜包围盒安全距离
-		field_args.push_back(new vector<float>{ float( 114.9417 )});	// 第一个同心圆与接收器之间的距离(Campo: 114.9417)
-		field_args.push_back(new vector<float>{ 0.866f });				// 第一个同心环中定日镜的分布间隔
-		field_args.push_back(new vector<float>{ 1.4f });				// 第二个同心环中定日镜的分布间隔
-		field_args.push_back(new vector<float>{ 2.0f});					// 第三个同心环中定日镜的分布间隔
+		field_args.push_back(new vector<double>{ double(0.1) });			// 定日镜包围盒安全距离
+		field_args.push_back(new vector<double>{ double( 114.9417 )});	// 第一个同心圆与接收器之间的距离(Campo: 114.9417)
+		field_args.push_back(new vector<double>{ 0.866f });				// 第一个同心环中定日镜的分布间隔
+		field_args.push_back(new vector<double>{ 1.4f });				// 第二个同心环中定日镜的分布间隔
+		field_args.push_back(new vector<double>{ 2.0f});					// 第三个同心环中定日镜的分布间隔
 		break;
 	default:
 		break;
@@ -117,9 +119,9 @@ int main(int argc, char** argv) {
 
 	//	outFile.open(save_path + "/total_single_helio_" + to_string(helio_index) + ".txt", ios_base::out);
 	//	vector<int> time_param(4);
-	//	float sum = 0;
-	//	float cnt = 0;
-	//	float dni_sum = 0;
+	//	double sum = 0;
+	//	double cnt = 0;
+	//	double dni_sum = 0;
 	//	for (int month = 1; month <= 12; month++) {
 	//		for (int day = 1; day < 29; day += 4) {
 	//			for (int hour = 8; hour < 17; hour++) {
@@ -130,9 +132,9 @@ int main(int argc, char** argv) {
 	//					time_param[3] = min;
 	//					sunray_dir = sunray.changeSunRay(time_param);
 	//					solar_scene->changeSolarScene(sunray_dir);
-	//					float visi = 1 - sdbk_calc->calcSingleShadowBlock(helio_index);
-	//					float dni = sunray.current_DNI;
-	//					float cos_w = solar_scene->helios[helio_index]->calcSunHelioAngle(sunray_dir);
+	//					double visi = 1 - sdbk_calc->calcSingleShadowBlock(helio_index);
+	//					double dni = sunray.current_DNI;
+	//					double cos_w = solar_scene->helios[helio_index]->calcSunHelioAngle(sunray_dir);
 	//					sum += visi * dni * cos_w;
 	//					dni_sum += sunray.current_DNI;
 	//					outFile << setprecision(12) << visi << ' ' << dni << ' ' << cos_w << ' ';
@@ -147,8 +149,8 @@ int main(int argc, char** argv) {
 	//}
 
 
-	vector<MatrixXf*> gt_res;
-	vector<MatrixXf*> sample_sd_bk_res;
+	vector<MatrixXd*> gt_res;
+	vector<MatrixXd*> sample_sd_bk_res;
 	auto start = std::chrono::high_resolution_clock::now();
 	vector<int> time_param(4, 0);
 	for (int month = 1; month <= 12; month++) {
@@ -192,7 +194,7 @@ int main(int argc, char** argv) {
 	//for (int i = 0; i < sdbk_calc->sample_field_data[0]->rows(); i++)
 	//	cout << (*sdbk_calc->sample_field_data[1])(i, 0) << endl;
 
-	//vector<vector<MatrixXf*>> fitting_sd_bk_res;
+	//vector<vector<MatrixXd*>> fitting_sd_bk_res;
 	//if (options == "-s_l") {
 	//	LSPIA lspia;
 	//	lspia.set_datas(sdbk_calc->field_data, sdbk_calc->sample_field_data, sample_sd_bk_res);

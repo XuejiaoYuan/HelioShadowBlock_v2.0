@@ -5,8 +5,8 @@
 class FED
 {
 public:
-	FED(vector<Receiver*>& recvs, const Vector2f& helio_size, float rho, float sigma = 1e-3,
-		bool calc_mAA = false, float k = 1.36,  float sigma_sun = 2.24*1e-3) {
+	FED(vector<Receiver*>& recvs, const Vector2d& helio_size, double rho, double sigma = 1e-3,
+		bool calc_mAA = false, double k = 1.36,  double sigma_sun = 2.24*1e-3) {
 		this->recvs = recvs;
 		this->helio_size = helio_size;
 		this->rho = rho;
@@ -16,19 +16,19 @@ public:
 		this->sigma_sun = sigma_sun;
 	}
 
-	float calcFED(const Vector3f& helio_pos);
+	double calcFED(const Vector3d& helio_pos);
 
-	Vector2f helio_size;
+	Vector2d helio_size;
 	vector<Receiver*> recvs;
 	bool calc_mAA;
-	float k;
-	float sigma_sun;
-	float sigma;
-	float rho;
+	double k;
+	double sigma_sun;
+	double sigma;
+	double rho;
 
 private:
-	float calcAA(const float& dis);
-	float calcS(const float& dis);
-	float HeightFieldCauchyConvolveLine(float x0, float y0, float xc, float a, float yc, float b, float s);
+	double calcAA(const double& dis);
+	double calcS(const double& dis);
+	double HeightFieldCauchyConvolveLine(double x0, double y0, double xc, double a, double yc, double b, double s);
 };
 

@@ -17,33 +17,33 @@ class Layout {
 public:
     Layout(const LayoutType&_layout_type){
         layout_type = _layout_type;
-		helio_interval = Vector3f(0, 0, 0);
+		helio_interval = Vector3d(0, 0, 0);
         helio_num = 0;
         grid_num = 0;
-		layout_bound_pos = Vector3f(0, 0, 0);
-        layout_size = Vector3f(0, 0, 0);
+		layout_bound_pos = Vector3d(0, 0, 0);
+        layout_size = Vector3d(0, 0, 0);
 		layout_row_col = Vector2i(0, 0);
     }
 	void initLayout(fstream& inFile, InputMode& input_mode, int& helio_type);				// 输入文件时，初始化镜场分布
 	virtual void setHelioLayout(vector<Heliostat*> helios);									// 设置定日镜在网格中的排布
 	virtual void adjustHelioLayout(vector<Heliostat*>& helios,								// 镜场优化时调整镜场网格参数
-		const vector<vector<float>*>& field_args, const vector<Receiver*>& recvs);	
+		const vector<vector<double>*>& field_args, const vector<Receiver*>& recvs);	
 	void calc_param(Heliostat* helio, const vector<Receiver*>& recvs);
 
 
-	Vector3f helio_interval;					//Interval between heliostat's center
+	Vector3d helio_interval;					//Interval between heliostat's center
     int helio_num;								//The number of heliostat in the field
     LayoutType layout_type;						//Heliostat field's layout type
     int grid_num;								//The number of grid in the heliostat field's layout
-	Vector3f layout_bound_pos;					// The bounding box of layout
-	Vector3f layout_first_helio_center;			// The first heliostat center's position in the field
-	Vector3f layout_size;						//Size of the layout, length/width/thickness
+	Vector3d layout_bound_pos;					// The bounding box of layout
+	Vector3d layout_first_helio_center;			// The first heliostat center's position in the field
+	Vector3d layout_size;						//Size of the layout, length/width/thickness
 	Vector2i layout_row_col;					//The rows and cols of the layout
 	vector<vector<vector<Heliostat*>>> helio_layout;				//List the index of heliostats in the field
 	HelioType helio_type;			//Heliostat's type
-	Vector3f helio_pos;           //The position of the heliostat's center
-	Vector3f helio_size;          //Heliostat's size:length, thickness, width 
-	Vector2f helio_gap;           //Heliostat's slice gap: x, z
+	Vector3d helio_pos;           //The position of the heliostat's center
+	Vector3d helio_size;          //Heliostat's size:length, thickness, width 
+	Vector2d helio_gap;           //Heliostat's slice gap: x, z
 	Vector2i helio_matrix;          //Heliostat's slice matrix: row, col
 
 };
@@ -59,16 +59,16 @@ public:
 class CrossRectLayout :public Layout {
 public:
 	CrossRectLayout() :Layout(CrossRectLayoutType){};
-	void adjustHelioLayout(vector<Heliostat*>& helios, const vector<vector<float>*>& field_args, const vector<Receiver*>& recvs);
+	void adjustHelioLayout(vector<Heliostat*>& helios, const vector<vector<double>*>& field_args, const vector<Receiver*>& recvs);
 };
 
 class FermatLayout:public Layout{
 public:
     FermatLayout():Layout(FermatLayoutType){}
-	void adjustHelioLayout(vector<Heliostat*>& helios, const vector<vector<float>*>& field_args, const vector<Receiver*>& recvs);
+	void adjustHelioLayout(vector<Heliostat*>& helios, const vector<vector<double>*>& field_args, const vector<Receiver*>& recvs);
 
 private:
-	void setCircleHelios(const float R, const float gap, const int rows, const float angle_delta, vector<Heliostat*>& helios, const vector<Receiver*>& recvs);
+	void setCircleHelios(const double R, const double gap, const int rows, const double angle_delta, vector<Heliostat*>& helios, const vector<Receiver*>& recvs);
 };
 
 class RadialLayout:public Layout{

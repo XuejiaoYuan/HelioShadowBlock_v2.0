@@ -21,38 +21,41 @@ public:
 		//this->clipper_res_store.resize(2);
 		//this->sample_clipper_res_store.resize(2);
 	}
-	float calcSingleShadowBlock(int helio_index);
-	void calcShadowBlock(const float DNI);
+	double calcSingleShadowBlock(int helio_index);
+	void calcShadowBlock(const double DNI);
 	void sample_calc_preprocess(const int sample_row_num, const int sample_col_num, bool calc_s = false, bool calc_f = false);
-	MatrixXf* calcSampleShadowBlock();
+	MatrixXd* calcSampleShadowBlock();
 	virtual void save_clipper_res(const string save_path, int month, int day, int hour, int minute) {};
 
 	FieldType field_type;
 	SolarScene* solar_scene;
 	GaussLegendre* gl;
 
-	MatrixXf* field_index;					// 定日镜场所有定日镜序号
-	MatrixXf* sample_field_index;
-	vector<MatrixXf*> field_data;			// 定日镜场所有定日镜x与z坐标
-	vector<MatrixXf*> sample_field_data;		// 定日镜场采样定日镜x与z坐标
-	MatrixXf* sample_sd_bk_res;
+	MatrixXd* field_index;					// 定日镜场所有定日镜序号
+	MatrixXd* sample_field_index;
+	vector<MatrixXd*> field_data;			// 定日镜场所有定日镜x与z坐标
+	vector<MatrixXd*> sample_field_data;		// 定日镜场采样定日镜x与z坐标
+	MatrixXd* sample_sd_bk_res;
 
 protected:
-	float helioClipper(Heliostat*helio, const Vector3f&dir, const set<vector<int>>& estimate_grid);
-	float helioClipper(Heliostat*helio, const vector<Vector3f>&dir, const vector<set<vector<int>>>& estimate_grid);
-	float calcAccurateIntersection(Heliostat* helio, const Vector3f&dir, set<vector<int>>&relative_grid_label);		// used ray tracing calculate accurate relative grids
-	float calcAccurateIntersection(Heliostat* helio, const vector<Vector3f>& dir, vector<set<vector<int>>>& relative_helio_label);
-	void calcIntersection3DDDA(Heliostat* helio, const Vector3f&dir, set<vector<int>> & relative_grid_label);			// using 3DDDA for relative grid's prediction
-	float checkForRelativeHelio(const set<vector<int>>& accurate_grid, const set<vector<int>>& estimate_grid);
-	float calcIntersectionPoint(const Vector3f&orig, const Vector3f&dir, const Vector3f&A, const Vector3f&B, const Vector3f&C);
-	float calcFluxMap(Heliostat*helio, const float DNI);
-	float _calc_flux_sum(vector<Vector2d>& proj_v, const int rows, const int cols, Heliostat* helio, const float cos_phi, const float DNI);
-	float _calc_flux_sum(vector<Vector2d>& proj_v, Heliostat* helio, const float cos_phi, const float DNI);
+	double helioClipper(Heliostat*helio, const Vector3d&dir, const set<vector<int>>& estimate_grid);
+	double helioClipper(Heliostat*helio, const vector<Vector3d>&dir, const vector<set<vector<int>>>& estimate_grid);
+	double calcAccurateIntersection(Heliostat* helio, const Vector3d&dir, set<vector<int>>&relative_grid_label);		// used ray tracing calculate accurate relative grids
+	double calcAccurateIntersection(Heliostat* helio, const vector<Vector3d>& dir, vector<set<vector<int>>>& relative_helio_label);
+	void calcIntersection3DDDA(Heliostat* helio, const Vector3d&dir, set<vector<int>> & relative_grid_label);			// using 3DDDA for relative grid's prediction
+	double checkForRelativeHelio(const set<vector<int>>& accurate_grid, const set<vector<int>>& estimate_grid);
+	double calcIntersectionPoint(const Vector3d&orig, const Vector3d&dir, const Vector3d&A, const Vector3d&B, const Vector3d&C);
+	double calcFluxMap(Heliostat*helio, const double DNI);
+	double _calc_flux_sum(vector<Vector2d>& proj_v, const int rows, const int cols, Heliostat* helio, const double cos_phi, const double DNI);
+	double _calc_flux_sum(vector<Vector2d>& proj_v, Heliostat* helio, const double cos_phi, const double DNI);
+	double _multi_inte_flux_sum(vector<Vector2d>& proj_v, int n, Heliostat* helio, const double cos_phi, const double DNI);
+
+	void flux_sum_matrix_grid(vector<Vector3d>& _recv_v, vector<Vector2d>& proj_v, const int rows, const int cols, Heliostat* helio, const double cos_phi, const double DNI);
+	void flux_sum_matrix_inte(Vector3d& recv_normal, Vector3d& fc, vector<Vector3d>& _recv_v, Matrix4d& local2world, vector<Vector2d>& proj_v, Heliostat * helio, const double cos_phi, const double DNI);
 	virtual void get_row_col(const int index, int& r, int& c) = 0;
 	// 采样计算预处理操作
-	virtual MatrixXf* field_data_pre() = 0;
-	virtual MatrixXf* sample_field_data_pre(const int sample_row_num, const int sample_col_num) = 0;
-	
+	virtual MatrixXd* field_data_pre() = 0;
+	virtual MatrixXd* sample_field_data_pre(const int sample_row_num, const int sample_col_num) = 0;
 
 };
 
@@ -62,8 +65,8 @@ public:
 	void sample_calc_preprocess(const int sample_row_num, const int sample_col_num, bool calc_s = false, bool calc_f = false) {};
 private:
 	void get_row_col(const int index, int& r, int& c);
-	MatrixXf* field_data_pre() { return nullptr; }
-	MatrixXf* sample_field_data_pre(const int sample_row_num, const int sample_col_num);
+	MatrixXd* field_data_pre() { return nullptr; }
+	MatrixXd* sample_field_data_pre(const int sample_row_num, const int sample_col_num);
 
 };
 
@@ -75,8 +78,8 @@ public:
 
 private:
 	void get_row_col(const int index, int& r, int& c);
-	MatrixXf* field_data_pre();
-	MatrixXf* sample_field_data_pre(const int sample_row_num, const int sample_col_num);
+	MatrixXd* field_data_pre();
+	MatrixXd* sample_field_data_pre(const int sample_row_num, const int sample_col_num);
 };
 
 class FermatSdBkCalc :public SdBkCalc {
@@ -87,8 +90,8 @@ public:
 
 private:
 	void get_row_col(const int index, int& r, int& c) {}
-	MatrixXf* field_data_pre() { return nullptr; }
-	MatrixXf* sample_field_data_pre(const int sample_row_num, const int sample_col_num) { return nullptr; }
+	MatrixXd* field_data_pre() { return nullptr; }
+	MatrixXd* sample_field_data_pre(const int sample_row_num, const int sample_col_num) { return nullptr; }
 
 };
 
@@ -99,8 +102,8 @@ public:
 
 private:
 	void get_row_col(const int index, int& r, int& c) {}
-	MatrixXf* field_data_pre() { return nullptr; }
-	MatrixXf* sample_field_data_pre(const int sample_row_num, const int sample_col_num) { return nullptr; }
+	MatrixXd* field_data_pre() { return nullptr; }
+	MatrixXd* sample_field_data_pre(const int sample_row_num, const int sample_col_num) { return nullptr; }
 };
 
 class SdBkCalcCreator {

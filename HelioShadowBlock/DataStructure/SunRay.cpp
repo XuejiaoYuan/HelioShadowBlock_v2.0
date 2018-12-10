@@ -5,11 +5,11 @@
 #include "SunRay.h"
 #include "SPA.h"
 
-Vector3f SunRay::calcSunRay(const string &spa_data_file) {
+Vector3d SunRay::calcSunRay(const string &spa_data_file) {
     fstream inFile(spa_data_file);
     if(inFile.fail()){
         cout << "Can't open the file!"<< endl;
-        return Vector3f(0, 0, 0);
+        return Vector3d(0, 0, 0);
     }
 
     string str, word;
@@ -68,14 +68,14 @@ Vector3f SunRay::calcSunRay(const string &spa_data_file) {
 	sunray_dir = sunray_dir.normalized();
     inFile.close();
 
-	float min = 60.0*(spa.sunset - (int)(spa.sunset));
-	float sec = 60.0*(min - (int)min);
+	double min = 60.0*(spa.sunset - (int)(spa.sunset));
+	double sec = 60.0*(min - (int)min);
 	printf("Sunset:        %02d:%02d:%02d Local Time\n", (int)(spa.sunset), (int)min, (int)sec);
 
     return sunray_dir;
 }
 
-Vector3f SunRay::changeSunRay(const vector<int>& time_param)
+Vector3d SunRay::changeSunRay(const vector<int>& time_param)
 {
 	spa.month = time_param[0];
 	spa.day = time_param[1];
@@ -98,10 +98,10 @@ Vector3f SunRay::changeSunRay(const vector<int>& time_param)
 	return sunray_dir;
 }
 
-Vector3f SunRay::changeSunRay(const float & altitude, const float & azimuth)
+Vector3d SunRay::changeSunRay(const double & altitude, const double & azimuth)
 {
-	float local_altitude = deg2rad(altitude);
-	float local_azimuth = deg2rad(azimuth - 90);
+	double local_altitude = deg2rad(altitude);
+	double local_azimuth = deg2rad(azimuth - 90);
 	sunray_dir.x() = cos(local_altitude) * sin(local_azimuth);
 	sunray_dir.y() = -sin(local_altitude);
 	sunray_dir.z() =  -cos(local_altitude) * cos(local_azimuth);
@@ -111,28 +111,28 @@ Vector3f SunRay::changeSunRay(const float & altitude, const float & azimuth)
 
 Vector3i SunRay::getSunSet()
 {
-	float min = 60.0*(spa.sunset - (int)(spa.sunset));
-	float sec = 60.0*(min - (int)min);
+	double min = 60.0*(spa.sunset - (int)(spa.sunset));
+	double sec = 60.0*(min - (int)min);
 	printf("Sunset:        %02d:%02d:%02d Local Time\n", (int)(spa.sunset), (int)min, (int)sec);
 	Vector3i sunset(int(spa.sunset), int(min), int(sec));
 	return sunset;
 }
 
-float SunRay::calcDNI(const vector<int>& time_param)
+double SunRay::calcDNI(const vector<int>& time_param)
 {
 	if (this->current_altitude < 0)
 		return 0;
 
-	float ALT = 0.0;  // 当地海拔, 默认为0, 单位km
+	double ALT = 0.0;  // 当地海拔, 默认为0, 单位km
 	int day_count = calcDay(time_param);
-	float E0 = 1.353 + 0.045 * cos(2 * PI* (day_count + 10) / 365); // 太阳辐射进入地球大气之后单位面积的能量，单位kW / m2
+	double E0 = 1.353 + 0.045 * cos(2 * PI* (day_count + 10) / 365); // 太阳辐射进入地球大气之后单位面积的能量，单位kW / m2
 
-	float a = 0.4237 - 0.00821 * (6 - ALT) * (6 - ALT);
-	float b = 0.5055 + 0.00595 * (6.5 - ALT) * (6.5 - ALT);
-	float c = 0.2711 + 0.01858 * (2.5 - ALT) * (2.5 - ALT);
+	double a = 0.4237 - 0.00821 * (6 - ALT) * (6 - ALT);
+	double b = 0.5055 + 0.00595 * (6.5 - ALT) * (6.5 - ALT);
+	double c = 0.2711 + 0.01858 * (2.5 - ALT) * (2.5 - ALT);
 
-	float fair = this->current_altitude * PI / 180.0;
-	float DNI = 1000 * E0 * (a + b * exp(-c / sin(fair)));
+	double fair = this->current_altitude * PI / 180.0;
+	double DNI = 1000 * E0 * (a + b * exp(-c / sin(fair)));
 	// double DNI = E0 * (a + b * exp(-c / sin(fair)));  // 为减小数量级修改了计算式
 	this->current_DNI = DNI;
 	return DNI;

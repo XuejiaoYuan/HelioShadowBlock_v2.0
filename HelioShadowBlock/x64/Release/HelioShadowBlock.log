@@ -1,6 +1,6 @@
 ﻿  sdbkCalculator.cpp
-e:\xjyuan\003 zju\002 solar\004 codes\180911_solar\helioshadowblock\helioshadowblock\datastructure\../Common/global_function.h(65): warning C4244: “初始化”: 从“double”转换到“float”，可能丢失数据
-e:\xjyuan\003 zju\002 solar\004 codes\180911_solar\helioshadowblock\helioshadowblock\datastructure\../Common/global_function.h(66): warning C4244: “初始化”: 从“double”转换到“float”，可能丢失数据
+e:\xjyuan\003 zju\002 solar\004 codes\180911_solar\helioshadowblock\helioshadowblock\datastructure\../Common/global_function.h(33): warning C4244: “初始化”: 从“double”转换到“float”，可能丢失数据
+e:\xjyuan\003 zju\002 solar\004 codes\180911_solar\helioshadowblock\helioshadowblock\datastructure\../Common/global_function.h(34): warning C4244: “初始化”: 从“double”转换到“float”，可能丢失数据
 e:\xjyuan\003 zju\002 solar\004 codes\180911_solar\helioshadowblock\helioshadowblock\datastructure\../DataStructure/Heliostat.h(31): warning C4305: “=”: 从“double”到“float”截断
 e:\xjyuan\003 zju\002 solar\004 codes\180911_solar\helioshadowblock\helioshadowblock\datastructure\../DataStructure/Heliostat.h(32): warning C4305: “=”: 从“double”到“float”截断
 e:\xjyuan\003 zju\002 solar\004 codes\180911_solar\helioshadowblock\helioshadowblock\datastructure\../DataStructure/Heliostat.h(36): warning C4150: 删除指向不完整“SubHelio”类型的指针；没有调用析构函数
@@ -25,38 +25,35 @@ sdbkCalculator\sdbkCalculator.cpp(108): warning C4244: “=”: 从“double”�
 sdbkCalculator\sdbkCalculator.cpp(143): warning C4244: “参数”: 从“float”转换到“ClipperLib::cInt”，可能丢失数据
 sdbkCalculator\sdbkCalculator.cpp(147): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
 sdbkCalculator\sdbkCalculator.cpp(151): warning C4244: “=”: 从“double”转换到“__int64”，可能丢失数据
-sdbkCalculator\sdbkCalculator.cpp(182): warning C4244: “参数”: 从“float”转换到“ClipperLib::cInt”，可能丢失数据
-sdbkCalculator\sdbkCalculator.cpp(198): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
-sdbkCalculator\sdbkCalculator.cpp(204): warning C4244: “=”: 从“double”转换到“float”，可能丢失数据
-sdbkCalculator\sdbkCalculator.cpp(244): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
-sdbkCalculator\sdbkCalculator.cpp(256): warning C4305: “初始化”: 从“int”到“float”截断
-sdbkCalculator\sdbkCalculator.cpp(299): warning C4244: “=”: 从“float”转换到“int”，可能丢失数据
-sdbkCalculator\sdbkCalculator.cpp(300): warning C4244: “=”: 从“float”转换到“int”，可能丢失数据
-sdbkCalculator\sdbkCalculator.cpp(337): warning C4305: “初始化”: 从“int”到“float”截断
-sdbkCalculator\sdbkCalculator.cpp(379): warning C4244: “=”: 从“float”转换到“int”，可能丢失数据
-sdbkCalculator\sdbkCalculator.cpp(380): warning C4244: “=”: 从“float”转换到“int”，可能丢失数据
-sdbkCalculator\sdbkCalculator.cpp(426): warning C4244: “=”: 从“float”转换到“int”，可能丢失数据
-sdbkCalculator\sdbkCalculator.cpp(427): warning C4244: “=”: 从“float”转换到“int”，可能丢失数据
-sdbkCalculator\sdbkCalculator.cpp(489): warning C4244: “初始化”: 从“float”转换到“int”，可能丢失数据
-sdbkCalculator\sdbkCalculator.cpp(490): warning C4244: “初始化”: 从“float”转换到“int”，可能丢失数据
-sdbkCalculator\sdbkCalculator.cpp(492): warning C4244: “初始化”: 从“float”转换到“int”，可能丢失数据
-sdbkCalculator\sdbkCalculator.cpp(493): warning C4244: “初始化”: 从“float”转换到“int”，可能丢失数据
-sdbkCalculator\sdbkCalculator.cpp(494): warning C4244: “初始化”: 从“double”转换到“int”，可能丢失数据
-sdbkCalculator\sdbkCalculator.cpp(495): warning C4244: “初始化”: 从“double”转换到“int”，可能丢失数据
-sdbkCalculator\sdbkCalculator.cpp(629): warning C4244: “初始化”: 从“double”转换到“float”，可能丢失数据
-sdbkCalculator\sdbkCalculator.cpp(630): warning C4244: “初始化”: 从“double”转换到“float”，可能丢失数据
-sdbkCalculator\sdbkCalculator.cpp(632): warning C4244: “初始化”: 从“double”转换到“float”，可能丢失数据
-sdbkCalculator\sdbkCalculator.cpp(633): warning C4244: “初始化”: 从“double”转换到“float”，可能丢失数据
-sdbkCalculator\sdbkCalculator.cpp(638): warning C4244: “初始化”: 从“double”转换到“float”，可能丢失数据
-sdbkCalculator\sdbkCalculator.cpp(639): warning C4244: “初始化”: 从“double”转换到“float”，可能丢失数据
-sdbkCalculator\sdbkCalculator.cpp(722): warning C4244: “return”: 从“double”转换到“float”，可能丢失数据
-sdbkCalculator\sdbkCalculator.cpp(731): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
-sdbkCalculator\sdbkCalculator.cpp(732): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
-sdbkCalculator\sdbkCalculator.cpp(934): warning C4244: “=”: 从“unsigned int”转换到“float”，可能丢失数据
+sdbkCalculator\sdbkCalculator.cpp(177): warning C4244: “参数”: 从“float”转换到“ClipperLib::cInt”，可能丢失数据
+sdbkCalculator\sdbkCalculator.cpp(192): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
+sdbkCalculator\sdbkCalculator.cpp(198): warning C4244: “=”: 从“double”转换到“float”，可能丢失数据
+sdbkCalculator\sdbkCalculator.cpp(238): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
+sdbkCalculator\sdbkCalculator.cpp(250): warning C4305: “初始化”: 从“int”到“float”截断
+sdbkCalculator\sdbkCalculator.cpp(293): warning C4244: “=”: 从“float”转换到“int”，可能丢失数据
+sdbkCalculator\sdbkCalculator.cpp(294): warning C4244: “=”: 从“float”转换到“int”，可能丢失数据
+sdbkCalculator\sdbkCalculator.cpp(331): warning C4305: “初始化”: 从“int”到“float”截断
+sdbkCalculator\sdbkCalculator.cpp(373): warning C4244: “=”: 从“float”转换到“int”，可能丢失数据
+sdbkCalculator\sdbkCalculator.cpp(374): warning C4244: “=”: 从“float”转换到“int”，可能丢失数据
+sdbkCalculator\sdbkCalculator.cpp(420): warning C4244: “=”: 从“float”转换到“int”，可能丢失数据
+sdbkCalculator\sdbkCalculator.cpp(421): warning C4244: “=”: 从“float”转换到“int”，可能丢失数据
+sdbkCalculator\sdbkCalculator.cpp(483): warning C4244: “初始化”: 从“float”转换到“int”，可能丢失数据
+sdbkCalculator\sdbkCalculator.cpp(484): warning C4244: “初始化”: 从“float”转换到“int”，可能丢失数据
+sdbkCalculator\sdbkCalculator.cpp(486): warning C4244: “初始化”: 从“float”转换到“int”，可能丢失数据
+sdbkCalculator\sdbkCalculator.cpp(487): warning C4244: “初始化”: 从“float”转换到“int”，可能丢失数据
+sdbkCalculator\sdbkCalculator.cpp(488): warning C4244: “初始化”: 从“double”转换到“int”，可能丢失数据
+sdbkCalculator\sdbkCalculator.cpp(489): warning C4244: “初始化”: 从“double”转换到“int”，可能丢失数据
+sdbkCalculator\sdbkCalculator.cpp(625): warning C4244: “return”: 从“double”转换到“float”，可能丢失数据
+sdbkCalculator\sdbkCalculator.cpp(669): warning C4244: “return”: 从“double”转换到“float”，可能丢失数据
+sdbkCalculator\sdbkCalculator.cpp(681): warning C4244: “return”: 从“double”转换到“float”，可能丢失数据
+sdbkCalculator\sdbkCalculator.cpp(724): warning C4244: “return”: 从“double”转换到“float”，可能丢失数据
+sdbkCalculator\sdbkCalculator.cpp(733): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
+sdbkCalculator\sdbkCalculator.cpp(734): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
+sdbkCalculator\sdbkCalculator.cpp(936): warning C4244: “=”: 从“unsigned int”转换到“float”，可能丢失数据
   正在生成代码
-  29 of 5084 functions ( 0.6%) were compiled, the rest were copied from previous compilation.
+  20 of 5512 functions ( 0.4%) were compiled, the rest were copied from previous compilation.
     0 functions were new in current compilation
-    22 functions had inline decision re-evaluated but remain unchanged
+    26 functions had inline decision re-evaluated but remain unchanged
   已完成代码的生成
   HelioShadowBlock.vcxproj -> E:\xjYuan\003 ZJU\002 Solar\004 Codes\180911_Solar\HelioShadowBlock\x64\Release\HelioShadowBlock.exe
   HelioShadowBlock.vcxproj -> E:\xjYuan\003 ZJU\002 Solar\004 Codes\180911_Solar\HelioShadowBlock\x64\Release\HelioShadowBlock.pdb (Full PDB)

@@ -1,6 +1,19 @@
 #include "GaussLegendre.h"
 
 
+double GaussLegendre::calcInte(const Vector4d & x, const Vector4d & y, const double sigma, const double ratio)
+{
+	Vector2d map_v;
+	double sum = 0.0;
+	for (int i = 0; i < weight[0].size(); i++) {
+		for (int j = 0; j < weight[1].size(); j++) {
+			map_v = map(x, y, node[0][i], node[1][j]);
+			sum += weight[0][i] * weight[1][j] * jacobi(x, y, node[0](i), node[1](j))*flux_func(map_v.x(), map_v.y(), sigma, ratio);
+		}
+	}
+	return sum;
+}
+
 void GaussLegendre::legendre(const double t, const double m, double&p, double& dp)
 {
 	double p0 = 1.0;
@@ -24,33 +37,6 @@ void GaussLegendre::legendre(const double t, const double m, double&p, double& d
 ///
 void GaussLegendre::CalcWeight(const int m, VectorXd& x, VectorXd&w, const double a, const double b)
 {
-	//int m = (n+1) / 2;
-	//x.resize(n);
-	//w.resize(n);
-	//double xm = 0.5*(b + a);
-	//double xl = 0.5*(b - a);
-	//const double EPS = 3e-11;
-	//double z, z1, pp, p1, p2, p3;
-	//for (int i = 0; i < m; i++) {
-	//	z = cos(PI*(i + 0.75) / (n + 0.5));
-	//	z1 = -z;
-	//	while (abs(z - z1) > EPS) {
-	//		p1 = 1.0;
-	//		p2 = 0.0;
-	//		for (int j = 0; j < n; j++) {
-	//			p3 = p2;
-	//			p2 = p1;
-	//			p1 = ((2 * j + 1)*z*p2 - j*p3) / (j + 1);
-	//		}
-	//		pp = n*(z*p1 - p2) / (z*z - 1);
-	//		z1 = z;
-	//		z = z1 - p1 / pp;
-	//	}
-	//	x(i) = xm - xl*z;
-	//	x(n - 1 - i) = xm + xl*z;
-	//	w(i) = 2 * xl / ((1 - z*z)*pp*pp);
-	//	w(n - 1 - i) = w(i);
-	//}
 	x.resize(m);
 	w.resize(m);
 	int nRoots = int((m + 1) / 2);
@@ -62,8 +48,8 @@ void GaussLegendre::CalcWeight(const int m, VectorXd& x, VectorXd&w, const doubl
 			dt = -p / dp;
 			t += dt;
 			if (abs(dt) < Epsilon) {
-				x[i] = t;
-				x[m - 1 - i] = -t;
+				x[i] = -t;
+				x[m - 1 - i] = t;
 				w[i] = 2.0 / (1.0 - t*t) / (dp*dp);
 				w[m - i - 1] = w[i];
 				break;
@@ -71,3 +57,24 @@ void GaussLegendre::CalcWeight(const int m, VectorXd& x, VectorXd&w, const doubl
 		}
 	}
 }
+
+inline double GaussLegendre::jacobi(const Vector4d& x, const Vector4d& y, double s, double t) {
+	double J00 = -(1.0 - t)*x(0) + (1.0 - t)*x(1) + (1.0 + t)*x(2) - (1.0 - t)*x(3);
+	double J01 = -(1.0 - t)*y(0) + (1.0 - t)*y(1) + (1.0 + t)*y(2) - (1.0 - t)*y(3);
+	double J10 = -(1.0 - s)*x(0) - (1.0 + s)*x(1) + (1.0 + s)*x(2) + (1.0 - s)*x(3);
+	double J11 = -(1.0 - s)*y(0) - (1.0 + s)*y(1) + (1.0 + s)*y(2) + (1.0 - s)*y(3);
+	return (J00*J11 - J01*J10) / 16.0;
+}
+
+inline Vector2d GaussLegendre::map(const Vector4d&x, const Vector4d&y, double s, double t) {
+	Vector4d N;
+	N(0) = (1.0 - s)*(1.0 - t) / 4.0;
+	N(1) = (1.0 + s)*(1.0 - t) / 4.0;
+	N(2) = (1.0 + s)*(1.0 + t) / 4.0;
+	N(3) = (1.0 - s)*(1.0 + t) / 4.0;
+	Vector2d map_v;
+	map_v.x() = N.dot(x);
+	map_v.y() = N.dot(y);
+	return map_v;
+}
+

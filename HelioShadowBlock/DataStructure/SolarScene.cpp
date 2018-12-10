@@ -7,8 +7,8 @@
 //
 //  Load heliostat field's file with Duan's format
 //
-bool SolarScene::initSolarScene(const string &scene_filepath, const Vector3f &sunray_dir){
-	this->sunray_dir = Vector3f(sunray_dir.x(), sunray_dir.y(), sunray_dir.z());
+bool SolarScene::initSolarScene(const string &scene_filepath, const Vector3d &sunray_dir){
+	this->sunray_dir = Vector3d(sunray_dir.x(), sunray_dir.y(), sunray_dir.z());
 	fstream inFile(scene_filepath);
     if(inFile.fail()){
         cerr<<"Can't open the file!"<<endl;
@@ -23,7 +23,7 @@ bool SolarScene::initSolarScene(const string &scene_filepath, const Vector3f &su
     Receiver* recv;
     Layout* layout;
     Heliostat* helio;
-	Vector2f helio_gap;
+	Vector2d helio_gap;
 	Vector2i helio_matrix;
     while(getline(inFile,line)){
         line_stream.clear();
@@ -109,9 +109,9 @@ bool SolarScene::initSolarScene(const string &scene_filepath, const Vector3f &su
 }
 
 
-bool SolarScene::changeSolarScene(const Vector3f & sunray_dir)
+bool SolarScene::changeSolarScene(const Vector3d & sunray_dir)
 {
-	this->sunray_dir = Vector3f(sunray_dir.x(), sunray_dir.y(), sunray_dir.z() );
+	this->sunray_dir = Vector3d(sunray_dir.x(), sunray_dir.y(), sunray_dir.z() );
 
 #pragma omp parallel for
 	for (int i = 0; i < helios.size(); i++)
@@ -141,10 +141,10 @@ bool SolarScene::initFieldParam(const string& file_name)
 	Layout* layout;
 	int helio_type;
 	int layout_type;
-	Vector2f helio_gap;
+	Vector2d helio_gap;
 	Vector2i helio_matrix;
-	Vector3f helio_size;
-	Vector3f helio_pos;
+	Vector3d helio_size;
+	Vector3d helio_pos;
 	while (getline(inFile, line)) {
 		line_stream.clear();
 		line_stream.str(line);
@@ -228,7 +228,7 @@ bool SolarScene::initFieldParam(const string& file_name)
 //
 // [镜场优化] 镜场优化时改变优化参数以调整镜场位置
 //
-bool SolarScene::adjustFieldParam(const vector<vector<float>*>& field_args)
+bool SolarScene::adjustFieldParam(const vector<vector<double>*>& field_args)
 {
 	if (!helios.empty()) {
 		for (auto&h : helios)
