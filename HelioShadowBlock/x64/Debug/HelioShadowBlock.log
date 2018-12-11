@@ -38,7 +38,7 @@ e:\xjyuan\003 zju\002 solar\004 codes\180911_solar\helioshadowblock\helioshadowb
 e:\xjyuan\003 zju\002 solar\004 codes\180911_solar\helioshadowblock\helioshadowblock\sdbkcalculator\sdbkcalculator.cpp(488): warning C4244: “初始化”: 从“double”转换到“int”，可能丢失数据
 e:\xjyuan\003 zju\002 solar\004 codes\180911_solar\helioshadowblock\helioshadowblock\sdbkcalculator\sdbkcalculator.cpp(489): warning C4244: “初始化”: 从“double”转换到“int”，可能丢失数据
 e:\xjyuan\003 zju\002 solar\004 codes\180911_solar\helioshadowblock\helioshadowblock\sdbkcalculator\sdbkcalculator.cpp(564): warning C4244: “参数”: 从“double”转换到“float”，可能丢失数据
-e:\xjyuan\003 zju\002 solar\004 codes\180911_solar\helioshadowblock\helioshadowblock\sdbkcalculator\sdbkcalculator.cpp(845): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
-e:\xjyuan\003 zju\002 solar\004 codes\180911_solar\helioshadowblock\helioshadowblock\sdbkcalculator\sdbkcalculator.cpp(846): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
+e:\xjyuan\003 zju\002 solar\004 codes\180911_solar\helioshadowblock\helioshadowblock\sdbkcalculator\sdbkcalculator.cpp(857): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
+e:\xjyuan\003 zju\002 solar\004 codes\180911_solar\helioshadowblock\helioshadowblock\sdbkcalculator\sdbkcalculator.cpp(858): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
   HelioShadowBlock.vcxproj -> E:\xjYuan\003 ZJU\002 Solar\004 Codes\180911_Solar\HelioShadowBlock\x64\Debug\HelioShadowBlock.exe
   HelioShadowBlock.vcxproj -> E:\xjYuan\003 ZJU\002 Solar\004 Codes\180911_Solar\HelioShadowBlock\x64\Debug\HelioShadowBlock.pdb (Partial PDB)

@@ -1,4 +1,6 @@
 #include"sdbkCalculator.h"
+#include <random>
+#include <ctime>
 
 
 void SdBkCalc::sample_calc_preprocess(const int sample_row_num, const int sample_col_num, bool calc_s, bool calc_f)
@@ -587,6 +589,7 @@ double SdBkCalc::calcFluxMap(Heliostat * helio, const double DNI)
 	double _flux_sum1 = 0;
 	double _flux_sum2 = 0;
 	double _flux_sum3 = 0;
+	double _flux_sum4 = 0;
 
 	Matrix4d world2localM, local2worldM;
 	// GeometryFunc::imgplane_getMatrixs(reverse_dir, focus_center, local2worldM, word2localM);
@@ -605,14 +608,16 @@ double SdBkCalc::calcFluxMap(Heliostat * helio, const double DNI)
 			// flux_sum += _calc_flux_sum(proj_v, recvs[0]->mask_rows, recvs[0]->mask_cols, helio, helio->cos_phi[i], DNI);
 			double _flux_sum_grid1 = _calc_flux_sum(proj_v, recvs[0]->mask_rows, recvs[0]->mask_cols, helio, helio->cos_phi[i], DNI);
 			double _flux_sum_grid2 =  _calc_flux_sum(proj_v, helio, helio->cos_phi[i], DNI);
-			double _flux_sum_grid3 = _multi_inte_flux_sum(proj_v, 4, helio, helio->cos_phi[i], DNI);
+			double _flux_sum_grid3 = _multi_inte_flux_sum(proj_v, 7, helio, helio->cos_phi[i], DNI);
+			double _flux_sum_ray = ray_tracing_flux_sum(recvs[0]->recv_vertex[i], recvs[0]->focus_center[i], recvs[0]->recv_normal_list[i], helio, -reverse_dir, DNI);
 			_flux_sum1 += _flux_sum_grid1;
 			_flux_sum2 += _flux_sum_grid2;
 			_flux_sum3 += _flux_sum_grid3;
+			_flux_sum4 += _flux_sum_ray;
 
 			flux_sum_matrix_grid(recvs[0]->recv_vertex[i], proj_v, recvs[0]->mask_rows, recvs[0]->mask_cols, helio, helio->cos_phi[i], DNI);
 			flux_sum_matrix_inte(recvs[0]->recv_normal_list[i], recvs[0]->focus_center[i], recvs[0]->recv_vertex[i], local2worldM, proj_v, helio, helio->cos_phi[i], DNI);
-			cout << _flux_sum1 << ' ' << _flux_sum2 << ' ' << _flux_sum3 << endl;
+			cout << _flux_sum1 << ' ' << _flux_sum2 << ' ' << _flux_sum3 << ' ' << _flux_sum4 << endl;
 		}
 	}
 	//auto elapsed = chrono::duration_cast<chrono::microseconds>(std::chrono::high_resolution_clock::now() - start);
@@ -804,7 +809,7 @@ double SdBkCalc::_calc_flux_sum(vector<Vector2d>& proj_v, Heliostat * helio, con
 
 double SdBkCalc::_multi_inte_flux_sum(vector<Vector2d>& proj_v, int n, Heliostat* helio, const double cos_phi, const double DNI) {
 	GaussLegendre* s_gl = new GaussLegendre();
-	s_gl->calcNodeWeight(int(gl->getW()[0].rows() / n), int(gl->getX()[0].rows() / n));
+	s_gl->calcNodeWeight(int(gl->getX()[0].rows()/n/n), int(gl->getX()[1].rows()/n/n));
 
 	vector<VectorXd> weight = s_gl->getW();
 	vector<VectorXd> node = s_gl->getX();
@@ -817,25 +822,94 @@ double SdBkCalc::_multi_inte_flux_sum(vector<Vector2d>& proj_v, int n, Heliostat
 		for (int j = 0; j < n; j++) {
 			tmp_x(0) = (proj_v[0] + i*row_gap + j*col_gap).x();
 			tmp_y(0) = (proj_v[0] + i*row_gap + j*col_gap).y();
-			tmp_x(1) = (proj_v[0] + (i + 1)*row_gap).x();
-			tmp_y(1) = (proj_v[0] + (i + 1)*row_gap).y();
+			tmp_x(1) = (proj_v[0] + (i + 1)*row_gap + j*col_gap).x();
+			tmp_y(1) = (proj_v[0] + (i + 1)*row_gap + j*col_gap).y();
 			tmp_x(2) = (proj_v[0] + (i + 1)*row_gap + (j + 1)*col_gap).x();
 			tmp_y(2) = (proj_v[0] + (i + 1)*row_gap + (j + 1)*col_gap).y();
-			tmp_x(3) = (proj_v[0] + (j + 1)*col_gap).x();
-			tmp_y(3) = (proj_v[0] + (j + 1)*col_gap).y();
+			tmp_x(3) = (proj_v[0] + i*row_gap + (j + 1)*col_gap).x();
+			tmp_y(3) = (proj_v[0] + i*row_gap + (j + 1)*col_gap).y();
 			v_x.push_back(tmp_x);
 			v_y.push_back(tmp_y);
 		}
-	}
-	
-	double sum = 0.0;
-	for(int i=0; i<v_x.size(); i++)
-		sum += gl->calcInte(v_x[i], v_y[i], helio->sigma, helio->l_w_ratio);
-	//sum = sum * helio->flux_param * (1 - helio->sd_bk) * DNI * cos_phi;
-	sum = sum * helio->flux_param *  DNI * cos_phi;
+	}	
 
+	fstream outFile("multi.txt", ios_base::out);
+
+	double sum = 0.0;
+	for (int i = 0; i < v_x.size(); i++) {
+		for(int l=0; l<node[0].size(); l++)
+			for (int j = 0; j < node[1].size(); j++) {
+				Vector2d map_v = gl->map(v_x[i], v_y[i], node[0][l], node[1][j]);
+				double tmp_sum = DNI*cos_phi*helio->flux_param *
+					weight[0][l] * weight[1][j] * gl->jacobi(v_x[i], v_y[i], node[0](l), node[1](j))*gl->flux_func(map_v.x(), map_v.y(), helio->sigma, helio->l_w_ratio);
+				sum += tmp_sum;
+				outFile << map_v.x() << ' ' << map_v.y() << ' ' << tmp_sum << endl;
+			}
+		//double tmp_sum = gl->calcInte(v_x[i], v_y[i], helio->sigma, helio->l_w_ratio);
+		//sum += gl->calcInte(v_x[i], v_y[i], helio->sigma, helio->l_w_ratio);
+	}
+	//sum = sum * helio->flux_param * (1 - helio->sd_bk) * DNI * cos_phi;
+	//sum = sum * helio->flux_param *  DNI * cos_phi;
+	outFile.close();
 	return sum;
 }
+
+
+inline double random_double() {
+	static std::default_random_engine e(time(NULL));
+	static std::uniform_real_distribution<double> u(0, 1);
+	return u(e);
+}
+///
+// 使用Ray-Tracing计算接收器上接收到的能量
+///
+double SdBkCalc::ray_tracing_flux_sum(vector<Vector3d>& recv_v, Vector3d& recv_pos, Vector3d& recv_normal, Heliostat * helio, const Vector3d& dir, const double DNI)
+{
+	int rows = helio->helio_size.z() / RECEIVER_SLICE;
+	int cols = helio->helio_size.x() / RECEIVER_SLICE;
+	int grid_num = gl->getX()[0].rows() * gl->getX()[1].rows();
+	int ray_num = 20;
+	double ray_e = DNI*helio->S * helio->cos_w / grid_num / ray_num;
+	int iter_n = 20;
+	double sum =0;
+	Vector3d row_gap = (helio->vertex[3] - helio->vertex[0]) / cols;
+	Vector3d col_gap = (helio->vertex[1] - helio->vertex[0]) / rows;
+
+	Vector3d start_v;
+	for (int n = 0; n < iter_n; n++) {
+		start_v = helio->vertex[0];
+		for (int i = 0; i < rows; i++) {
+			start_v = helio->vertex[0] + i*row_gap;
+			for (int j = 0; j < cols; j++) {
+				for (int k = 0; j < ray_num; k++) {
+					double x = random_double();
+					double y = random_double();
+					Vector3d ray_v = start_v + x*row_gap + y*col_gap;
+					Vector3d inter_v = GeometryFunc::calcIntersection(recv_normal, recv_pos, ray_v, dir);
+					for (int l = 0; l < 4; l++) {
+						Vector3d edg = recv_v[(l + 1) % 4] - recv_v[l];
+						Vector3d line = inter_v - recv_v[l];
+						Vector3d tmp_n = edg.cross(line);
+						if (tmp_n.dot(recv_normal) > Epsilon) {
+							double dis = (inter_v - ray_v).norm();
+							double mAA = 0.0;
+							if (dis <= 1000)
+								mAA = (double)(0.99321 - 0.0001176 * dis + 1.97 * 1e-8 * dis * dis);      //d<1000
+							else
+								mAA = exp(-0.0001106 * dis);
+
+							sum += mAA*ray_e;
+						}
+					}
+				}
+				start_v += col_gap;
+			}
+		}
+	}
+
+	return sum / iter_n;
+}
+
 
 // 以光线跟踪计算结果为groundtruth，检测预测结果是否包含准确结果
 // version: CPU
