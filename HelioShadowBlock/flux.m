@@ -5,8 +5,6 @@ grid = load('multi.txt');
 gauss = load('gauss_51.txt');
 grid_recv = load('grid_51.txt');
 
-
-
 x1 = grid(:,1);
 y1=grid(:,2);
 z1=grid(:,3);

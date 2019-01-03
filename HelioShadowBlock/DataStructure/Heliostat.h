@@ -72,6 +72,8 @@ public:
 	double sigma;				// Heliostat's sigma
 	double flux_param;			// flux_param = 0.5 * S * cos_w * rou * mAA * l_w_ration / pi
 	double flux_sum;				// flux_sum = 0.5 * S * cos_w * rou * mAA * l_w_ration / pi
+	double rela_dis;			// 计算阴影与遮挡时最大无关距离
+	double approx_rela_dis;		// 由公式计算得到的阴影与遮挡时最大无关距离
 
 protected:
 	bool initialized;

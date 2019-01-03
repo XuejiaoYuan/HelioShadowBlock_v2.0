@@ -59,10 +59,10 @@ void GaussLegendre::CalcWeight(const int m, VectorXd& x, VectorXd&w, const doubl
 }
 
 inline double GaussLegendre::jacobi(const Vector4d& x, const Vector4d& y, double s, double t) {
-	double J00 = -(1.0 - t)*x(0) + (1.0 - t)*x(1) + (1.0 + t)*x(2) - (1.0 - t)*x(3);
-	double J01 = -(1.0 - t)*y(0) + (1.0 - t)*y(1) + (1.0 + t)*y(2) - (1.0 - t)*y(3);
-	double J10 = -(1.0 - s)*x(0) - (1.0 + s)*x(1) + (1.0 + s)*x(2) + (1.0 - s)*x(3);
-	double J11 = -(1.0 - s)*y(0) - (1.0 + s)*y(1) + (1.0 + s)*y(2) + (1.0 - s)*y(3);
+	double J00 = -(1.0 - t) * x[0] + (1.0 - t) * x[1] + (1.0 + t) * x[2] - (1.0 + t) * x[3];
+	double J01 = -(1.0 - t) * y[0] + (1.0 - t) * y[1] + (1.0 + t) * y[2] - (1.0 + t) * y[3];
+	double J10 = -(1.0 - s) * x[0] - (1.0 + s) * x[1] + (1.0 + s) * x[2] + (1.0 - s) * x[3];
+	double J11 = -(1.0 - s) * y[0] - (1.0 + s) * y[1] + (1.0 + s) * y[2] + (1.0 - s) * y[3];
 	return (J00*J11 - J01*J10) / 16.0;
 }
 

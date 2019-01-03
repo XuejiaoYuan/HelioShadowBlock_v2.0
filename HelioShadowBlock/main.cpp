@@ -46,8 +46,8 @@ int main(int argc, char** argv) {
 	int N = solar_scene->recvs[0]->recv_size.x() / RECEIVER_SLICE;
 	int M = solar_scene->recvs[0]->recv_size.z() / RECEIVER_SLICE;
 	GaussLegendre* gl = new GaussLegendre();
-	/*N = 100;
-	M = 100;*/
+	N = 8;
+	M = 8;
 	gl->calcNodeWeight(N, M);
 
 	// TODO 镜场参数优化
@@ -148,19 +148,35 @@ int main(int argc, char** argv) {
 	//	outFile.close();
 	//}
 
+	vector<int> time_param(4, 0);
+	//time_param[0] = 6;
+	//time_param[1] = 22;
+	//time_param[2] = 12;
+	//time_param[3] = 0;
+	//sunray_dir = sunray.changeSunRay(time_param);
+	//solar_scene->changeSolarScene(sunray_dir);
+
+	//sdbk_calc->calcSingleFluxSum(0, sunray.current_DNI);
+	//return 0;
 
 	vector<MatrixXd*> gt_res;
 	vector<MatrixXd*> sample_sd_bk_res;
-	auto start = std::chrono::high_resolution_clock::now();
-	vector<int> time_param(4, 0);
-	for (int month = 1; month <= 12; month++) {
+	double total_t = 0;
+	cnt = 0;
+	vector<double> calc_t;
+	for (int month = 1; month <= 6; month++) {
 		for (int day = 1; day < 29; day += 4) {
-			for (int hour = 8; hour < 13; hour++) {
+			for (int hour = 10; hour < 13; hour++) {
 				for (int min = 0; min < 15; min += 15) {
+					cnt++;
+					cout << "cnt: " << cnt << endl;
+					auto start = std::chrono::high_resolution_clock::now();
+
 					time_param[0] = month;
 					time_param[1] = day;
 					time_param[2] = hour;
 					time_param[3] = min;
+					
 					sunray_dir = sunray.changeSunRay(time_param);
 					solar_scene->changeSolarScene(sunray_dir);
 
@@ -175,10 +191,22 @@ int main(int argc, char** argv) {
 						sdbk_calc->calcShadowBlock(sunray.current_DNI);
 					else
 						gt_res.push_back(sdbk_calc->calcSampleShadowBlock());
+					auto elapsed = chrono::duration_cast<chrono::microseconds>(std::chrono::high_resolution_clock::now() - start);
+					auto time = double(elapsed.count())*chrono::microseconds::period::num / chrono::microseconds::period::den;
+					total_t += time;
+					calc_t.push_back(time);
+					std::cout << "Change and Calculate time: " << time << "s." << endl;
+
 				}
 			}
 		}
 	}
+	cout << "average time: " << total_t / cnt << " time cnt: " << cnt << endl;
+	fstream outFile("calc_t.txt", ios_base::out);
+	for (auto& t : calc_t) {
+		outFile << t << endl;
+	}
+	outFile.close();
 	////
 	//// test
 	////

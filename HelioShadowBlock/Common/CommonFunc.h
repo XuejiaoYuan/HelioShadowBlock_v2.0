@@ -8,6 +8,7 @@
 #include <chrono>
 #include <omp.h>
 #include <cstdarg>
+#include <iomanip>
 using namespace std;
 
 #include <Eigen/Dense>
@@ -19,10 +20,11 @@ using namespace Eigen;
 #define HELIOSTAT_REFLECTIVITY 0.88 
 #define RECEIVER_SLICE 0.05		// *ATTENTION*: w与l应被RECEIVER_SLICE整除
 
-//#define DEBUG
+#define DEBUG
 //#define OUTPUTRES
 //#define READFILE
 #define CLIPPER
+//#define CALC_TIME
 
 
 typedef enum {

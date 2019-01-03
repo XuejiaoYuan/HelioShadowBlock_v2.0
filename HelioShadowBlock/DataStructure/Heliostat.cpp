@@ -5,6 +5,8 @@
 
 bool Heliostat::initSurfaceNormal(const vector<Vector3d> &focus_center, const Vector3d &sunray_dir) {
 	double dis_min = INT_MAX;
+	rela_dis = INT_MIN;
+	approx_rela_dis = INT_MIN;
 	for (int i = 0; i < focus_center.size(); i++) {
 		double dis = (focus_center[i] - helio_pos).norm();
 		if (dis < dis_min) {
@@ -22,6 +24,8 @@ bool Heliostat::initSurfaceNormal(const vector<Vector3d> &focus_center, const Ve
 
 void Heliostat::changeSurfaceNormal(const vector<Vector3d>& focus_center, const Vector3d & sunray_dir)
 {
+	rela_dis = INT_MIN;
+	approx_rela_dis = INT_MIN;
 	Vector3d reflectray_dir = focus_center[focus_center_index] - helio_pos;
 	reflectray_dir = reflectray_dir.normalized();
 	helio_normal = (reflectray_dir - sunray_dir).normalized();
@@ -95,7 +99,7 @@ void Heliostat::calc_flux_param(const Vector3d& focus_center)
 	Vector3d reverse_dir = (helio_pos - focus_center).normalized();
 	for (int i = 0; i < 3; i++) {
 		// ¼ÆËãimage plane¶¥µã
-		inter_v[i] = GeometryFunc::calcIntersection(reverse_dir, focus_center, vertex[i], -reverse_dir);
+		 GeometryFunc::calcIntersection(reverse_dir, focus_center, vertex[i], -reverse_dir, inter_v[i]);
 	}
 	double ip_w = (vertex[1] - vertex[0]).norm();
 	double ip_l = (vertex[2] - vertex[1]).norm();

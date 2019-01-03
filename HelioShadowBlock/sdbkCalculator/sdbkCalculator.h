@@ -22,6 +22,7 @@ public:
 		//this->sample_clipper_res_store.resize(2);
 	}
 	double calcSingleShadowBlock(int helio_index);
+	void calcSingleFluxSum(int helio_index, const double DNI);
 	void calcShadowBlock(const double DNI);
 	void sample_calc_preprocess(const int sample_row_num, const int sample_col_num, bool calc_s = false, bool calc_f = false);
 	MatrixXd* calcSampleShadowBlock();
@@ -50,6 +51,8 @@ protected:
 	double _calc_flux_sum(vector<Vector2d>& proj_v, Heliostat* helio, const double cos_phi, const double DNI);
 	double _multi_inte_flux_sum(vector<Vector2d>& proj_v, int n, Heliostat* helio, const double cos_phi, const double DNI);
 	double ray_tracing_flux_sum(vector<Vector3d>& recv_v, Vector3d& recv_pos, Vector3d& recv_normal, Heliostat* helio, const Vector3d& dir, const double DNI);
+	double inte_infinite_flux_sum(Heliostat* helio, const Vector3d& recv_pos, const double cos_phi, const double DNI);
+
 
 	void flux_sum_matrix_grid(vector<Vector3d>& _recv_v, vector<Vector2d>& proj_v, const int rows, const int cols, Heliostat* helio, const double cos_phi, const double DNI);
 	void flux_sum_matrix_inte(Vector3d& recv_normal, Vector3d& fc, vector<Vector3d>& _recv_v, Matrix4d& local2world, vector<Vector2d>& proj_v, Heliostat * helio, const double cos_phi, const double DNI);

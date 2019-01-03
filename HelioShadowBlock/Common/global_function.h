@@ -22,11 +22,28 @@ namespace GeometryFunc
 
 	}
 
-	inline Vector3d calcIntersection(const Vector3d& normal, const Vector3d& origin_p, const Vector3d& v, const Vector3d& dir) {
+	inline double calcIntersection(const Vector3d& normal, const Vector3d& origin_p, const Vector3d& v, const Vector3d& dir, Vector3d& inter_v) {
 		double div = dir.dot(normal);
-		double t = (origin_p - v).dot(normal);
-		Vector3d inter_v = v + dir*t / div;
-		return inter_v;
+		double t = (origin_p - v).dot(normal)/div;
+		inter_v = v + dir*t;
+		return t;
+	}
+
+	inline bool inProjArea(const vector<Vector3d>& v, const Vector3d& p) {
+		Vector3d pre_n, cur_n, edg, line;
+		for (int l = 0; l < 4; l++) {
+			edg = v[(l + 1) % 4] - v[l];
+			line = p-v[l];
+			if (l == 0) {
+				pre_n = edg.cross(line);
+				continue;
+			}
+			cur_n = edg.cross(line);
+			if (pre_n.dot(cur_n) < Epsilon)
+				return false;
+			pre_n = cur_n;
+		}
+		return true;
 	}
 
 	inline void setLocalVertex(const double l, const double w, vector<Vector3d>& vertex) {

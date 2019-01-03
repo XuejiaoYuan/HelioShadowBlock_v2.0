@@ -8,7 +8,7 @@ end
 # Receiver attributes
 Recv 0
 pos	0 250 0
-size 10 0 20
+size 10 20 2
 norm 0 0 -1
 face 0
 num 1
