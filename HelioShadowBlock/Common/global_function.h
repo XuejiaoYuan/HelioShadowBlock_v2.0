@@ -61,17 +61,17 @@ namespace GeometryFunc
 
 		u[1] = normal;
 
-		if (abs(u[1].x()) > abs(u[1].z()))
-		{
-			u[2] = u[1].cross(Vector3d(0.0f, 1.0f, 0.0f)).normalized();
-			u[0] = u[1].cross(u[2]).normalized();
-		}
-		else
-		{
+		//if (abs(u[1].x()) > abs(u[1].z()))
+		//{
+		//	u[2] = u[1].cross(Vector3d(0.0f, 1.0f, 0.0f)).normalized();
+		//	u[0] = u[1].cross(u[2]).normalized();
+		//}
+		//else
+		//{
 			Vector3d tmp_u(0.0f, 1.0f, 0.0f);
 			u[0] = tmp_u.cross(u[1]).normalized();
 			u[2] = u[0].cross(u[1]).normalized();
-		}
+		//}
 
 		for (int i = 0; i < 3; i++) {
 			local2worldM(i, 0) = u[i].x();

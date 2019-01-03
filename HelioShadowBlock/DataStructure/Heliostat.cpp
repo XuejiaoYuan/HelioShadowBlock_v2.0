@@ -94,7 +94,6 @@ void Heliostat::getSubHelioVertex(vector<Vector3d>& subhelio_vertex)
 
 void Heliostat::calc_flux_param(const Vector3d& focus_center)
 {
-	double t[3];
 	vector<Vector3d> inter_v(3);
 	Vector3d reverse_dir = (helio_pos - focus_center).normalized();
 	for (int i = 0; i < 3; i++) {
@@ -112,6 +111,8 @@ void Heliostat::calc_flux_param(const Vector3d& focus_center)
 
 void Heliostat::setHelioVertex()
 {
+	//if (helio_index == 966 || helio_index == 967)
+	//	system("pause");
 	GeometryFunc::setLocalVertex(helio_size.x(), helio_size.z(), vertex);
 
 	GeometryFunc::getHelioMatrix(helio_normal, helio_pos, local2worldM, world2localM);

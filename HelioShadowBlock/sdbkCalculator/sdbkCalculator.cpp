@@ -165,7 +165,7 @@ double SdBkCalc::helioClipper(Heliostat * helio, const vector<Vector3d>& dir, co
 	}
 
 	for (int index = 0; index < 2; index++) {
-		Vector3d reverse_dir = Vector3d(-dir[index].x(), -dir[index].y(), -dir[index].z());
+		Vector3d reverse_dir = -dir[index]; 
 		vector<Vector3d> pro(4), tmp_pro(4);
 		set<Heliostat*> relative_helio_set;
 		for (auto iter = estimate_grids[index].begin(); iter != estimate_grids[index].end(); iter++) {
@@ -349,6 +349,7 @@ double SdBkCalc::calcAccurateIntersection(Heliostat* helio, const vector<Vector3
 	//helio->getSubHelioVertex(subhelio_v);
 	//int subHelio_num = subhelio_v.size() / 4;
 	fstream outFile("ray.txt", ios_base::out);
+	vector<set<Heliostat*>> sd_bk_h(2);
 	for (int i = 0; i < helio->vertex.size(); i++) {
 		vector<Vector3d> helio_v = helio->vertex;
 		//vector<Vector3d> helio_v;
@@ -430,6 +431,7 @@ double SdBkCalc::calcAccurateIntersection(Heliostat* helio, const vector<Vector3
 					relative_helio_label[0].insert(res);
 					cnt++;
 					outFile << 1 << endl;
+					sd_bk_h[0].insert(hNear);
 				}
 				//if (sd)
 				//	continue;
@@ -497,6 +499,7 @@ double SdBkCalc::calcAccurateIntersection(Heliostat* helio, const vector<Vector3
 						relative_helio_label[1].insert(res);
 						cnt++;
 						outFile << 1 << endl;
+						sd_bk_h[1].insert(hNear);
 					}
 					else
 						outFile << 0 << endl;
@@ -506,6 +509,12 @@ double SdBkCalc::calcAccurateIntersection(Heliostat* helio, const vector<Vector3
 	}
 	double res = cnt / total_sum;
 	outFile.close();
+	for (int i = 0; i < sd_bk_h.size(); i++) {
+		cout << endl;
+		for (auto& iter : sd_bk_h[i]) {
+			cout << iter->helio_index << endl;
+		}
+	}
 	return res;
 }
 
@@ -1191,7 +1200,7 @@ void SdBkCalc::calcShadowBlock(const double DNI)
 
 	Vector3d reverse_sunray_dir = -solar_scene->sunray_dir;
 #pragma omp parallel for
-	for (int i = 1083; i < helios.size(); i++) {
+	for (int i = 0; i < helios.size(); i++) {
 
 		auto helio = helios[i];
 		set<vector<int>> shadow_relative_grid_label_3ddda, block_relative_grid_label_3ddda;
@@ -1206,7 +1215,7 @@ void SdBkCalc::calcShadowBlock(const double DNI)
 
 		calcIntersection3DDDA(helio, reflect_dir, block_relative_grid_label_3ddda);
 
-		vector<Vector3d> dir = { reverse_sunray_dir, reflect_dir };
+		vector<Vector3d> dir = { reverse_sunray_dir, reflect_dir };		// from heliostat
 		if (shadow_relative_grid_label_3ddda.size() != 0 || block_relative_grid_label_3ddda.size() != 0) {
 			vector<set<vector<int>>> estimate_grids = { shadow_relative_grid_label_3ddda, block_relative_grid_label_3ddda };
 			helio->sd_bk = helioClipper(helio, dir, estimate_grids);
