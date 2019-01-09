@@ -26,7 +26,7 @@ vector<vector<MatrixXd*>> LSPIA::LSPIA_surface(const vector<int>&ctrl_num, const
 	delta_even_uv = new MatrixXd(row / 2, col);
 	delta_odd_uv = new MatrixXd(row / 2, col);
 	delta = new MatrixXd(ctrl_num[0], ctrl_num[1]);
-
+	
 	// Step1. Calculate the parameters
 	vector<double> param_u, param_v;
 	for (int i = row - 1; i > -1; i--)
@@ -114,8 +114,8 @@ vector<vector<MatrixXd*>> LSPIA::LSPIA_surface(const vector<int>&ctrl_num, const
 		double sd_bk_error = surface_fitting(sample_sd_bk_res[cnt], tmp_ctrl_sd_bk, Nik, miu, 1e-4);
 
 		// 2. Calculate the fitting surface
-		MatrixXd* calc_sd_bk_even = new MatrixXd((*Nik[0]) * tmp_ctrl_sd_bk * Nik[2]->transpose());
-		MatrixXd* calc_sd_bk_odd = new MatrixXd((*Nik[1]) * tmp_ctrl_sd_bk * Nik[3]->transpose());
+		MatrixXd* calc_sd_bk_even = new MatrixXd((*f_Nik[0]) * tmp_ctrl_sd_bk * f_Nik[2]->transpose());
+		MatrixXd* calc_sd_bk_odd = new MatrixXd((*f_Nik[1]) * tmp_ctrl_sd_bk * f_Nik[3]->transpose());
 
 		calc[cnt].push_back(calc_sd_bk_even);
 		calc[cnt].push_back(calc_sd_bk_odd);
@@ -127,6 +127,33 @@ vector<vector<MatrixXd*>> LSPIA::LSPIA_surface(const vector<int>&ctrl_num, const
 	delete delta;
 	
 	return calc;
+}
+
+void LSPIA::checkFittingData(vector<Heliostat*>& helios, MatrixXd * field_index, vector<vector<MatrixXd*>>& fitting_data)
+{
+	MatrixXd* data_even = fitting_data[0][0];
+	MatrixXd* data_odd = fitting_data[0][1];
+	MatrixXd* data_ptr;
+
+	int tmp_col;
+	int col = field_index->cols();
+	fstream outFile("fitting_error.txt", ios_base::out);
+	for (int i = 0; i < field_index->rows(); i++) {
+		if (i % 2) {
+			tmp_col = col - 1;
+			data_ptr = data_odd;
+		}
+		else {
+			tmp_col = col;
+			data_ptr = data_even;
+		}
+		for (int j = 0; j < tmp_col; j++) {
+			Heliostat* helio = helios[(*field_index)(i, j)];
+			outFile << helio->helio_pos.x() << ' ' << helio->helio_pos.z() << ' ' << helio->sd_bk <<
+				' ' << (*data_ptr)(i/2, j) << ' ' << helio->sd_bk - (*data_ptr)(i/2, j) << endl;
+		}
+	}
+	outFile.close();
 }
 
 double LSPIA::BaseFunction(const int i, const int k, const double u, const vector<double>& knot)

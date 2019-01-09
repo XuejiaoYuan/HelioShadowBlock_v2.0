@@ -22,10 +22,10 @@ public:
 		//this->sample_clipper_res_store.resize(2);
 	}
 	double calcSingleShadowBlock(int helio_index);
-	void calcSingleFluxSum(int helio_index, const double DNI);
+	double calcSingleFluxSum(int helio_index, const double DNI);
 	void calcShadowBlock(const double DNI);
 	void sample_calc_preprocess(const int sample_row_num, const int sample_col_num, bool calc_s = false, bool calc_f = false);
-	MatrixXd* calcSampleShadowBlock();
+	MatrixXd* calcSampleShadowBlock(const double DNI);
 	virtual void save_clipper_res(const string save_path, int month, int day, int hour, int minute) {};
 
 	FieldType field_type;

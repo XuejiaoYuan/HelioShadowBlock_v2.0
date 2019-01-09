@@ -5,7 +5,8 @@
 
 bool Heliostat::initSurfaceNormal(const vector<Vector3d> &focus_center, const Vector3d &sunray_dir) {
 	double dis_min = INT_MAX;
-	rela_dis = INT_MIN;
+	max_rela_dis = INT_MIN;
+	min_rela_dis = INT_MAX;
 	approx_rela_dis = INT_MIN;
 	for (int i = 0; i < focus_center.size(); i++) {
 		double dis = (focus_center[i] - helio_pos).norm();
@@ -24,7 +25,8 @@ bool Heliostat::initSurfaceNormal(const vector<Vector3d> &focus_center, const Ve
 
 void Heliostat::changeSurfaceNormal(const vector<Vector3d>& focus_center, const Vector3d & sunray_dir)
 {
-	rela_dis = INT_MIN;
+	max_rela_dis = INT_MIN;
+	min_rela_dis = INT_MAX;
 	approx_rela_dis = INT_MIN;
 	Vector3d reflectray_dir = focus_center[focus_center_index] - helio_pos;
 	reflectray_dir = reflectray_dir.normalized();
@@ -111,8 +113,6 @@ void Heliostat::calc_flux_param(const Vector3d& focus_center)
 
 void Heliostat::setHelioVertex()
 {
-	//if (helio_index == 966 || helio_index == 967)
-	//	system("pause");
 	GeometryFunc::setLocalVertex(helio_size.x(), helio_size.z(), vertex);
 
 	GeometryFunc::getHelioMatrix(helio_normal, helio_pos, local2worldM, world2localM);
@@ -152,6 +152,21 @@ double Heliostat::set_focus_center_index(const vector<Receiver*>& recvs)
 	}
 
 	return min_d;
+}
+
+void Heliostat::calcFluxParam(const vector<Receiver*>& recvs)
+{
+	double dis = set_focus_center_index(recvs);
+	if (dis <= 1000)
+		mAA = (double)(0.99321 - 0.0001176 * dis + 1.97 * 1e-8 * dis * dis);      //d<1000
+	else
+		mAA = exp(-0.0001106 * dis);
+
+	Vector3d reverse_sunray_dir = (helio_pos - recvs[0]->focus_center[focus_center_index]).normalized();
+	S = helio_size.x() * helio_size.z();
+
+	// TODO: set helio sigma
+	sigma = 1.31;
 }
 
 void Heliostat::initializeSubHelio(const Vector3d&focus_center, const Vector3d&sunray_dir)

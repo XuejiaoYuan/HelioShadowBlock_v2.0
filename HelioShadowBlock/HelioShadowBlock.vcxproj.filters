@@ -117,6 +117,9 @@
     <ClInclude Include="GaussLegendre\GaussLegendre.h">
       <Filter>GaussLegendre</Filter>
     </ClInclude>
+    <ClInclude Include="DataStructure\FieldSegment.h">
+      <Filter>DataStructure</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DataStructure\Clip\Clipper\clipper.cpp">
@@ -184,6 +187,9 @@
     </ClCompile>
     <ClCompile Include="GaussLegendre\GaussLegendre.cpp">
       <Filter>GaussLegendre</Filter>
+    </ClCompile>
+    <ClCompile Include="DataStructure\FieldSegment.cpp">
+      <Filter>DataStructure</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

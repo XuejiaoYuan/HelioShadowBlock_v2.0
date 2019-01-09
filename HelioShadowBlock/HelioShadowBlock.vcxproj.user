@@ -1,11 +1,11 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <LocalDebuggerCommandArguments>userData/field_data/fermat_field/fermat_init_param.scn userData/SPAtest_ori.txt -a_c -f fermatField_res/10/</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>userData/field_data/cross_field/crossField_300x300/crossRectField_300_300_init_param.scn userData/SPAtest_ori.txt -s_l -f crossField_res/300x300/10/</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <LocalDebuggerCommandArguments>userData/field_data/fermat_field/fermat_init_param.scn userData/SPAtest_ori.txt -a_c -f fermatField_res/10/</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>userData/field_data/cross_field/crossField_300x300/crossRectField_300_300_init_param.scn userData/SPAtest_ori.txt -s_l -f crossField_res/300x300/10/</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">

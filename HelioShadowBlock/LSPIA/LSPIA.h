@@ -2,6 +2,7 @@
 #ifndef LSPIA_H
 #define LSPIA_H
 #include "../Common/CommonFunc.h"
+#include "../DataStructure/Heliostat.h"
 
 class LSPIA
 {
@@ -9,7 +10,7 @@ public:
 	LSPIA() {};
 	void set_datas(vector<MatrixXd*> field_data, vector<MatrixXd*> sample_field_data, vector<MatrixXd*> sd_bk_res);
 	vector<vector<MatrixXd*>> LSPIA_surface(const vector<int>&ctrl_num, const double miu);
-
+	void checkFittingData(vector<Heliostat*>& helios, MatrixXd* field_index, vector<vector<MatrixXd*>>& fitting_data);
 private:
 	vector<MatrixXd*> field_data;			// 定日镜场所有定日镜x与z坐标
 	vector<MatrixXd*> sample_field_data;		// 定日镜场采样定日镜x与z坐标

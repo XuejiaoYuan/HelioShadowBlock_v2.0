@@ -20,16 +20,19 @@ class SubHelio;
 
 class Heliostat {
 public:
-	Heliostat(const HelioType&_helio_type) {
-		helio_type = helio_type;
-		helio_matrix = Vector2i(1, 1);
-		helio_gap = Vector2d(0, 0);
-		helio_pos = Vector3d(0, 0, 0);
-		helio_size = Vector3d(0, 0, 0);
+	Heliostat(const HelioType& _type){}
+	Heliostat(const HelioType&_type, const Vector2d& _gap, const Vector2i& _matrix, const Vector3d& _size, 
+		const int _index, const Vector3d& _pos, const Vector3d& _poly_pos = Vector3d(0,0,0)) {
+		helio_type = _type;
+		helio_matrix = _matrix;
+		helio_gap = _gap;
+		helio_pos = _pos;
+		helio_size = _size;
 		helio_normal = Vector3d(0, 0, 0);
 		sd_bk = 0;
 		rou = HELIOSTAT_REFLECTIVITY;
 		sigma = 1.31;	// TODO: update
+		helio_index = _index;
 	};
 	~Heliostat() {
 		for (auto&sub : subhelios) {
@@ -41,6 +44,7 @@ public:
 	}
 	void initHeliostat(stringstream& line_stream, fstream& inFile, LayoutType layout_type, const Vector2d& helio_gap,
 		const Vector2i& helio_matrix, const vector<Vector3d>& focus_center, const Vector3d& sunray_dir = Vector3d(0, 0, 0));
+	
 	void getSubHelioVertex(vector<Vector3d>& subhelio_vertex);
 	void initializeSubHelio(const Vector3d&focus_center, const Vector3d&sunray_dir);
 	bool initSurfaceNormal(const vector<Vector3d>& focus_center, const Vector3d& sunray_dir);   // Calculate the normal of heliostat surface
@@ -48,6 +52,7 @@ public:
 	void changeSubHelio(const Vector3d& focus_center, const Vector3d& sunray_dir);
 	double calcSunHelioAngle(const Vector3d& sunray_dir);
 	double set_focus_center_index(const vector<Receiver*>& recvs);
+	void calcFluxParam(const vector<Receiver*>& recvs);
 
 	vector<Vector3d> vertex;		//Heliostat's vertex
 	vector<SubHelio*> subhelios;
@@ -72,7 +77,8 @@ public:
 	double sigma;				// Heliostat's sigma
 	double flux_param;			// flux_param = 0.5 * S * cos_w * rou * mAA * l_w_ration / pi
 	double flux_sum;				// flux_sum = 0.5 * S * cos_w * rou * mAA * l_w_ration / pi
-	double rela_dis;			// 计算阴影与遮挡时最大无关距离
+	double max_rela_dis;			// 计算阴影与遮挡时最大无关距离
+	double min_rela_dis;			// 计算阴影与遮挡时最小相关距离
 	double approx_rela_dis;		// 由公式计算得到的阴影与遮挡时最大无关距离
 
 protected:

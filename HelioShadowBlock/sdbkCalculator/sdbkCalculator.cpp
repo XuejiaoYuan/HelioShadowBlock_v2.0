@@ -11,7 +11,7 @@ void SdBkCalc::sample_calc_preprocess(const int sample_row_num, const int sample
 		sample_field_index = sample_field_data_pre(sample_row_num, sample_col_num);
 }
 
-MatrixXd* SdBkCalc::calcSampleShadowBlock()
+MatrixXd* SdBkCalc::calcSampleShadowBlock(const double DNI)
 {
 	vector<Receiver*> recvs = solar_scene->recvs;
 	int row = sample_field_index->rows();
@@ -21,6 +21,7 @@ MatrixXd* SdBkCalc::calcSampleShadowBlock()
 	Vector3d reverse_sunray_dir = -solar_scene->sunray_dir;
 	sample_sd_bk_res = new MatrixXd(row, col);
 
+#pragma omp parallel for
 	for (int i = 0; i < row; i++) {
 		for (int j = 0; j < col; j++) {
 			int index = (*sample_field_index)(i, j);
@@ -35,6 +36,13 @@ MatrixXd* SdBkCalc::calcSampleShadowBlock()
 			vector<Vector3d> dir = { reverse_sunray_dir, reflect_dir };
 			vector<set<vector<int>>> estimate_grids = { shadow_relative_grid_label_3ddda, block_relative_grid_label_3ddda };
 			(*sample_sd_bk_res)(i, j) = helioClipper(helio, dir, estimate_grids);
+			if (gl != NULL)
+				helio->flux_sum = calcFluxMap(helio, DNI);
+			//(*sample_sd_bk_res)(i, j) *= helio->flux_sum;
+
+			shadow_relative_grid_label_3ddda.clear();
+			block_relative_grid_label_3ddda.clear();
+			estimate_grids.clear();
 		}
 	}
 	return sample_sd_bk_res;
@@ -164,6 +172,9 @@ double SdBkCalc::helioClipper(Heliostat * helio, const vector<Vector3d>& dir, co
 		return 0;
 	}
 
+	helio->max_rela_dis = INT_MIN;
+	helio->min_rela_dis = INT_MAX;
+
 	for (int index = 0; index < 2; index++) {
 		Vector3d reverse_dir = -dir[index]; 
 		vector<Vector3d> pro(4), tmp_pro(4);
@@ -178,15 +189,20 @@ double SdBkCalc::helioClipper(Heliostat * helio, const vector<Vector3d>& dir, co
 				int cnt = 0;
 				for (int i = 0; i < helio_v.size(); i++) {
 					//t = calcIntersectionPoint(helio_v[i], reverse_dir, helio->vertex[0], helio->vertex[1], helio->vertex[2]);
-					if(GeometryFunc::calcIntersection(helio->helio_normal, helio->helio_pos, helio_v[i], reverse_dir, pro[i]) > Epsilon){
+					t = GeometryFunc::calcIntersection(helio->helio_normal, helio->helio_pos, helio_v[i], reverse_dir, pro[i]);
+					if(t > Epsilon){
 						cnt++;
+						if (helio->max_rela_dis < t)
+							helio->max_rela_dis = t;
+						if (helio->min_rela_dis > t)
+							helio->min_rela_dis = t;
 						//cout << relative_helio->helio_index << endl;
 					}
 				}
 				if (cnt > 0) {
-					double rela_dis = (helio->helio_pos - relative_helio->helio_pos).norm();
-					if (helio->rela_dis < rela_dis)
-						helio->rela_dis = rela_dis;
+					//double rela_dis = (helio->helio_pos - relative_helio->helio_pos).norm();
+					//if (helio->rela_dis < rela_dis)
+					//	helio->rela_dis = rela_dis;
 
 					Path clip;
 					for (auto v : pro) {
@@ -339,8 +355,8 @@ double SdBkCalc::calcAccurateIntersection(Heliostat * helio, const Vector3d & di
 
 double SdBkCalc::calcAccurateIntersection(Heliostat* helio, const vector<Vector3d>& dir, vector<set<vector<int>>>& relative_helio_label)
 {
-	int helio_inner_rows = 100;
-	int helio_inner_cols = 100;
+	int helio_inner_rows = 50;
+	int helio_inner_cols = 50;
 
 	double total_sum = 0;
 	int cnt = 0;
@@ -348,7 +364,7 @@ double SdBkCalc::calcAccurateIntersection(Heliostat* helio, const vector<Vector3
 	//vector<Vector3d> subhelio_v;
 	//helio->getSubHelioVertex(subhelio_v);
 	//int subHelio_num = subhelio_v.size() / 4;
-	fstream outFile("ray.txt", ios_base::out);
+	fstream outFile("ray" + to_string(helio->helio_index) + ".txt", ios_base::out);
 	vector<set<Heliostat*>> sd_bk_h(2);
 	for (int i = 0; i < helio->vertex.size(); i++) {
 		vector<Vector3d> helio_v = helio->vertex;
@@ -368,24 +384,9 @@ double SdBkCalc::calcAccurateIntersection(Heliostat* helio, const vector<Vector3
 				Heliostat* hNear = nullptr;
 				bool sd = false;
 				for (auto&h : solar_scene->helios) {
-					
 					if (h != helio) {
-						/*Vector3d inter_v = GeometryFunc::calcIntersection(h->helio_normal, h->helio_pos, ori_v, dir[0]);
-						double t = calcIntersectionPoint(ori_v, dir[0], h->vertex[0], h->vertex[1], h->vertex[2]);
-						Vector3d inter_v2 = ori_v + dir[0] * t;*/
-						//if (t < Epsilon)
-						//	cout << t << endl;
-						//if (GeometryFunc::inProjArea(h->vertex, inter_v)) {
-						//	//vector<int> res(3);
-						//	//res[0] = (hNear->helio_pos.z() - solar_scene->layouts[0]->layout_first_helio_center.z()) / solar_scene->layouts[0]->helio_interval.z();		// smaller x is, smaller col is
-						//	//res[1] = (hNear->helio_pos.x() - solar_scene->layouts[0]->layout_first_helio_center.x()) / solar_scene->layouts[0]->helio_interval.x();		// bigger z is, smaller row is
-						//	//res[2] = 0;
-						//	//relative_helio_label[0].insert(res);
-						//	cnt++;
-						//	sd = true;
-						//	outFile << 1 << endl;
-						//	break;
-						//}
+						if ((h->helio_pos - helio->helio_pos).norm() > 80)
+							continue;
 
 						vector<Vector3d> neigh_v = h->vertex;
 
@@ -432,25 +433,16 @@ double SdBkCalc::calcAccurateIntersection(Heliostat* helio, const vector<Vector3
 					cnt++;
 					outFile << 1 << endl;
 					sd_bk_h[0].insert(hNear);
+					if (helio->max_rela_dis < tMin)
+						helio->max_rela_dis = tMin;
 				}
-				//if (sd)
-				//	continue;
 				else {
 					for (auto&h : solar_scene->helios) {
 						
 						if (h != helio) {
-							//Vector3d inter_v = GeometryFunc::calcIntersection(h->helio_normal, h->helio_pos, ori_v, dir[1]);
-							//if (GeometryFunc::inProjArea(h->vertex, inter_v)) {
-							//	vector<int> res(3);
-							//	res[0] = (hNear->helio_pos.z() - solar_scene->layouts[0]->layout_first_helio_center.z()) / solar_scene->layouts[0]->helio_interval.z();		// smaller x is, smaller col is
-							//	res[1] = (hNear->helio_pos.x() - solar_scene->layouts[0]->layout_first_helio_center.x()) / solar_scene->layouts[0]->helio_interval.x();		// bigger z is, smaller row is
-							//	res[2] = 0;
-							//	relative_helio_label[1].insert(res);
-							//	cnt++;
-							//	sd = true;
-							//	outFile << 1 << endl;
-							//	break;
-							//}
+							if ((h->helio_pos - helio->helio_pos).norm() > 80)
+								continue;
+		
 							vector<Vector3d> neigh_v = h->vertex;
 
 							Vector3d E1 = neigh_v[1] - neigh_v[0];
@@ -487,10 +479,6 @@ double SdBkCalc::calcAccurateIntersection(Heliostat* helio, const vector<Vector3
 							}
 						}
 					}
-					//if (sd)
-					//	continue;
-					//else
-					//	outFile << 0 << endl;
 					if (hNear != nullptr) {
 						vector<int> res(3);
 						res[0] = (hNear->helio_pos.z() - solar_scene->layouts[0]->layout_first_helio_center.z()) / solar_scene->layouts[0]->helio_interval.z();		// smaller x is, smaller col is
@@ -500,6 +488,8 @@ double SdBkCalc::calcAccurateIntersection(Heliostat* helio, const vector<Vector3
 						cnt++;
 						outFile << 1 << endl;
 						sd_bk_h[1].insert(hNear);
+						if (helio->max_rela_dis < tMin)
+							helio->max_rela_dis = tMin;
 					}
 					else
 						outFile << 0 << endl;
@@ -1065,7 +1055,7 @@ double SdBkCalc::calcSingleShadowBlock(int helio_index)
 }
 
 
-void SdBkCalc::calcSingleFluxSum(int helio_index, const double DNI) {
+double SdBkCalc::calcSingleFluxSum(int helio_index, const double DNI) {
 
 	Heliostat* helio = solar_scene->helios[helio_index];
 	int fc_index = helio->focus_center_index;
@@ -1078,97 +1068,33 @@ void SdBkCalc::calcSingleFluxSum(int helio_index, const double DNI) {
 	double _flux_sum4 = 0;
 
 	Matrix4d world2localM, local2worldM;
-	// GeometryFunc::imgplane_getMatrixs(reverse_dir, focus_center, local2worldM, word2localM);
 	GeometryFunc::getImgPlaneMatrixs(reverse_dir, focus_center, local2worldM, world2localM, 1);
-	//fstream outFile("grid_gauss.txt", ios_base::out);
-	//for (int clip_n = 1; clip_n <= 10; clip_n += 1){
-	//	_flux_sum1 = 0;
-	//	_flux_sum2 = 0;
-	//	_flux_sum3 = 0;
-	//	for (int i = 0; i < helio->cos_phi.size(); i++) {
-	//		if (helio->cos_phi[i] > Epsilon) {
-	//			vector<Vector2d> proj_v;
-	//			vector<Vector3d> tmp_v;
-	//			for (auto& v : recvs[0]->recv_vertex[i]) {
-	//				Vector3d inter_v = GeometryFunc::calcIntersection(reverse_dir, focus_center, v, reverse_dir);
-	//				tmp_v.push_back(inter_v);
-	//				inter_v = GeometryFunc::mulMatrix(inter_v, world2localM);
-	//				proj_v.push_back(Vector2d(inter_v.x(), inter_v.z()));
-	//			}
-	//			gl->calcNodeWeight(clip_n, clip_n);
-	//			double _flux_sum_grid1 = _calc_flux_sum(proj_v, clip_n, clip_n, helio, helio->cos_phi[i], DNI);
-	//			double _flux_sum_grid2 = _calc_flux_sum(proj_v, helio, helio->cos_phi[i], DNI);
-	//			
-	//			
-	//			// gl->calcNodeWeight(15 - clip_n/5, 15 - clip_n/5);
-	//			// double _flux_sum_grid3 = _multi_inte_flux_sum(proj_v, clip_n/5, helio, helio->cos_phi[i], DNI);
-	//			
-	//			// _flux_sum3 += _flux_sum_grid3;
-	//			_flux_sum1 += _flux_sum_grid1;
-	//			_flux_sum2 += _flux_sum_grid2;
-	//		}
-	//	}
-	//	outFile << std::setprecision(18) << clip_n*clip_n << ' ' << _flux_sum1 << ' ' << _flux_sum2 << ' ' << pow(15-clip_n/5,2)*pow(clip_n/5,2) << ' ' << _flux_sum3 << endl;
-	//}
-	//outFile.close();
-	
-	fstream outFile("multi_gauss.txt", ios_base::out);
-	//outFile.open("multi_gauss.txt", ios_base::out);
-	for (int clip_n = 1; clip_n <= 5; clip_n++) {
-		for (int row = 1; row <= 10; row++) {
-			for (int col = 1; col <= 10; col++) {
-				_flux_sum3 = 0;
-				gl->calcNodeWeight(row, col);
 
-				auto start = std::chrono::high_resolution_clock::now();
+	for (int i = 0; i < helio->cos_phi.size(); i++) {
+		if (helio->cos_phi[i] > Epsilon) {
+			vector<Vector2d> proj_v;
+			vector<Vector3d> tmp_v;
+			for (auto& v : recvs[0]->recv_vertex[i]) {
+				Vector3d inter_v;
+				GeometryFunc::calcIntersection(reverse_dir, focus_center, v, reverse_dir, inter_v);
+				tmp_v.push_back(inter_v);
+				inter_v = GeometryFunc::mulMatrix(inter_v, world2localM);
+				proj_v.push_back(Vector2d(inter_v.x(), inter_v.z()));
 
-				for (int i = 0; i < helio->cos_phi.size(); i++) {
-					if (helio->cos_phi[i] > Epsilon) {
-						vector<Vector2d> proj_v;
-						vector<Vector3d> tmp_v;
-						for (auto& v : recvs[0]->recv_vertex[i]) {
-							Vector3d inter_v;
-							GeometryFunc::calcIntersection(reverse_dir, focus_center, v, reverse_dir, inter_v);
-							tmp_v.push_back(inter_v);
-							inter_v = GeometryFunc::mulMatrix(inter_v, world2localM);
-							proj_v.push_back(Vector2d(inter_v.x(), inter_v.z()));
-							
-						}
-						
-						double _flux_sum_grid3 = _multi_inte_flux_sum(proj_v, clip_n, helio, helio->cos_phi[i], DNI);
-						_flux_sum3 += _flux_sum_grid3;
-						
-					}
-				}
-				auto elapsed = chrono::duration_cast<chrono::microseconds>(std::chrono::high_resolution_clock::now() - start);
-				auto time = double(elapsed.count())*chrono::microseconds::period::num / chrono::microseconds::period::den;
-				if(abs(_flux_sum3 - 46700.88189) < 1)
-					outFile << row << ' ' << col << ' ' << clip_n << ' ' << clip_n*clip_n * (2*row+1)*(2*col+1) <<  ' ' << setprecision(10) << _flux_sum3- 46700.88189 << ' ' << time << endl;
 			}
+			//double _flux_sum_grid1 = _calc_flux_sum(proj_v, recvs[0]->mask_rows, recvs[0]->mask_cols, helio, helio->cos_phi[i], DNI);
+			// double _flux_sum_grid2 = _calc_flux_sum(proj_v, helio, helio->cos_phi[i], DNI);
+			double _flux_sum_grid3 = _multi_inte_flux_sum(proj_v, 2, helio, helio->cos_phi[i], DNI);
+			// double _flux_sum_ray = ray_tracing_flux_sum(recvs[0]->recv_vertex[i], recvs[0]->focus_center[i], recvs[0]->recv_normal_list[i], helio, -reverse_dir, DNI);
+			//_flux_sum1 += _flux_sum_grid1;
+			// _flux_sum2 += _flux_sum_grid2;
+			_flux_sum3 += _flux_sum_grid3;
+			// _flux_sum4 += _flux_sum_ray;
+
 		}
 	}
-	//	for (int n = 2; n <= 10; n++) {
-	//		_flux_sum3 = 0;
-	//		for (int i = 0; i < helio->cos_phi.size(); i++) {
-	//			if (helio->cos_phi[i] > Epsilon) {
-	//				vector<Vector2d> proj_v;
-	//				vector<Vector3d> tmp_v;
-	//				for (auto& v : recvs[0]->recv_vertex[i]) {
-	//					Vector3d inter_v = GeometryFunc::calcIntersection(reverse_dir, focus_center, v, reverse_dir);
-	//					tmp_v.push_back(inter_v);
-	//					inter_v = GeometryFunc::mulMatrix(inter_v, world2localM);
-	//					proj_v.push_back(Vector2d(inter_v.x(), inter_v.z()));
-	//				}
-	//				gl->calcNodeWeight(n, n);
-	//				double _flux_sum_grid3 = _multi_inte_flux_sum(proj_v, clip_n, helio, helio->cos_phi[i], DNI);
-	//
-	//				_flux_sum3 += _flux_sum_grid3;
-	//			}
-	//		}
-	//		outFile << clip_n<< ' ' << n << ' ' << _flux_sum3 << endl;
-	//	}
-	//}
-	outFile.close();
+
+	return _flux_sum3;
 }
 
 
@@ -1450,7 +1376,8 @@ void FermatSdBkCalc::save_clipper_res(const string save_path, int month, int day
 	fstream outFile(save_path + "clipper_m" + to_string(month) + "_d" + to_string(day) + "_h" + to_string(hour) + "_min" + to_string(minute) + ".txt", ios_base::out);
 	for (int i = 0; i < solar_scene->helios.size(); i++) {
 		auto h = solar_scene->helios[i];
-		outFile << h->helio_pos.x() << ' ' << h->helio_pos.z() << ' ' << h->sd_bk << ' ' << h->flux_sum << ' ' << h->rela_dis << ' ' << h->approx_rela_dis << endl;
+		outFile << solar_scene->sunray_dir.x() << ' ' << solar_scene->sunray_dir.z() << ' ' << h->helio_pos.x() << ' ' << h->helio_pos.z() << ' ' << h->sd_bk << ' ' 
+			<< h->flux_sum << ' ' << h->min_rela_dis << ' ' << h->max_rela_dis << ' ' << h->approx_rela_dis << endl;
 	}
 	outFile.close();
 

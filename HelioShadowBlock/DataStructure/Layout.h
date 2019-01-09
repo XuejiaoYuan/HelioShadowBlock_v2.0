@@ -25,10 +25,10 @@ public:
 		layout_row_col = Vector2i(0, 0);
     }
 	void initLayout(fstream& inFile, InputMode& input_mode, int& helio_type);				// 输入文件时，初始化镜场分布
-	virtual void setHelioLayout(vector<Heliostat*> helios);									// 设置定日镜在网格中的排布
+	inline void setHelioLayout(Heliostat* helio);											// 设置单个定日镜顶点坐标在网格中的排布
+	void setHelioLayout(vector<Heliostat*>& helios);										// 调整镜场内所有定日镜的坐标
 	virtual void adjustHelioLayout(vector<Heliostat*>& helios,								// 镜场优化时调整镜场网格参数
 		const vector<vector<double>*>& field_args, const vector<Receiver*>& recvs);	
-	void calc_param(Heliostat* helio, const vector<Receiver*>& recvs);
 
 
 	Vector3d helio_interval;					//Interval between heliostat's center

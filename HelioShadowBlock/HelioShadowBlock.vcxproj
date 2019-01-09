@@ -127,6 +127,7 @@
     <ClInclude Include="DataStructure\Clip\PolyBool\posadder.h" />
     <ClInclude Include="DataStructure\Clip\PolyBool\primitives.h" />
     <ClInclude Include="DataStructure\Clip\PolyBool\set.h" />
+    <ClInclude Include="DataStructure\FieldSegment.h" />
     <ClInclude Include="DataStructure\Heliostat.h" />
     <ClInclude Include="DataStructure\Layout.h" />
     <ClInclude Include="DataStructure\Receiver.h" />
@@ -150,6 +151,7 @@
     <ClCompile Include="DataStructure\Clip\PolyBool\posadder.cc" />
     <ClCompile Include="DataStructure\Clip\PolyBool\primitives.cc" />
     <ClCompile Include="DataStructure\Clip\PolyBool\templates.cc" />
+    <ClCompile Include="DataStructure\FieldSegment.cpp" />
     <ClCompile Include="DataStructure\Heliostat.cpp" />
     <ClCompile Include="DataStructure\Layout.cpp" />
     <ClCompile Include="DataStructure\Receiver.cpp" />
