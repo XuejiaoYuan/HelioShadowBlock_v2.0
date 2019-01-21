@@ -3,6 +3,7 @@
 #include "./DataStructure/SunRay.h"
 #include "./LSPIA/LSPIA.h"
 #include "./GaussLegendre/GaussLegendre.h"
+#include "./DataStructure/FieldSegment.h"
 #include <iomanip>
 
 int get_index(int r, int c) {
@@ -73,11 +74,13 @@ int main(int argc, char** argv) {
 		break;
 	}
 	solar_scene->adjustFieldParam(field_args);
-	//bool flag = solar_scene->initSolarScene(scene_filepath, sunray_dir);
-	//if (!flag) {
-	//	cout << "Solar scene initialize failed!" << endl;
-	//	return -1;
-	//}
+	//FieldSegmentCreator field_seg_creator;
+	//FieldSegment* field_seg = field_seg_creator.getFieldSegment(solar_scene->layouts[0]->layout_type);
+	//field_seg->initFieldMatrix(solar_scene);
+	//field_seg->updateSample(10, 10);
+	FieldSegment* field_seg = new FieldSegment(solar_scene);
+	field_seg->setSegmentParam(1, 1, 100, 100);
+	field_seg->initFieldSegment();
 
 	SdBkCalcCreator sdbk_calc_creator;
 	SdBkCalc* sdbk_calc = sdbk_calc_creator.getSdBkCalc(solar_scene, gl);
@@ -92,7 +95,7 @@ int main(int argc, char** argv) {
 	//};
 	//vector<int> sample_hour = { 8, 10, 12, 14, 16 };
 
-	//for (int helio_index = 0; helio_index < solar_scene->helios.size(); helio_index+=20) {
+	//for (int helio_index = 0; helio_index < solar_scene->helios.size(); helio_index+=100) {
 	//	fstream outFile(save_path + "/single_helio_" + to_string(helio_index) + ".txt", ios_base::out);
 	//	//fstream outFile(save_path + "/sunray_altitude.txt", ios_base::out);
 	//	auto start = std::chrono::high_resolution_clock::now();
@@ -151,7 +154,6 @@ int main(int argc, char** argv) {
 	//return 0;
 
 	vector<MatrixXd*> gt_res;
-	vector<MatrixXd*> sample_sd_bk_res;
 	double total_t = 0;
 	cnt = 0;
 	vector<double> calc_t;
@@ -230,7 +232,6 @@ int main(int argc, char** argv) {
 	solar_scene->changeSolarScene(sunray_dir);
 	sdbk_calc->calcShadowBlock(sunray.current_DNI);
 
-
 	auto elapsed = chrono::duration_cast<chrono::microseconds>(std::chrono::high_resolution_clock::now() - start);
 	auto time = double(elapsed.count())*chrono::microseconds::period::num / chrono::microseconds::period::den;
 	std::cout << "Total clipper time: " << time << "s." << endl;
@@ -238,27 +239,30 @@ int main(int argc, char** argv) {
 
 	start = std::chrono::high_resolution_clock::now();
 
-	if (options == "-s_l")
-		sdbk_calc->sample_calc_preprocess(100, 100, true, true);
+	//if (options == "-s_l")
+	//	sdbk_calc->sample_calc_preprocess(100, 100, true, true);
 
-
+	vector<vector<MatrixXd*>> sample_sd_bk_res;
 	sunray_dir = sunray.changeSunRay(time_param);
 	solar_scene->changeSolarScene(sunray_dir);
-	if (options == "-s_l")
-		sample_sd_bk_res.push_back(sdbk_calc->calcSampleShadowBlock(sunray.current_DNI));
-
-	//for (int i = 0; i < sdbk_calc->sample_field_data[0]->rows(); i++)
-	//	cout << (*sdbk_calc->sample_field_data[1])(i, 0) << endl;
+	if (options == "-s_l") {
+		field_seg->even_sample_res.push_back(sdbk_calc->calcSampleShadowBlock(field_seg->even_sample_field_index, sunray.current_DNI));
+		field_seg->odd_sample_res.push_back(sdbk_calc->calcSampleShadowBlock(field_seg->odd_sample_field_index, sunray.current_DNI));
+		sdbk_calc->calcExcludeShadowBlock(sunray.current_DNI);
+	}
 
 	vector<vector<MatrixXd*>> fitting_sd_bk_res;
 	if (options == "-s_l") {
 		LSPIA lspia;
-		lspia.set_datas(sdbk_calc->field_data, sdbk_calc->sample_field_data, sample_sd_bk_res);
+		//lspia.set_datas(sdbk_calc->field_data, sdbk_calc->sample_field_data, sample_sd_bk_res);
 
-		vector<int> ctrl_nums = { 100,100 };
-		fitting_sd_bk_res = lspia.LSPIA_surface(ctrl_nums, 1.7);		// sd bk: 76,76,0.9
+		vector<int> ctrl_nums = { 75,75 };
+		//fitting_sd_bk_res = lspia.LSPIA_surface(ctrl_nums, 1.7);		// sd bk: 76,76,0.9
 
-		lspia.checkFittingData(sdbk_calc->solar_scene->helios, sdbk_calc->field_index, fitting_sd_bk_res);
+		//lspia.checkFittingData(sdbk_calc->solar_scene->helios, sdbk_calc->field_index, fitting_sd_bk_res);
+		
+		lspia.setPreDatas(field_seg, ctrl_nums, 0.5);
+		lspia.LSPIA_surface();
 	}
 
 	elapsed = chrono::duration_cast<chrono::microseconds>(std::chrono::high_resolution_clock::now() - start);

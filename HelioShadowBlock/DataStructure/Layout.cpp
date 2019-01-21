@@ -52,7 +52,7 @@ void Layout::setHelioLayout(vector<Heliostat*>& helios)
 	helio_layout.clear();
 	helio_layout.resize(layout_row_col.x(), vector<vector<Heliostat*>>(layout_row_col.y()));
 
-#pragma omp parallel for
+//#pragma omp parallel for
 	for (int i = 0; i < helios.size(); i++)
 		setHelioLayout(helios[i]);
 }
@@ -84,6 +84,16 @@ void Layout::adjustHelioLayout(vector<Heliostat*>& helios, const vector<vector<d
 
 
 	// 2. 调整helio位置参数
+	bool init = false;
+	if (helio_index_store.empty()) {
+		init = true;
+		helio_index_store.push_back(new MatrixXd(row, col));
+	}
+	if (init) {
+		m_helio_x.push_back(new MatrixXd(row, col));
+		m_helio_y.push_back(new MatrixXd(row, col));
+	}
+
 	int cnt = 0;
 	vector<int> row_col(2, 0);
 	for (int i = 0; i < row; i++) {
@@ -93,6 +103,10 @@ void Layout::adjustHelioLayout(vector<Heliostat*>& helios, const vector<vector<d
 			helio = new Heliostat((HelioType)helio_type, helio_gap, helio_matrix, helio_size, helios.size(), Vector3d(x_start, helio_pos.y(), z_start));
 			helio->calcFluxParam(recvs);
 			setHelioLayout(helio);
+			if(init)
+				(*helio_index_store[0])(i, j) = helio->helio_index;
+			(*m_helio_x.back())(i, j) = helio->helio_pos.x();
+			(*m_helio_y.back())(i, j) = helio->helio_pos.z();
 			helios.push_back(helio);
 			helio = nullptr;
 			x_start += helio_interval.x();
@@ -125,6 +139,21 @@ void CrossRectLayout::adjustHelioLayout(vector<Heliostat*>& helios, const vector
 
 
 	// 2. 调整helio位置参数
+	bool init = false;
+	if (helio_index_store.empty()) {
+		init = true;
+		helio_index_store.push_back(new MatrixXd(row, col - 1));
+	}
+	if (!exclude_helio_index.empty()) {
+		init = true;
+		exclude_helio_index.clear();
+	}
+	if (init) {
+		exclude_helio_index.push_back(vector<int>());
+		m_helio_x.push_back(new MatrixXd(row, col - 1));;
+		m_helio_y.push_back(new MatrixXd(row, col - 1));
+	}
+
 	int cnt = 0;
 	for (int i = 0; i < row; i++) {
 		int tmp_col = col - i % 2;
@@ -135,6 +164,18 @@ void CrossRectLayout::adjustHelioLayout(vector<Heliostat*>& helios, const vector
 			helio->calcFluxParam(recvs);
 			setHelioLayout(helio);
 			helios.push_back(helio);
+
+
+			if (!(i % 2) && j == tmp_col - 1) {
+				if (init)
+					exclude_helio_index[0].push_back(helio->helio_index);
+			}
+			else {
+				if (init)
+					(*helio_index_store[0])(i, j) = helio->helio_index;
+					(*m_helio_x.back())(i, j) = helio->helio_pos.x();
+					(*m_helio_y.back())(i, j) = helio->helio_pos.z();
+			}
 			helio = nullptr;
 			x_start += helio_interval.x();
 		}
@@ -161,6 +202,14 @@ void FermatLayout::adjustHelioLayout(vector<Heliostat*>& helios, const vector<ve
 	int n_row3 = int(helio_recv_dis4 - helio_recv_dis3) / helio_gap3;
 	helio_interval = Vector3d(dm, dm, dm);				// 定日镜包围盒间距
 
+	// 清空镜场布局存储矩阵
+	for (auto&m : helio_index_store) delete m;
+	for (auto&m : m_helio_x) delete m;
+	for (auto&m : m_helio_y) delete m;
+	helio_index_store.clear();
+	m_helio_x.clear();
+	m_helio_y.clear();
+
 	// 调整layout的参数
 	layout_bound_pos = Vector3d(
 		-helio_recv_dis4,
@@ -179,9 +228,9 @@ void FermatLayout::adjustHelioLayout(vector<Heliostat*>& helios, const vector<ve
 
 
 	// 调整helio位置参数
-	setCircleHelios(helio_recv_dis1, helio_gap1, n_row1, angle_delta1, helios, recvs);
-	setCircleHelios(helio_recv_dis2, helio_gap2, n_row2, angle_delta2, helios, recvs);
-	setCircleHelios(helio_recv_dis3, helio_gap3, n_row3, angle_delta3, helios, recvs);
+	setCircleHelios(0, helio_recv_dis1, helio_gap1, n_row1, angle_delta1, helios, recvs);
+	setCircleHelios(1, helio_recv_dis2, helio_gap2, n_row2, angle_delta2, helios, recvs);
+	setCircleHelios(2, helio_recv_dis3, helio_gap3, n_row3, angle_delta3, helios, recvs);
 
 
 #ifdef DEBUG
@@ -194,19 +243,25 @@ void FermatLayout::adjustHelioLayout(vector<Heliostat*>& helios, const vector<ve
 
 }
 
-void FermatLayout::setCircleHelios(const double R, const double gap, const int rows, const double angle_delta, vector<Heliostat*>& helios, const vector<Receiver*>& recvs)
+void FermatLayout::setCircleHelios(const int field_index, const double R, const double gap, const int rows,
+	const double angle_delta, vector<Heliostat*>& helios, const vector<Receiver*>& recvs)
 {
 	Heliostat* helio;
 	int cnt = 0;
 	int h_cnt = 2 * PI / angle_delta;
-
+	if (helio_index_store.size() == field_index) {
+		helio_index_store.push_back(new MatrixXd(rows, h_cnt));
+		m_helio_x.push_back(new MatrixXd(rows, h_cnt));
+		m_helio_y.push_back(new MatrixXd(rows, h_cnt));
+	}
+	
+	
 	for (int i = 0; i < rows; i++) {
 		double angle_d = 2 * PI / h_cnt;
 		double start_angle = (i + 1) % 2 * (angle_d / 2);
 		double start_r = R + i * gap;
 
 		for (int h = 0; h < h_cnt; h++) {
-			
 			helio = new Heliostat((HelioType)helio_type, helio_gap, helio_matrix, helio_size, helios.size(),
 				Vector3d(
 					sin(start_angle + h*angle_d) * start_r,
@@ -221,6 +276,9 @@ void FermatLayout::setCircleHelios(const double R, const double gap, const int r
 			);
 			helio->calcFluxParam(recvs);
 			setHelioLayout(helio);
+			(*helio_index_store[field_index])(i, h) = helio->helio_index;
+			(*m_helio_x.back())(i, h) = helio->helio_pos.x();
+			(*m_helio_y.back())(i, h) = helio->helio_pos.z();
 			helios.push_back(helio);
 			helio = nullptr;
 			cnt++;

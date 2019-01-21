@@ -45,7 +45,10 @@ public:
 	Vector3d helio_size;          //Heliostat's size:length, thickness, width 
 	Vector2d helio_gap;           //Heliostat's slice gap: x, z
 	Vector2i helio_matrix;          //Heliostat's slice matrix: row, col
-
+	vector<MatrixXd*> helio_index_store;				// Store helio index into matrix, exclude the last helio in every even row
+	vector<vector<int>> exclude_helio_index;		// Stote helio index which not included in the helio index matrix
+	vector<vector<vector<double>>> exclude_helio_res;	// t x field_num x helio_num
+	vector<MatrixXd*> m_helio_x, m_helio_y;
 };
 
 //
@@ -68,7 +71,7 @@ public:
 	void adjustHelioLayout(vector<Heliostat*>& helios, const vector<vector<double>*>& field_args, const vector<Receiver*>& recvs);
 
 private:
-	void setCircleHelios(const double R, const double gap, const int rows, const double angle_delta, vector<Heliostat*>& helios, const vector<Receiver*>& recvs);
+	void setCircleHelios(const int filed_index, const double R, const double gap, const int rows, const double angle_delta, vector<Heliostat*>& helios, const vector<Receiver*>& recvs);
 };
 
 class RadialLayout:public Layout{

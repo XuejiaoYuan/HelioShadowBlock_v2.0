@@ -3,6 +3,7 @@
 #include "../DataStructure/SolarScene.h"
 #include "../DataStructure/Clip/Clipper/clipper.hpp"
 #include "../GaussLegendre/GaussLegendre.h"
+#include "../DataStructure/FieldSegment.h"
 using namespace ClipperLib;
 
 
@@ -24,21 +25,23 @@ public:
 	double calcSingleShadowBlock(int helio_index);
 	double calcSingleFluxSum(int helio_index, const double DNI);
 	void calcShadowBlock(const double DNI);
-	void sample_calc_preprocess(const int sample_row_num, const int sample_col_num, bool calc_s = false, bool calc_f = false);
-	MatrixXd* calcSampleShadowBlock(const double DNI);
-	virtual void save_clipper_res(const string save_path, int month, int day, int hour, int minute) {};
+	//void sample_calc_preprocess(const int sample_row_num, const int sample_col_num, bool calc_s = false, bool calc_f = false);
+	vector<MatrixXd*> calcSampleShadowBlock(vector<MatrixXd*>& sample_index, const double DNI);
+	void calcExcludeShadowBlock(const double DNI);
+	//virtual void save_clipper_res(const string save_path, int month, int day, int hour, int minute) {};
 
 	FieldType field_type;
 	SolarScene* solar_scene;
 	GaussLegendre* gl;
 
-	MatrixXd* field_index;					// 定日镜场所有定日镜序号
-	MatrixXd* sample_field_index;
-	vector<MatrixXd*> field_data;			// 定日镜场所有定日镜x与z坐标
-	vector<MatrixXd*> sample_field_data;		// 定日镜场采样定日镜x与z坐标
-	MatrixXd* sample_sd_bk_res;
+	//MatrixXd* field_index;					// 定日镜场所有定日镜序号
+	//MatrixXd* sample_field_index;
+	//vector<MatrixXd*> field_data;			// 定日镜场所有定日镜x与z坐标
+	//vector<MatrixXd*> sample_field_data;		// 定日镜场采样定日镜x与z坐标
+	//MatrixXd* sample_sd_bk_res;
 
 protected:
+
 	double helioClipper(Heliostat*helio, const Vector3d&dir, const set<vector<int>>& estimate_grid);
 	double helioClipper(Heliostat*helio, const vector<Vector3d>&dir, const vector<set<vector<int>>>& estimate_grid);
 	double calcAccurateIntersection(Heliostat* helio, const Vector3d&dir, set<vector<int>>&relative_grid_label);		// used ray tracing calculate accurate relative grids
@@ -52,14 +55,14 @@ protected:
 	double _multi_inte_flux_sum(vector<Vector2d>& proj_v, int n, Heliostat* helio, const double cos_phi, const double DNI);
 	double ray_tracing_flux_sum(vector<Vector3d>& recv_v, Vector3d& recv_pos, Vector3d& recv_normal, Heliostat* helio, const Vector3d& dir, const double DNI);
 	double inte_infinite_flux_sum(Heliostat* helio, const Vector3d& recv_pos, const double cos_phi, const double DNI);
-
+	double _helio_calc(int index, int DNI);
 
 	void flux_sum_matrix_grid(vector<Vector3d>& _recv_v, vector<Vector2d>& proj_v, const int rows, const int cols, Heliostat* helio, const double cos_phi, const double DNI);
 	void flux_sum_matrix_inte(Vector3d& recv_normal, Vector3d& fc, vector<Vector3d>& _recv_v, Matrix4d& local2world, vector<Vector2d>& proj_v, Heliostat * helio, const double cos_phi, const double DNI);
-	virtual void get_row_col(const int index, int& r, int& c) = 0;
+	//virtual void get_row_col(const int index, int& r, int& c) = 0;
 	// 采样计算预处理操作
-	virtual MatrixXd* field_data_pre() = 0;
-	virtual MatrixXd* sample_field_data_pre(const int sample_row_num, const int sample_col_num) = 0;
+	//virtual MatrixXd* field_data_pre() = 0;
+	//virtual MatrixXd* sample_field_data_pre(const int sample_row_num, const int sample_col_num) = 0;
 
 };
 
@@ -70,7 +73,7 @@ public:
 private:
 	void get_row_col(const int index, int& r, int& c);
 	MatrixXd* field_data_pre() { return nullptr; }
-	MatrixXd* sample_field_data_pre(const int sample_row_num, const int sample_col_num);
+	//MatrixXd* sample_field_data_pre(const int sample_row_num, const int sample_col_num);
 
 };
 
@@ -82,8 +85,8 @@ public:
 
 private:
 	void get_row_col(const int index, int& r, int& c);
-	MatrixXd* field_data_pre();
-	MatrixXd* sample_field_data_pre(const int sample_row_num, const int sample_col_num);
+	//MatrixXd* field_data_pre();
+	//MatrixXd* sample_field_data_pre(const int sample_row_num, const int sample_col_num);
 };
 
 class FermatSdBkCalc :public SdBkCalc {

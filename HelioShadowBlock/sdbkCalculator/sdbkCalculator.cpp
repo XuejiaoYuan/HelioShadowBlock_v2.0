@@ -3,51 +3,71 @@
 #include <ctime>
 
 
-void SdBkCalc::sample_calc_preprocess(const int sample_row_num, const int sample_col_num, bool calc_s, bool calc_f)
-{
-	if (calc_f || field_index == nullptr)
-		field_index = field_data_pre();
-	if (calc_s || sample_field_index == nullptr)
-		sample_field_index = sample_field_data_pre(sample_row_num, sample_col_num);
-}
+//void SdBkCalc::sample_calc_preprocess(const int sample_row_num, const int sample_col_num, bool calc_s, bool calc_f)
+//{
+//	if (calc_f || field_index == nullptr)
+//		field_index = field_data_pre();
+//	if (calc_s || sample_field_index == nullptr)
+//		sample_field_index = sample_field_data_pre(sample_row_num, sample_col_num);
+//}
 
-MatrixXd* SdBkCalc::calcSampleShadowBlock(const double DNI)
+vector<MatrixXd*> SdBkCalc::calcSampleShadowBlock(vector<MatrixXd*>& sample_index, const double DNI)
 {
-	vector<Receiver*> recvs = solar_scene->recvs;
-	int row = sample_field_index->rows();
-	int col = sample_field_index->cols();
-	// Vector3d focus_center = recvs[0]->recv_pos + Vector3d(recvs[0]->recv_normal.array() * recvs[0]->recv_size.array());
-	
-	Vector3d reverse_sunray_dir = -solar_scene->sunray_dir;
-	sample_sd_bk_res = new MatrixXd(row, col);
+	vector<MatrixXd*> sample_res;
+	for (int m = 0; m < sample_index.size(); ++m) {
+		auto m_index = sample_index[m];
+		int row = m_index->rows();
+		int col = m_index->cols();
+		MatrixXd *m_sample_res = new MatrixXd(row, col);
 
 #pragma omp parallel for
-	for (int i = 0; i < row; i++) {
-		for (int j = 0; j < col; j++) {
-			int index = (*sample_field_index)(i, j);
-			Heliostat* helio = solar_scene->helios[index];
-			set<vector<int>> shadow_relative_grid_label_3ddda, block_relative_grid_label_3ddda;
-			// Vector3d reflect_dir = focus_center - helio->helio_pos;
-			int fc_index = solar_scene->helios[index]->focus_center_index;
-			Vector3d reflect_dir = recvs[0]->focus_center[fc_index] - helio->helio_pos;
-			calcIntersection3DDDA(helio, reverse_sunray_dir, shadow_relative_grid_label_3ddda);
-
-			calcIntersection3DDDA(helio, reflect_dir, block_relative_grid_label_3ddda);
-			vector<Vector3d> dir = { reverse_sunray_dir, reflect_dir };
-			vector<set<vector<int>>> estimate_grids = { shadow_relative_grid_label_3ddda, block_relative_grid_label_3ddda };
-			(*sample_sd_bk_res)(i, j) = helioClipper(helio, dir, estimate_grids);
-			if (gl != NULL)
-				helio->flux_sum = calcFluxMap(helio, DNI);
-			//(*sample_sd_bk_res)(i, j) *= helio->flux_sum;
-
-			shadow_relative_grid_label_3ddda.clear();
-			block_relative_grid_label_3ddda.clear();
-			estimate_grids.clear();
+		for (int i = 0; i < row; i++) {
+			for (int j = 0; j < col; j++) {
+				int index = (*m_index)(i, j);
+				(*m_sample_res)(i, j) = _helio_calc(index, DNI);
+			}
 		}
+		sample_res.push_back(m_sample_res);
 	}
-	return sample_sd_bk_res;
+	return sample_res;
 }
 
+double SdBkCalc::_helio_calc(int index, int DNI)
+{
+
+	Heliostat* helio = solar_scene->helios[index];
+	set<vector<int>> shadow_relative_grid_label_3ddda, block_relative_grid_label_3ddda;
+	int fc_index = solar_scene->helios[index]->focus_center_index;
+	Vector3d reflect_dir = solar_scene->recvs[0]->focus_center[fc_index] - helio->helio_pos;
+	calcIntersection3DDDA(helio, -solar_scene->sunray_dir, shadow_relative_grid_label_3ddda);
+
+	calcIntersection3DDDA(helio, reflect_dir, block_relative_grid_label_3ddda);
+	vector<Vector3d> dir = { -solar_scene->sunray_dir, reflect_dir };
+	vector<set<vector<int>>> estimate_grids = { shadow_relative_grid_label_3ddda, block_relative_grid_label_3ddda };
+	double res = helioClipper(helio, dir, estimate_grids);
+	if (gl != NULL)
+		helio->flux_sum = calcFluxMap(helio, DNI);
+
+	shadow_relative_grid_label_3ddda.clear();
+	block_relative_grid_label_3ddda.clear();
+	estimate_grids.clear();
+	return helio->flux_sum;
+}
+
+void SdBkCalc::calcExcludeShadowBlock(const double DNI) {
+	vector<vector<int>>& exclude_helio_index = solar_scene->layouts[0]->exclude_helio_index;
+	vector<vector<double>> ex_helio_res(exclude_helio_index.size(), vector<double>(exclude_helio_index[0].size(), 0));
+
+	for (int m = 0; m < solar_scene->layouts[0]->exclude_helio_index.size(); ++m) {
+#pragma omp parallel for
+		for (int i = 0; i < solar_scene->layouts[0]->exclude_helio_index[m].size(); ++i) {
+			int index = solar_scene->layouts[0]->exclude_helio_index[m][i];
+			ex_helio_res[m][i] = _helio_calc(index, DNI);
+		}
+	}
+	solar_scene->layouts[0]->exclude_helio_res.push_back(ex_helio_res);
+
+}
 
 double SdBkCalc::helioClipper(Heliostat*helio, const Vector3d&dir, const set<vector<int>>& estimate_grid)
 {
@@ -1246,121 +1266,121 @@ void CrossRectSdBkCalc::get_row_col(const int index, int & r, int & c)
 }
 
 
-MatrixXd* CrossRectSdBkCalc::field_data_pre() {
-	vector<Heliostat*>& helios = solar_scene->helios;
-	vector<Layout*>& layouts = solar_scene->layouts;
-	int row = layouts[0]->layout_row_col.x();
-	int col = layouts[0]->layout_row_col.y();
-	if (!field_data.empty()) {
-		delete field_data[0];
-		delete field_data[1];
-		field_data.clear();
-	}
-
-	MatrixXd* field_data_x = new MatrixXd(row, col);
-	MatrixXd* field_data_y = new MatrixXd(row, col);
-	MatrixXd* field_index = new MatrixXd(row, col);
-	int h = 0;
-	int tmp_col;
-	for (int i = 0; i < row; i++) {
-		if (i % 2) tmp_col = col - 1;
-		else tmp_col = col;
-		for (int j = 0; j < tmp_col; j++) {
-			(*field_data_x)(i, j) = helios[h]->helio_pos.x();
-			(*field_data_y)(i, j) = helios[h]->helio_pos.z();
-			(*field_index)(i, j) = helios[h]->helio_index;
-			h++;
-		}
-	}
-
-	field_data.push_back(field_data_x);
-	field_data.push_back(field_data_y);
-	return field_index;
-}
-
-
-MatrixXd* CrossRectSdBkCalc::sample_field_data_pre(const int sample_row_num, const int sample_col_num)
-{
-	int row = solar_scene->layouts[0]->layout_row_col.x();
-	int col = solar_scene->layouts[0]->layout_row_col.y();
-	if (!sample_field_data.empty()) {
-		delete sample_field_data[0];
-		delete sample_field_data[1];
-		sample_field_data.clear();
-	}
-
-	MatrixXd* sample_f_data_x = new MatrixXd(sample_row_num, sample_col_num);
-	MatrixXd* sample_f_data_y = new MatrixXd(sample_row_num, sample_col_num);
-	MatrixXd* sample_index = new MatrixXd(sample_row_num, sample_col_num);
-	int tmp_col;
-	int cur_row = 0;
-	for (int i = 0; i < sample_row_num / 2 - 1; i++) {
-		int f_i = int(row*i / sample_row_num);
-		for (int k = 0; k < 2; k++) {
-			for (int j = 0; j < sample_col_num - 1; j++) {
-				int f_j = int(col*j / sample_col_num);
-				(*sample_f_data_x)(cur_row, j) = (*field_data[0])(2 * f_i + k, f_j);
-				(*sample_f_data_y)(cur_row, j) = (*field_data[1])(2 * f_i + k, f_j);
-				(*sample_index)(cur_row, j) = (*field_index)(2 * f_i + k, f_j);
-			}
-			if (k % 2) tmp_col = col - 2;
-			else tmp_col = col - 1;
-			(*sample_f_data_x)(cur_row, sample_col_num - 1) = (*field_data[0])(2 * f_i + k, tmp_col);
-			(*sample_f_data_y)(cur_row, sample_col_num - 1) = (*field_data[1])(2 * f_i + k, tmp_col);
-			(*sample_index)(cur_row, sample_col_num - 1) = (*field_index)(2 * f_i + k, tmp_col);
-			cur_row++;
-		}
-	}
-
-	for (int i = 0; i < 2; i++) {
-		for (int j = 0; j < sample_col_num - 1; j++) {
-			int f_j = int(col*j / sample_col_num);
-			int row_cnt = row - cur_row;
-			(*sample_f_data_x)(cur_row, j) = (*field_data[0])(row - 2 + i, f_j);
-			(*sample_f_data_y)(cur_row, j) = (*field_data[1])(row - 2 + i, f_j);
-			(*sample_index)(cur_row, j) = (*field_index)(row - 2 + i, f_j);
-		}
-		if (cur_row % 2) tmp_col = col - 2;
-		else tmp_col = col - 1;
-		(*sample_f_data_x)(cur_row, sample_col_num - 1) = (*field_data[0])(row - 2 + i, tmp_col);
-		(*sample_f_data_y)(cur_row, sample_col_num - 1) = (*field_data[1])(row - 2 + i, tmp_col);
-		(*sample_index)(cur_row, sample_col_num - 1) = (*field_index)(row - 2 + i, tmp_col);
-		cur_row++;
-	}
-	sample_field_data.push_back(sample_f_data_x);
-	sample_field_data.push_back(sample_f_data_y);
-	return sample_index;
-}
-
-
-MatrixXd* RectSdBkCalc::sample_field_data_pre(const int sample_row_num, const int sample_col_num)
-{
-	int row = solar_scene->layouts[0]->layout_row_col.x();
-	int col = solar_scene->layouts[0]->layout_row_col.y();
-	if (!sample_field_data.empty()) {
-		delete sample_field_data[0];
-		delete sample_field_data[1];
-		sample_field_data.clear();
-	}
-
-	MatrixXd* sample_f_data_x = new MatrixXd(sample_row_num, sample_col_num);
-	MatrixXd* sample_f_data_y = new MatrixXd(sample_row_num, sample_col_num);
-	MatrixXd* sample_index = new MatrixXd(sample_row_num, sample_col_num);
-
-	for (int i = 0; i < sample_row_num; i++) {
-		int f_i = int(row*i / sample_row_num);
-		for (int j = 0; j < sample_col_num; j++) {
-			int f_j = int(col*j / sample_col_num);
-			(*sample_f_data_x)(i, j) = (*field_data[0])(f_i, f_j);
-			(*sample_f_data_y)(i, j) = (*field_data[1])(f_i, f_j);
-			(*sample_index)(i, j) = (*field_index)(f_i, f_j);
-		}
-	}
-
-	sample_field_data.push_back(sample_f_data_x);
-	sample_field_data.push_back(sample_f_data_y);
-	return sample_index;
-}
+//MatrixXd* CrossRectSdBkCalc::field_data_pre() {
+//	vector<Heliostat*>& helios = solar_scene->helios;
+//	vector<Layout*>& layouts = solar_scene->layouts;
+//	int row = layouts[0]->layout_row_col.x();
+//	int col = layouts[0]->layout_row_col.y();
+//	if (!field_data.empty()) {
+//		delete field_data[0];
+//		delete field_data[1];
+//		field_data.clear();
+//	}
+//
+//	MatrixXd* field_data_x = new MatrixXd(row, col);
+//	MatrixXd* field_data_y = new MatrixXd(row, col);
+//	MatrixXd* field_index = new MatrixXd(row, col);
+//	int h = 0;
+//	int tmp_col;
+//	for (int i = 0; i < row; i++) {
+//		if (i % 2) tmp_col = col - 1;
+//		else tmp_col = col;
+//		for (int j = 0; j < tmp_col; j++) {
+//			(*field_data_x)(i, j) = helios[h]->helio_pos.x();
+//			(*field_data_y)(i, j) = helios[h]->helio_pos.z();
+//			(*field_index)(i, j) = helios[h]->helio_index;
+//			h++;
+//		}
+//	}
+//
+//	field_data.push_back(field_data_x);
+//	field_data.push_back(field_data_y);
+//	return field_index;
+//}
+//
+//
+//MatrixXd* CrossRectSdBkCalc::sample_field_data_pre(const int sample_row_num, const int sample_col_num)
+//{
+//	int row = solar_scene->layouts[0]->layout_row_col.x();
+//	int col = solar_scene->layouts[0]->layout_row_col.y();
+//	if (!sample_field_data.empty()) {
+//		delete sample_field_data[0];
+//		delete sample_field_data[1];
+//		sample_field_data.clear();
+//	}
+//
+//	MatrixXd* sample_f_data_x = new MatrixXd(sample_row_num, sample_col_num);
+//	MatrixXd* sample_f_data_y = new MatrixXd(sample_row_num, sample_col_num);
+//	MatrixXd* sample_index = new MatrixXd(sample_row_num, sample_col_num);
+//	int tmp_col;
+//	int cur_row = 0;
+//	for (int i = 0; i < sample_row_num / 2 - 1; i++) {
+//		int f_i = int(row*i / sample_row_num);
+//		for (int k = 0; k < 2; k++) {
+//			for (int j = 0; j < sample_col_num - 1; j++) {
+//				int f_j = int(col*j / sample_col_num);
+//				(*sample_f_data_x)(cur_row, j) = (*field_data[0])(2 * f_i + k, f_j);
+//				(*sample_f_data_y)(cur_row, j) = (*field_data[1])(2 * f_i + k, f_j);
+//				(*sample_index)(cur_row, j) = (*field_index)(2 * f_i + k, f_j);
+//			}
+//			if (k % 2) tmp_col = col - 2;
+//			else tmp_col = col - 1;
+//			(*sample_f_data_x)(cur_row, sample_col_num - 1) = (*field_data[0])(2 * f_i + k, tmp_col);
+//			(*sample_f_data_y)(cur_row, sample_col_num - 1) = (*field_data[1])(2 * f_i + k, tmp_col);
+//			(*sample_index)(cur_row, sample_col_num - 1) = (*field_index)(2 * f_i + k, tmp_col);
+//			cur_row++;
+//		}
+//	}
+//
+//	for (int i = 0; i < 2; i++) {
+//		for (int j = 0; j < sample_col_num - 1; j++) {
+//			int f_j = int(col*j / sample_col_num);
+//			int row_cnt = row - cur_row;
+//			(*sample_f_data_x)(cur_row, j) = (*field_data[0])(row - 2 + i, f_j);
+//			(*sample_f_data_y)(cur_row, j) = (*field_data[1])(row - 2 + i, f_j);
+//			(*sample_index)(cur_row, j) = (*field_index)(row - 2 + i, f_j);
+//		}
+//		if (cur_row % 2) tmp_col = col - 2;
+//		else tmp_col = col - 1;
+//		(*sample_f_data_x)(cur_row, sample_col_num - 1) = (*field_data[0])(row - 2 + i, tmp_col);
+//		(*sample_f_data_y)(cur_row, sample_col_num - 1) = (*field_data[1])(row - 2 + i, tmp_col);
+//		(*sample_index)(cur_row, sample_col_num - 1) = (*field_index)(row - 2 + i, tmp_col);
+//		cur_row++;
+//	}
+//	sample_field_data.push_back(sample_f_data_x);
+//	sample_field_data.push_back(sample_f_data_y);
+//	return sample_index;
+//}
+//
+//
+//MatrixXd* RectSdBkCalc::sample_field_data_pre(const int sample_row_num, const int sample_col_num)
+//{
+//	int row = solar_scene->layouts[0]->layout_row_col.x();
+//	int col = solar_scene->layouts[0]->layout_row_col.y();
+//	if (!sample_field_data.empty()) {
+//		delete sample_field_data[0];
+//		delete sample_field_data[1];
+//		sample_field_data.clear();
+//	}
+//
+//	MatrixXd* sample_f_data_x = new MatrixXd(sample_row_num, sample_col_num);
+//	MatrixXd* sample_f_data_y = new MatrixXd(sample_row_num, sample_col_num);
+//	MatrixXd* sample_index = new MatrixXd(sample_row_num, sample_col_num);
+//
+//	for (int i = 0; i < sample_row_num; i++) {
+//		int f_i = int(row*i / sample_row_num);
+//		for (int j = 0; j < sample_col_num; j++) {
+//			int f_j = int(col*j / sample_col_num);
+//			(*sample_f_data_x)(i, j) = (*field_data[0])(f_i, f_j);
+//			(*sample_f_data_y)(i, j) = (*field_data[1])(f_i, f_j);
+//			(*sample_index)(i, j) = (*field_index)(f_i, f_j);
+//		}
+//	}
+//
+//	sample_field_data.push_back(sample_f_data_x);
+//	sample_field_data.push_back(sample_f_data_y);
+//	return sample_index;
+//}
 
 
 void RectSdBkCalc::get_row_col(const int index, int& r, int & c)
