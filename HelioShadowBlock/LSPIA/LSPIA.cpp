@@ -11,7 +11,20 @@
 void LSPIA::setPreDatas(FieldSegment *_field_seg, vector<int>& _ctrl_num, const double _miu)
 {
 	field_seg = _field_seg;
-	ctrl_num = _ctrl_num;
+	ctrl_num_row = MatrixXi::Ones(field_seg->seg_row, field_seg->seg_col);
+	ctrl_num_col = MatrixXi::Ones(field_seg->seg_row, field_seg->seg_col);
+	int per_row = _ctrl_num[0] / field_seg->seg_row;
+	int per_col = _ctrl_num[1] / field_seg->seg_col;
+	if(field_seg->seg_row != 1 ||  field_seg->seg_col != 1)
+		for (int i = 0; i < field_seg->seg_row; ++i)
+			for (int j = 0; j < field_seg->seg_col; ++j) {
+				if (i == 0 || i == field_seg->seg_row - 1) ctrl_num_row(i, j) = min(2, field_seg->seg_row) * per_row;
+				else ctrl_num_row(i, j) = min(3, field_seg->seg_row) * per_row;
+				if (j == 0 || j == field_seg->seg_col - 1) ctrl_num_col(i, j) = min(2, field_seg->seg_col) * per_col;
+				else ctrl_num_col(i, j) = min(3, field_seg->seg_col) * per_col;
+				cout << ctrl_num_row(i, j) << ' ' << ctrl_num_col(i, j) << endl;
+			}
+
 	miu = _miu;
 }
 
@@ -148,6 +161,12 @@ void LSPIA::LSPIA_surface()
 	vector<vector<MatrixXd*>>& odd_res = field_seg->odd_res;
 	vector<vector<MatrixXd*>>& even_sample_res = field_seg->even_sample_res;
 	vector<vector<MatrixXd*>>& odd_sample_res = field_seg->odd_sample_res;
+
+	// for test
+	vector<MatrixXd*>& even_field_index = field_seg->even_field_index;
+	vector<MatrixXd*>& odd_field_index = field_seg->odd_field_index;
+
+
 	int tCnt = even_sample_res.size();
 	int rCnt = even_sample_label.size();
 	int seg_row = field_seg->seg_row;
@@ -161,48 +180,74 @@ void LSPIA::LSPIA_surface()
 		MatrixXd* even_pos_y = field_seg->even_pos_y[k];
 		MatrixXd* odd_pos_x = field_seg->odd_pos_x[k];
 		MatrixXd* odd_pos_y = field_seg->odd_pos_y[k];
+		fstream outFile("odd_sample.txt", ios_base::out);
+		for (int i = 0; i < odd_sample_pos_x->rows(); ++i) {
+			for (int j = 0; j < odd_sample_pos_x->cols(); ++j)
+				outFile << "(" << (*odd_sample_pos_x)(i, j) << ", " << (*odd_sample_pos_y)(i, j) << ")\t";
+			outFile << endl;
+		}
+		outFile.close();
+		outFile.open("even_sample.txt", ios_base::out);
+		for (int i = 0; i < even_sample_pos_x->rows(); ++i) {
+			for (int j = 0; j < even_sample_pos_x->cols(); ++j)
+				outFile << "(" << (*even_sample_pos_x)(i, j) << ", " << (*even_sample_pos_y)(i, j) << ")\t";
+			outFile << endl;
+		}
+		outFile.close();
 		for (int i = 0; i < seg_row; ++i) {				// 同一场景下的分割区域
 			for (int j = 0; j < seg_col; ++j) {
 				// 1. 采样子区域划分
-				Vector2i even_sample_start = even_sample_label[k][i*seg_col + j][0];
-				Vector2i even_sample_end = even_sample_label[k][i*seg_col + j][1];
-				Vector2i odd_sample_start = odd_sample_label[k][i*seg_col + j][0];
-				Vector2i odd_sample_end = odd_sample_label[k][i*seg_col + j][1];
-				MatrixXd sub_even_sample_pos_x = even_sample_pos_x->block(even_sample_start.x(), even_sample_start.y(), even_sample_end.x(), even_sample_end.y());
-				MatrixXd sub_even_sample_pos_y = even_sample_pos_y->block(even_sample_start.x(), even_sample_start.y(), even_sample_end.x(), even_sample_end.y());
-				MatrixXd sub_odd_sample_pos_x = odd_sample_pos_x->block(odd_sample_start.x(), odd_sample_start.y(), odd_sample_end.x(), odd_sample_end.y());
-				MatrixXd sub_odd_sample_pos_y = odd_sample_pos_y->block(odd_sample_start.x(), odd_sample_start.y(), odd_sample_end.x(), odd_sample_end.y());
-				MatrixXd sub_even_sample_res = even_sample_res[0][k]->block(even_sample_start.x(), even_sample_start.y(), even_sample_end.x(), even_sample_end.y());
-				MatrixXd sub_odd_sample_res = odd_sample_res[0][k]->block(odd_sample_start.x(), odd_sample_start.y(), odd_sample_end.x(), odd_sample_end.y());
+				Vector2i even_sample_start = even_sample_label[k][i*seg_col + j][2];
+				Vector2i even_sample_len = even_sample_label[k][i*seg_col + j][3];
+				Vector2i odd_sample_start = odd_sample_label[k][i*seg_col + j][2];
+				Vector2i odd_sample_len = odd_sample_label[k][i*seg_col + j][3];
+				cout << even_sample_start.x() << ' ' << even_sample_start.y() << ' ' << even_sample_len.x() << ' ' << even_sample_len.y() << endl;
+				cout << odd_sample_start.x() << ' ' << odd_sample_start.y() << ' ' << odd_sample_len.x() << ' ' << odd_sample_len.y() << endl;
+				MatrixXd sub_even_sample_pos_x = even_sample_pos_x->block(even_sample_start.x(), even_sample_start.y(), even_sample_len.x(), even_sample_len.y());
+				MatrixXd sub_even_sample_pos_y = even_sample_pos_y->block(even_sample_start.x(), even_sample_start.y(), even_sample_len.x(), even_sample_len.y());
+				MatrixXd sub_odd_sample_pos_x = odd_sample_pos_x->block(odd_sample_start.x(), odd_sample_start.y(), odd_sample_len.x(), odd_sample_len.y());
+				MatrixXd sub_odd_sample_pos_y = odd_sample_pos_y->block(odd_sample_start.x(), odd_sample_start.y(), odd_sample_len.x(), odd_sample_len.y());
+				MatrixXd sub_even_sample_res = even_sample_res[0][k]->block(even_sample_start.x(), even_sample_start.y(), even_sample_len.x(), even_sample_len.y());
+				MatrixXd sub_odd_sample_res = odd_sample_res[0][k]->block(odd_sample_start.x(), odd_sample_start.y(), odd_sample_len.x(), odd_sample_len.y());
 
 				// 2. 子区域划分
-				Vector2i even_start = even_label[k][i*seg_col + j][0];
-				Vector2i even_end = even_label[k][i*seg_col + j][1];
-				Vector2i even_target_start = even_label[k][i*seg_col + j][2];
-				Vector2i even_target_end = even_label[k][i*seg_col + j][3];
-				Vector2i odd_start = odd_label[k][i*seg_col + j][0];
-				Vector2i odd_end = odd_label[k][i*seg_col + j][1];
-				Vector2i odd_target_start = odd_label[k][i*seg_col + j][2];
-				Vector2i odd_target_end = odd_label[k][i*seg_col + j][3];
+				Vector2i even_start = even_label[k][i*seg_col + j][2];
+				Vector2i even_len = even_label[k][i*seg_col + j][3];
+				Vector2i even_target_start = even_label[k][i*seg_col + j][4];
+				Vector2i even_target_len = even_label[k][i*seg_col + j][1];
+				Vector2i odd_start = odd_label[k][i*seg_col + j][2];
+				Vector2i odd_len = odd_label[k][i*seg_col + j][3];
+				Vector2i odd_target_start = odd_label[k][i*seg_col + j][4];
+				Vector2i odd_target_len = odd_label[k][i*seg_col + j][1];
 
-				MatrixXd sub_even_pos_x = even_pos_x->block(even_start.x(), even_start.y(), even_end.x(), even_end.y());
-				MatrixXd sub_even_pos_y = even_pos_y->block(even_start.x(), even_start.y(), even_end.x(), even_end.y());
-				MatrixXd sub_odd_pos_x = odd_pos_x->block(odd_start.x(), odd_start.y(), odd_end.x(), odd_end.y());
-				MatrixXd sub_odd_pos_y = odd_pos_y->block(odd_start.x(), odd_start.y(), odd_end.x(), odd_end.y());
+				MatrixXd sub_even_pos_x = even_pos_x->block(even_start.x(), even_start.y(), even_len.x(), even_len.y());
+				MatrixXd sub_even_pos_y = even_pos_y->block(even_start.x(), even_start.y(), even_len.x(), even_len.y());
+				MatrixXd sub_odd_pos_x = odd_pos_x->block(odd_start.x(), odd_start.y(), odd_len.x(), odd_len.y());
+				MatrixXd sub_odd_pos_y = odd_pos_y->block(odd_start.x(), odd_start.y(), odd_len.x(), odd_len.y());
+				fstream outFile("odd_pos_y.txt", ios_base::out);
+				for (int i = 0; i < odd_pos_y->rows(); ++i) {
+					for (int j = 0; j < odd_pos_y->cols(); ++j)
+						outFile << (*odd_pos_y)(i, j) << ' ';
+					outFile << endl;
+				}
+				outFile.close();
 
 				// 3. 采样矩阵参数计算
+				vector<int> ctrl_num = { ctrl_num_row(i,j), ctrl_num_col(i, j) };
 				int even_sample_row = sub_even_sample_pos_x.rows();
 				int sample_col = sub_even_sample_pos_x.cols();
 				int odd_sample_row = sub_odd_sample_pos_x.rows();
 				double start_x = min(sub_even_sample_pos_x(0, 0), sub_odd_sample_pos_x(0, 0));
 				double start_y = min(sub_even_sample_pos_y(even_sample_row - 1, sample_col - 1), sub_odd_sample_pos_y(odd_sample_row - 1, sample_col - 1)); 
 				double end_x = max(sub_even_sample_pos_x(even_sample_row - 1, sample_col - 1), sub_odd_sample_pos_x(odd_sample_row - 1, sample_col - 1));
+				cout << sub_even_sample_pos_x(even_sample_row - 1, sample_col - 1) << ' ' << sub_odd_sample_pos_x(odd_sample_row - 1, sample_col - 1) << endl;
 				double end_y = max(sub_even_sample_pos_y(0, 0), sub_odd_sample_pos_y(0, 0));
+				cout << start_x << ' ' << start_y << ' ' << end_x << ' ' << end_y << endl;
 				vector<vector<double>> knot_uv = initParameters(
-					even_sample_row + odd_sample_row, sample_col, start_x, start_y, end_x, end_y
+					even_sample_row + odd_sample_row, sample_col, start_x, start_y, end_x, end_y, ctrl_num
 				);
 				
-				fstream outFile("knot_uv.txt", ios_base::out);
+				outFile.open("knot_uv.txt", ios_base::out);
 				for (int i = 0; i < knot_uv.size(); i++) {
 					for (int j = 0; j < knot_uv[i].size(); ++j)
 						outFile << knot_uv[i][j] << ' ';
@@ -210,30 +255,89 @@ void LSPIA::LSPIA_surface()
 				}
 				outFile.close();
 
-				vector<MatrixXd*> Nik = initBaseFunction(knot_uv, &sub_even_sample_pos_x, &sub_even_sample_pos_y, &sub_odd_sample_pos_x, &sub_odd_sample_pos_y);
-				MatrixXd ctrls = initCtrlPoints(&sub_even_sample_res, &sub_odd_sample_res);
+				outFile.open("sub_odd_pos_y.txt", ios_base::out);
+				for (int i = 0; i < sub_odd_pos_y.rows(); ++i) {
+					for (int j = 0; j < sub_odd_pos_y.cols(); ++j)
+						outFile << sub_odd_pos_y(i, j) << ' ';
+					outFile << endl;
+				}
+				outFile.close();
+
+				outFile.open("sub_sample_odd_pos_y.txt", ios_base::out);
+				for (int i = 0; i < sub_odd_sample_pos_y.rows(); ++i) {
+					for (int j = 0; j < sub_odd_sample_pos_y.cols(); ++j)
+						outFile << sub_odd_sample_pos_y(i, j) << ' ';
+					outFile << endl;
+				}
+				outFile.close();
+
+
+				vector<MatrixXd*> Nik = initBaseFunction(knot_uv, &sub_even_sample_pos_x, &sub_even_sample_pos_y, &sub_odd_sample_pos_x, &sub_odd_sample_pos_y, ctrl_num);
+				MatrixXd ctrls = initCtrlPoints(&sub_even_sample_res, &sub_odd_sample_res, ctrl_num);
 
 				// 4. 结果矩阵参数计算
-				vector<MatrixXd*> f_Nik = initBaseFunction(knot_uv, &sub_even_pos_x, &sub_even_pos_y, &sub_odd_pos_x, &sub_odd_pos_y);
+				vector<MatrixXd*> f_Nik = initBaseFunction(knot_uv, &sub_even_pos_x, &sub_even_pos_y, &sub_odd_pos_x, &sub_odd_pos_y, ctrl_num);
 				
 				for (int t = 0; t < tCnt; ++t) {					// 同一区域不同时刻结果拟合
 					//MatrixXd sub_even_target = even_res[k][t]->block(even_target_start.x(), even_target_start.y(), even_end.x(), even_end.y());
 					//MatrixXd sub_odd_target = odd_res[k][t]->block(odd_target_start.x(), odd_target_start.y(), odd_target_end.x(), odd_target_end.y());
-					MatrixXd t_sub_even_sample_res = even_sample_res[t][k]->block(even_sample_start.x(), even_sample_start.y(), even_sample_end.x(), even_sample_end.y());
-					MatrixXd t_sub_odd_sample_res = odd_sample_res[t][k]->block(odd_sample_start.x(), odd_sample_start.y(), odd_sample_end.x(), odd_sample_end.y());
+					MatrixXd t_sub_even_sample_res = even_sample_res[t][k]->block(even_sample_start.x(), even_sample_start.y(), even_sample_len.x(), even_sample_len.y());
+					MatrixXd t_sub_odd_sample_res = odd_sample_res[t][k]->block(odd_sample_start.x(), odd_sample_start.y(), odd_sample_len.x(), odd_sample_len.y());
 					double sd_bk_error = surface_fitting(vector<MatrixXd*>{&t_sub_even_sample_res, &t_sub_odd_sample_res}, ctrls, Nik, miu, 1e-4);
+
+					outFile.open("sub_even_sample_res.txt", ios_base::out);
+					for (int i = 0; i < t_sub_even_sample_res.rows(); ++i) {
+						for (int j = 0; j < t_sub_even_sample_res.cols(); ++j)
+							outFile << t_sub_even_sample_res(i, j) << ' ';
+						outFile << endl;
+					}
+					outFile.close();
 
 					// 2. Calculate the fitting surface
 					MatrixXd calc_sd_bk_even = (*f_Nik[0]) * ctrls * f_Nik[2]->transpose();
 					MatrixXd calc_sd_bk_odd = (*f_Nik[1]) *  ctrls * f_Nik[3]->transpose();
-					MatrixXd sub_even_target = calc_sd_bk_even.block(even_target_start.x(), even_target_start.y(), even_end.x(), even_end.y());
-					MatrixXd sub_odd_target = calc_sd_bk_odd.block(odd_target_start.x(), odd_target_start.y(), odd_target_end.x(), odd_target_end.y());
+					cout << even_target_start.x() << ' ' << even_target_start.y() << ' ' << even_target_len.x() << ' ' << even_target_len.y() << endl;
 
+					MatrixXd sub_even_target = calc_sd_bk_even.block(even_target_start.x(), even_target_start.y(), even_target_len.x(), even_target_len.y());
+					MatrixXd sub_odd_target = calc_sd_bk_odd.block(odd_target_start.x(), odd_target_start.y(), odd_target_len.x(), odd_target_len.y());
+
+					cout << even_target_start.x() << ' ' << even_target_start.y() << ' ' << even_target_len.x() << ' ' << even_target_len.y() << endl;
+					cout << sub_even_target.rows() << ' ' << sub_even_target.cols() << endl;
+
+					// for test
+					fstream outFile("fitting_t" + to_string(t) + "_row" + to_string(i) + "_col" + to_string(j) + ".txt", ios_base::out);
+					MatrixXd sub_even_target_pos_x = sub_even_pos_x.block(even_target_start.x(), even_target_start.y(), even_target_len.x(), even_target_len.y());
+					MatrixXd sub_even_target_pos_y = sub_even_pos_y.block(even_target_start.x(), even_target_start.y(), even_target_len.x(), even_target_len.y());
+					MatrixXd sub_odd_target_pos_x = sub_odd_pos_x.block(odd_target_start.x(), odd_target_start.y(), odd_target_len.x(), odd_target_len.y());
+					MatrixXd sub_odd_target_pos_y = sub_odd_pos_y.block(odd_target_start.x(), odd_target_start.y(), odd_target_len.x(), odd_target_len.y());
+					for (int i = 0; i < sub_even_target.rows(); ++i)
+						for (int j = 0; j < sub_even_target.cols(); ++j)
+							outFile << sub_even_target_pos_x(i, j) << ' ' << sub_even_target_pos_y(i, j) << ' ' << sub_even_target(i, j) << endl;
+
+					for (int i = 0; i < sub_odd_target.rows(); ++i)
+						for (int j = 0; j < sub_odd_target.cols(); ++j)
+							outFile << sub_odd_target_pos_x(i, j) << ' ' << sub_odd_target_pos_y(i, j) << ' ' << sub_odd_target(i, j) << endl;
+
+					vector<int>& exclude_helio_index = field_seg->solar_scene->layouts[0]->exclude_helio_index[k];
+					vector<double>& exclude_helio_res = field_seg->solar_scene->layouts[0]->exclude_helio_res[t][k];
+					vector<Heliostat*> helios = field_seg->solar_scene->helios;
+					for (int i = 0; i < exclude_helio_res.size(); ++i) {
+						Heliostat* helio = helios[exclude_helio_index[i]];
+						outFile << helio->helio_pos.x() << ' ' << helio->helio_pos.z() << ' ' << exclude_helio_res[i] << endl;
+
+					}
+						
+					outFile.close();
 				}
 			}
 		}
 
 	}
+
+	fstream outFile("gt_helio.txt", ios_base::out);
+	for (auto& h : field_seg->solar_scene->helios) 
+		outFile << h->helio_pos.x() << ' ' << h->helio_pos.z() << ' ' << h->flux_sum << endl;
+	outFile.close();
 }
 
 
@@ -446,21 +550,22 @@ double LSPIA::surface_fitting(const vector<MatrixXd*>& D_even_odd, MatrixXd& P, 
 	cur_error = surface_adjusting_control_points(D_even_odd, P, Nik, tmp_miu);
 	cout << "iteration: " << ++cnt << " error: " << cur_error << endl;
 	while (abs(pre_error - cur_error) > threashold) {
+		//if (cur_error > pre_error) {
+		//	P = preP;
+		//	tmp_miu -= 2* miu / 5;
+		//	cur_error = surface_adjusting_control_points(D_even_odd, P, Nik, tmp_miu);
+		//	cout << "iteration: " << cnt << " error: " << cur_error << endl;
+		//	//preP = P;
+		//}
+		//else {
+		//	preP = P;
+		//	if (!(cnt % 5))
+		//		tmp_miu += miu / 5;
+		//}
 		pre_error = cur_error;
 		cur_error = surface_adjusting_control_points(D_even_odd, P, Nik, tmp_miu);
 		cout << "iteration: " << ++cnt << " error: " << cur_error << endl;
-		if (cur_error > pre_error) {
-			P = preP;
-			tmp_miu -= miu / 5;
-			cur_error = surface_adjusting_control_points(D_even_odd, P, Nik, tmp_miu);
-			cout << "iteration: " << cnt << " error: " << cur_error << endl;
-			preP = P;
-		}
-		else {
-			preP = P;
-			if (!(cnt % 10))
-				tmp_miu += miu / 5;
-		}
+		
 	}
 	//delete D_even;
 	//delete D_odd;
@@ -480,7 +585,7 @@ double LSPIA::surface_adjusting_control_points(const vector<MatrixXd*>& D_even_o
 	return error;
 }
 
-vector<vector<double>> LSPIA::initParameters(const int rows, const int cols, const double start_x, const double start_y ,const double end_x, const double end_y)
+vector<vector<double>> LSPIA::initParameters(const int rows, const int cols, const double start_x, const double start_y ,const double end_x, const double end_y, const vector<int>& ctrl_num)
 {
 	// Calculate the parameters
 	VectorXd param_u(rows), param_v(cols);
@@ -495,7 +600,7 @@ vector<vector<double>> LSPIA::initParameters(const int rows, const int cols, con
 	return knot_uv;
 }
 
-vector<MatrixXd*> LSPIA::initBaseFunction(vector<vector<double>>& knot_uv, MatrixXd *even_x, MatrixXd *even_y, MatrixXd *odd_x, MatrixXd*odd_y)
+vector<MatrixXd*> LSPIA::initBaseFunction(vector<vector<double>>& knot_uv, MatrixXd *even_x, MatrixXd *even_y, MatrixXd *odd_x, MatrixXd*odd_y, const vector<int>& ctrl_num)
 {
 	// Calculate b-spline blending basis
 	int p = 3;
@@ -509,50 +614,58 @@ vector<MatrixXd*> LSPIA::initBaseFunction(vector<vector<double>>& knot_uv, Matri
 	MatrixXd* Nik_v_even = new MatrixXd(col, ctrl_num[1]);
 	MatrixXd* Nik_v_odd = new MatrixXd(col, ctrl_num[1]);
 	
-	//fstream outFile("Nik_u_even.txt", ios_base::out);
-	for (int i = row_even - 1; i > -1; --i) {
-		for (int j = 0; j < ctrl_num[0]; ++j) {
+	for (int i = row_even - 1; i > -1; --i) 
+		for (int j = 0; j < ctrl_num[0]; ++j) 
 			(*Nik_u_even)(i, j) = BaseFunction(j, p + 1, (*even_y)(i, 0), knot_uv[0]);
-			//outFile << (*Nik_u_even)(i, j) << ' ';
-		}
-		//outFile << endl;
-	}
-	//outFile.close();
 
-	//outFile.open("Nik_u_odd.txt", ios_base::out);
-	for (int i = row_odd - 1; i > -1; --i) {
-		for (int j = 0; j < ctrl_num[0]; ++j) {
+	for (int i = row_odd - 1; i > -1; --i) 
+		for (int j = 0; j < ctrl_num[0]; ++j) 
 			(*Nik_u_odd)(i, j) = BaseFunction(j, p + 1, (*odd_y)(i, 0), knot_uv[0]);
-			//outFile << (*Nik_u_odd)(i, j) << ' ';
-		}
-		//outFile << endl;
-	}
-	//outFile.close();
 
-	//outFile.open("Nik_v_even.txt", ios_base::out);
-	for (int i = 0; i < col; ++i) {
+	for (int i = 0; i < col; ++i) 
 		for (int j = 0; j < ctrl_num[1]; ++j) {
 			(*Nik_v_even)(i, j) = BaseFunction(j, q + 1, (*even_x)(0, i), knot_uv[1]);
 			(*Nik_v_odd)(i, j) = BaseFunction(j, q + 1, (*odd_x)(0, i), knot_uv[1]);
-			//outFile << (*Nik_v_even)(i, j) << ' ';
 		}
-		//outFile << endl;
-	}
-	//outFile.close();
 
-	//outFile.open("Nik_v_odd.txt", ios_base::out);
-	//for (int i = 0; i < col; ++i) {
-	//	for (int j = 0; j < ctrl_num[1]; ++j)
-	//		outFile << (*Nik_v_odd)(i, j) << ' ';
-	//	outFile << endl;
-	//}
-	//outFile.close();
+	fstream outFile("Nik_u_even.txt", ios_base::out);
+	for (int i = row_even - 1; i > -1; --i) {
+		for (int j = 0; j < ctrl_num[0]; ++j)
+			outFile << (*Nik_u_even)(i, j) << ' ';
+		outFile << endl;
+	}
+	outFile.close();
+
+	outFile.open("Nik_u_odd.txt", ios_base::out);
+	for (int i = row_odd - 1; i > -1; --i) {
+		for (int j = 0; j < ctrl_num[0]; ++j)
+			outFile << (*Nik_u_odd)(i, j) << ' ';
+		outFile << endl;
+	}
+	outFile.close();
+
+	outFile.open("Nik_v_even.txt", ios_base::out);
+	for (int i = 0; i < col; ++i) {
+		for (int j = 0; j < ctrl_num[1]; ++j) 
+			outFile << (*Nik_v_even)(i, j) << ' ';
+		outFile << endl;
+	}
+	outFile.close();
+
+
+	outFile.open("Nik_v_odd.txt", ios_base::out);
+	for (int i = 0; i < col; ++i) {
+		for (int j = 0; j < ctrl_num[1]; ++j)
+			outFile << (*Nik_v_odd)(i, j) << ' ';
+		outFile << endl;
+	}
+	outFile.close();
 	vector<MatrixXd*> Nik = { Nik_u_even, Nik_u_odd, Nik_v_even, Nik_v_odd };
 
 	return Nik;
 }
 
-MatrixXd LSPIA::initCtrlPoints(MatrixXd * even_res, MatrixXd * odd_res)
+MatrixXd LSPIA::initCtrlPoints(MatrixXd * even_res, MatrixXd * odd_res, const vector<int>& ctrl_num)
 {
 	int rows = even_res->rows();
 	int cols = even_res->cols();

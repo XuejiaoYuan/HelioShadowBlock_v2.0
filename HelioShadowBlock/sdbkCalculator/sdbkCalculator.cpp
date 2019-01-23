@@ -34,7 +34,6 @@ vector<MatrixXd*> SdBkCalc::calcSampleShadowBlock(vector<MatrixXd*>& sample_inde
 
 double SdBkCalc::_helio_calc(int index, int DNI)
 {
-
 	Heliostat* helio = solar_scene->helios[index];
 	set<vector<int>> shadow_relative_grid_label_3ddda, block_relative_grid_label_3ddda;
 	int fc_index = solar_scene->helios[index]->focus_center_index;
@@ -44,7 +43,7 @@ double SdBkCalc::_helio_calc(int index, int DNI)
 	calcIntersection3DDDA(helio, reflect_dir, block_relative_grid_label_3ddda);
 	vector<Vector3d> dir = { -solar_scene->sunray_dir, reflect_dir };
 	vector<set<vector<int>>> estimate_grids = { shadow_relative_grid_label_3ddda, block_relative_grid_label_3ddda };
-	double res = helioClipper(helio, dir, estimate_grids);
+	helio->sd_bk = helioClipper(helio, dir, estimate_grids);
 	if (gl != NULL)
 		helio->flux_sum = calcFluxMap(helio, DNI);
 
@@ -1148,33 +1147,34 @@ void SdBkCalc::calcShadowBlock(const double DNI)
 #pragma omp parallel for
 	for (int i = 0; i < helios.size(); i++) {
 
-		auto helio = helios[i];
-		set<vector<int>> shadow_relative_grid_label_3ddda, block_relative_grid_label_3ddda;
+		//auto helio = helios[i];
+		_helio_calc(i, DNI);
+		//set<vector<int>> shadow_relative_grid_label_3ddda, block_relative_grid_label_3ddda;
 
-		// 3DDDA + clipper 
-		//Calc the relative heliostats which cause shadowing
-		calcIntersection3DDDA(helio, reverse_sunray_dir, shadow_relative_grid_label_3ddda);
+		//// 3DDDA + clipper 
+		////Calc the relative heliostats which cause shadowing
+		//calcIntersection3DDDA(helio, reverse_sunray_dir, shadow_relative_grid_label_3ddda);
 
-		//Calc the relactive heliostats which cause blocking
-		int fc_index = helio->focus_center_index;
-		Vector3d reflect_dir = (recvs[0]->focus_center[fc_index] - helio->helio_pos).normalized();
+		////Calc the relactive heliostats which cause blocking
+		//int fc_index = helio->focus_center_index;
+		//Vector3d reflect_dir = (recvs[0]->focus_center[fc_index] - helio->helio_pos).normalized();
 
-		calcIntersection3DDDA(helio, reflect_dir, block_relative_grid_label_3ddda);
+		//calcIntersection3DDDA(helio, reflect_dir, block_relative_grid_label_3ddda);
 
-		vector<Vector3d> dir = { reverse_sunray_dir, reflect_dir };		// from heliostat
-		if (shadow_relative_grid_label_3ddda.size() != 0 || block_relative_grid_label_3ddda.size() != 0) {
-			vector<set<vector<int>>> estimate_grids = { shadow_relative_grid_label_3ddda, block_relative_grid_label_3ddda };
-			helio->sd_bk = helioClipper(helio, dir, estimate_grids);
-		}
-		else
-			helio->sd_bk = 0;
+		//vector<Vector3d> dir = { reverse_sunray_dir, reflect_dir };		// from heliostat
+		//if (shadow_relative_grid_label_3ddda.size() != 0 || block_relative_grid_label_3ddda.size() != 0) {
+		//	vector<set<vector<int>>> estimate_grids = { shadow_relative_grid_label_3ddda, block_relative_grid_label_3ddda };
+		//	helio->sd_bk = helioClipper(helio, dir, estimate_grids);
+		//}
+		//else
+		//	helio->sd_bk = 0;
 
-		if(gl!=NULL)
-			helio->flux_sum = calcFluxMap(helio, DNI);
+		//if(gl!=NULL)
+		//	helio->flux_sum = calcFluxMap(helio, DNI);
 
-		double tanpi2zen = reverse_sunray_dir.y() / sqrt(pow(reverse_sunray_dir.x(),2) + pow(reverse_sunray_dir.z(), 2));
-		double HIh = max(helio->helio_size.x(), helio->helio_size.z());
-		helio->approx_rela_dis = (HIh*sin(acos(helio->helio_normal.y()))) / tanpi2zen + HIh*helio->helio_normal.y();
+		//double tanpi2zen = reverse_sunray_dir.y() / sqrt(pow(reverse_sunray_dir.x(),2) + pow(reverse_sunray_dir.z(), 2));
+		//double HIh = max(helio->helio_size.x(), helio->helio_size.z());
+		//helio->approx_rela_dis = (HIh*sin(acos(helio->helio_normal.y()))) / tanpi2zen + HIh*helio->helio_normal.y();
 		//cout << helio->sd_bk << endl;
 #ifdef DEBUG
 		// Ray tracing

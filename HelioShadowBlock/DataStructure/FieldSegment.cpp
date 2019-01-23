@@ -9,19 +9,19 @@ void FieldSegment::initFieldSegment()
 	MatrixXd *o_s_f_i, *o_s_p_x, *o_s_p_y;
 
 	for (int i = 0; i < field.size(); ++i) {
-		e_s_f_i = new MatrixXd(sample_row, sample_col);
-		e_s_p_x = new MatrixXd(sample_row, sample_col);
-		e_s_p_y = new MatrixXd(sample_row, sample_col);
+		e_s_f_i = new MatrixXd(sample_row/2, sample_col);
+		e_s_p_x = new MatrixXd(sample_row/2, sample_col);
+		e_s_p_y = new MatrixXd(sample_row/2, sample_col);
 
-		o_s_f_i = new MatrixXd(sample_row, sample_col);
-		o_s_p_x = new MatrixXd(sample_row, sample_col);
-		o_s_p_y = new MatrixXd(sample_row, sample_col);
+		o_s_f_i = new MatrixXd(sample_row/2, sample_col);
+		o_s_p_x = new MatrixXd(sample_row/2, sample_col);
+		o_s_p_y = new MatrixXd(sample_row/2, sample_col);
 
 		matrixSeperate(field[i], m_x[i], m_y[i]);
 		initFieldMatrix(even_field_index.back(), even_segment_region_label);
 		initFieldMatrix(odd_field_index.back(), odd_segment_region_label);
-		initSample(sample_row, sample_col, even_field_index.back(), even_segment_region_label.back(), e_s_f_i, e_s_p_x, e_s_p_y, even_sample_segment_region_label);
-		initSample(sample_row, sample_col, odd_field_index.back(), odd_segment_region_label.back(), o_s_f_i, o_s_p_x, o_s_p_y, odd_sample_segment_region_label);
+		initSample(sample_row/2, sample_col, even_field_index.back(), even_segment_region_label.back(), e_s_f_i, e_s_p_x, e_s_p_y, even_sample_segment_region_label);
+		initSample(sample_row/2, sample_col, odd_field_index.back(), odd_segment_region_label.back(), o_s_f_i, o_s_p_x, o_s_p_y, odd_sample_segment_region_label);
 		even_sample_field_index.push_back(e_s_f_i);
 		even_sample_pos_x.push_back(e_s_p_x);
 		even_sample_pos_y.push_back(e_s_p_y);
@@ -113,30 +113,71 @@ void FieldSegment::initFieldMatrix(MatrixXd* m_helio_index, vector<vector<vector
 	int row_cnt = total_row%seg_row;
 	int col_cnt = total_col%seg_col;
 	int e_start_i, e_start_j, e_end_i, e_end_j;
-	int tmp_row, tmp_col;
+	int tmp_row = m_row, tmp_col = m_col;
 	int start_i = 0, start_j = 0;
 
 	vector<vector<Vector2i>> seg_list;
+	//Vector2i start;
 	//fstream outFile("field_seg.txt", ios_base::out);
 	for (int i = 0; i < seg_row; ++i) {
+		//start.x() = max(0, start_i - tmp_row);
 		if (row_cnt) tmp_row = m_row + 1, row_cnt--;
 		else tmp_row = m_row;
+		//row_len = 2 * tmp_row;
+		//if (tmp_row == m_row + 1 && row_cnt == 0) --row_len;
 		start_j = 0;
 		col_cnt = total_col%seg_col;
 		for (int j = 0; j < seg_col; ++j) {
+			//start.y() = max(0, start_j - tmp_col);
 			if (col_cnt) tmp_col = m_col + 1, col_cnt--;
 			else tmp_col = m_col;
-			Vector2i start(max(0, start_i - tmp_row), max(0, start_j - tmp_col));
-			Vector2i end(min(total_row - 1, start_i + 2 * tmp_row - 1), min(total_col - 1, start_j + 2 * tmp_col - 1));
-			Vector2i center_start(start_i, start_j);
-			Vector2i center_end(start_i + tmp_row - 1, start_j + tmp_col - 1);
-			seg_list.push_back(vector<Vector2i>{start, end, center_start, center_end});
+			//col_len = 2 * tmp_col;
+			//if (tmp_col == m_col + 1 && col_cnt == 0) --col_len;
+			//Vector2i len(min(total_row - start.x(), row_len), min(total_col - start.y(), col_len));
+			//Vector2i center_start(start_i - start.x(), start_j - start.y());
+			//Vector2i center_len(tmp_row, tmp_col);
+			//seg_list.push_back(vector<Vector2i>{start, center_start, center_len});
+			seg_list.push_back(vector<Vector2i>{Vector2i(start_i, start_j), Vector2i(tmp_row, tmp_col)});
 			//outFile << i << ' ' << j << ", " << start_i << " " << start_j << ", " << center_end.x() << ' ' << center_end.y() << endl;
 			start_j += tmp_col;
 		}
 		start_i += tmp_row;
 	}
+
+	//for (int i = 0; i < seg_row; ++i) {
+	//	if (i + 2 >= seg_row) tmp_row = total_row;
+	//	else tmp_row = seg_list[(i + 2)*seg_col][1].x();
+	//	tmp_row -= seg_list[i*seg_col][0].x();
+	//	for (int j = 0; j < seg_col; ++j) {
+	//		if (j + 2 >= seg_col) tmp_col = total_col;
+	//		else tmp_col = seg_list[i*seg_col + j + 2][1].y();
+	//		tmp_col -= seg_list[i*seg_col + j][0].y();
+	//		seg_list[i*seg_col + j].insert(seg_list[i*seg_col + j].begin() + 1, Vector2i(tmp_row, tmp_col));
+	//	}
+	//}
 	//outFile.close();
+
+	start_i = 0, start_j = 0;
+	int end_i = total_row, end_j = total_col;
+	int len_i = 0, len_j = 0;
+	for (int i = 0; i < seg_row; ++i) {
+		if (i > 0) start_i = seg_list[(i - 1)*seg_col][0].x();
+		if (i + 2 < seg_row) end_i = seg_list[(i + 2)*seg_col][0].x();
+		else end_i = total_row;
+
+		for (int j = 0; j < seg_col; ++j) {
+			if (j > 0) start_j = seg_list[i*seg_col + j - 1][0].y();
+			else start_j = 0;
+			if (j + 2 < seg_col) end_j = seg_list[i*seg_col + j + 2][0].y();
+			else end_j = total_col;
+			seg_list[i*seg_col + j].insert(seg_list[i*seg_col+j].end(), {
+					Vector2i(start_i, start_j),
+					Vector2i(end_i - start_i, end_j - start_j),
+					seg_list[i*seg_col + j].front() - Vector2i(start_i, start_j)
+			});
+		}
+	}
+ 
 	segment_region_label.push_back(seg_list);
 }
 
@@ -177,39 +218,53 @@ void FieldSegment::initSample(const int sample_row, const int sample_col, Matrix
 		for (int j = 0; j < seg_col; ++j) {
 			if (grid_col_cnt) tmp_sample_col = grid_sample_col + 1, --grid_col_cnt;
 			else tmp_sample_col = grid_sample_col;
-			int s_i = segment_region_label[i*seg_col + j][2].x();
-			int s_j = segment_region_label[i*seg_col + j][2].y();
-			int e_i = segment_region_label[i*seg_col + j][3].x();
-			int e_j = segment_region_label[i*seg_col + j][3].y();
+			int s_i = segment_region_label[i*seg_col + j][0].x();
+			int s_j = segment_region_label[i*seg_col + j][0].y();
+			int e_i = s_i + segment_region_label[i*seg_col + j][1].x();
+			int e_j = s_j + segment_region_label[i*seg_col + j][1].y();
 			int f_i, f_j;
 
 			for (int g_i = 0; g_i < tmp_sample_row; ++g_i) {
-				if (g_i == tmp_sample_row - 1) f_i = e_i;
-				else f_i = int((e_i - s_i + 1) *g_i / (tmp_sample_row -1)) + s_i;
+				if (g_i == tmp_sample_row - 1) f_i = e_i - 1;
+				else f_i = int((e_i - s_i) *g_i / (tmp_sample_row -1)) + s_i;
 				for (int g_j = 0; g_j < tmp_sample_col; ++g_j) {
-					if (g_j == tmp_sample_col - 1) f_j = e_j;
-					else f_j = int((e_j - s_j + 1) * g_j / (tmp_sample_col-1)) + s_j;
+					if (g_j == tmp_sample_col - 1) f_j = e_j - 1;
+					else f_j = int((e_j - s_j) * g_j / (tmp_sample_col-1)) + s_j;
 					//outFile << "(" << f_i << "," << f_j << ")\t";
 
 					int index = (*m_helio_index)(f_i, f_j);
 					(*sample_field_index)(start_i + g_i, start_j + g_j) = index;
 					(*sample_pos_x)(start_i + g_i, start_j + g_j) = helios[index]->helio_pos.x();
-					(*sample_pos_y)(start_i + g_i, start_i + g_j) = helios[index]->helio_pos.z();
+					(*sample_pos_y)(start_i + g_i, start_j + g_j) = helios[index]->helio_pos.z();
 				}
 				//outFile << endl;
 			}
 				
 			Vector2i sample_start(start_i, start_j);
-			Vector2i sample_end(start_i + tmp_sample_row - 1, start_j + tmp_sample_col - 1);
-			seg_list.push_back(vector<Vector2i>{sample_start, sample_end});
+			Vector2i sample_len(tmp_sample_row, tmp_sample_col);
+			seg_list.push_back(vector<Vector2i>{sample_start, sample_len});		// 目标区域的采样信息
 			//outFile << "start & end: " << i << ' ' << j << ", " << start_i << " " << start_j << ", " << sample_end.x() << ' ' << sample_end.y() << "\n" << endl;
 			start_j += tmp_sample_col;
 		}
 		start_i += tmp_sample_row;
 	}
-	//sample_field_index = m_index;
-	//sample_pos_x = m_x;
-	//sample_pos_y = m_y;
+
+	start_i = 0, start_j = 0;
+	int end_i = sample_row, end_j = sample_col;
+	for (int i = 0; i < seg_row; ++i) {
+		if (i > 0) start_i = seg_list[(i - 1)*seg_col][0].x();
+		if (i + 2 < seg_row) end_i = seg_list[(i + 2)*seg_col][0].x();
+		else end_i = sample_row;
+		for (int j = 0; j < seg_col; ++j) {
+			if (j > 0) start_j = seg_list[i*seg_col + j - 1][0].y();
+			else start_j = 0;
+			if (j + 2 < seg_col) end_j = seg_list[i*seg_col + j + 2][0].y();
+			else end_j = sample_col;
+			Vector2i start(start_i, start_j);
+			Vector2i len(end_i - start_i, end_j - start_j);
+			seg_list[i*seg_col + j].insert(seg_list[i*seg_col+j].end(), { start, len });
+		}
+	}
 	sample_segment_region_label.push_back(seg_list);
 
 	//outFile.close();

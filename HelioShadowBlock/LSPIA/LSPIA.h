@@ -22,7 +22,7 @@ private:
 	//vector<MatrixXd*> sample_pos_x, sample_pos_y;
 	//vector<vector<vector<Vector2i>>> sample_segment_region_label;
 	FieldSegment *field_seg;
-	vector<int> ctrl_num;
+	MatrixXi ctrl_num_row, ctrl_num_col;
 	double miu;
 	//MatrixXd* delta_even_uv;
 	//MatrixXd* delta_odd_uv;
@@ -35,9 +35,9 @@ private:
 		const vector<MatrixXd*>&Nik, const double miu, const double threashold);
 	double surface_adjusting_control_points(const vector<MatrixXd*>&D_even_odd, MatrixXd&P,
 		const vector <MatrixXd*>&Nik, const double miu);
-	vector<vector<double>> LSPIA::initParameters(const int rows, const int cols, const double start_x, const double start_y, const double end_x, const double end_y);
-	vector<MatrixXd*> initBaseFunction(vector<vector<double>>& knot_uv, MatrixXd *even_x, MatrixXd *even_y, MatrixXd *odd_x, MatrixXd *odd_y);
-	MatrixXd initCtrlPoints(MatrixXd* even_res, MatrixXd* odd_res);
+	vector<vector<double>> LSPIA::initParameters(const int rows, const int cols, const double start_x, const double start_y, const double end_x, const double end_y, const vector<int>& ctrl_num);
+	vector<MatrixXd*> initBaseFunction(vector<vector<double>>& knot_uv, MatrixXd *even_x, MatrixXd *even_y, MatrixXd *odd_x, MatrixXd *odd_y, const vector<int>& ctrl_num);
+	MatrixXd initCtrlPoints(MatrixXd* even_res, MatrixXd* odd_res, const vector<int>& ctrl_num);
 };
 
 #endif //LSPIA_H

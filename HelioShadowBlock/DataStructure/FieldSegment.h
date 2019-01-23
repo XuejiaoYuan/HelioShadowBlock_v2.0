@@ -21,8 +21,10 @@ public:
 	vector<MatrixXd*> even_sample_field_index, odd_sample_field_index;	// field_num x sample_row x sample_col
 	vector<MatrixXd*> even_sample_pos_x, even_sample_pos_y, odd_sample_pos_x, odd_sample_pos_y;		// field_num x sample_row x sample_col
 	vector<vector<MatrixXd*>> even_sample_res, odd_sample_res;			// 若干时刻下采样点的计算结果 t x field_num x sample_row x sample_col
-	vector<vector<vector<Vector2i>>> even_segment_region_label, odd_segment_region_label;				// 存储分割扩展区域的起始/结束坐标, 目标区域的起始/结束坐标  seg_row x seg_col x 4(start_i, start_j, end_i, end_j)
-	vector<vector<vector<Vector2i>>> even_sample_segment_region_label, odd_sample_segment_region_label;	// 存储采样区域各分割块的起始和结束坐标  seg_row x seg_col x 4 (start_i, start_j, end_i, end_j)
+	vector<vector<vector<Vector2i>>> even_segment_region_label, odd_segment_region_label;				// 存储目标区域的起始坐标、区域长度， 分割扩展区域的起始坐标、区域长度，目标区域相对位置
+																										// seg_row x seg_col x 6(tgt_start, tgt_len, st_start, st_len, rela_tgt_start)
+	vector<vector<vector<Vector2i>>> even_sample_segment_region_label, odd_sample_segment_region_label;	// 存储目标区域的起始坐标、区域长度， 分割扩展区域的起始坐标、区域长度
+																										// seg_row x seg_col x 4(tgt_start, tgt_len, st_start, st_len)
 	int seg_row, seg_col;						// the rows and cols of field segmentation
 	int sample_row, sample_col;
 	SolarScene *solar_scene;
