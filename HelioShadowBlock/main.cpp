@@ -79,7 +79,7 @@ int main(int argc, char** argv) {
 	//field_seg->initFieldMatrix(solar_scene);
 	//field_seg->updateSample(10, 10);
 	FieldSegment* field_seg = new FieldSegment(solar_scene);
-	field_seg->setSegmentParam(10, 10, 100, 100);
+	field_seg->setSegmentParam(50, 50, 100, 100);
 	field_seg->initFieldSegment();
 
 	SdBkCalcCreator sdbk_calc_creator;
@@ -249,7 +249,11 @@ int main(int argc, char** argv) {
 		field_seg->odd_sample_res.push_back(sdbk_calc->calcSampleShadowBlock(field_seg->odd_sample_field_index, sunray.current_DNI));
 		sdbk_calc->calcExcludeShadowBlock(sunray.current_DNI);
 	}
+	elapsed = chrono::duration_cast<chrono::microseconds>(std::chrono::high_resolution_clock::now() - start);
+	time = double(elapsed.count())*chrono::microseconds::period::num / chrono::microseconds::period::den;
+	std::cout << "Sample clipper time: " << time << "s." << endl;
 
+	start = std::chrono::high_resolution_clock::now();
 	vector<vector<MatrixXd*>> fitting_sd_bk_res;
 	if (options == "-s_l") {
 		LSPIA lspia;
@@ -260,13 +264,15 @@ int main(int argc, char** argv) {
 
 		//lspia.checkFittingData(sdbk_calc->solar_scene->helios, sdbk_calc->field_index, fitting_sd_bk_res);
 		
-		lspia.setPreDatas(field_seg, ctrl_nums, 0.1);
-		lspia.LSPIA_surface();
+		//lspia.setPreDatas(field_seg, ctrl_nums, 0.2);
+		//lspia.LSPIA_surface();
+		lspia.setPreDatas(field_seg);
+		lspia.LSF_surface();
 	}
 
 	elapsed = chrono::duration_cast<chrono::microseconds>(std::chrono::high_resolution_clock::now() - start);
 	time = double(elapsed.count())*chrono::microseconds::period::num / chrono::microseconds::period::den;
-	std::cout << "LSPIA calculation time: " << time << "s." << endl;
+	std::cout << "Fitting calculation time: " << time << "s." << endl;
 
 	return 1;
 }

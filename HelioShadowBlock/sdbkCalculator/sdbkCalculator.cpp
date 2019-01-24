@@ -27,6 +27,7 @@ vector<MatrixXd*> SdBkCalc::calcSampleShadowBlock(vector<MatrixXd*>& sample_inde
 				(*m_sample_res)(i, j) = _helio_calc(index, DNI);
 			}
 		}
+
 		sample_res.push_back(m_sample_res);
 	}
 	return sample_res;
@@ -50,7 +51,7 @@ double SdBkCalc::_helio_calc(int index, int DNI)
 	shadow_relative_grid_label_3ddda.clear();
 	block_relative_grid_label_3ddda.clear();
 	estimate_grids.clear();
-	return helio->flux_sum;
+	return helio->flux_sum * (1- helio->sd_bk);
 }
 
 void SdBkCalc::calcExcludeShadowBlock(const double DNI) {
