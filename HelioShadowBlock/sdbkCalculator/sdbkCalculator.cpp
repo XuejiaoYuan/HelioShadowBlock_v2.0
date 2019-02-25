@@ -33,6 +33,20 @@ vector<MatrixXd*> SdBkCalc::calcSampleShadowBlock(vector<MatrixXd*>& sample_inde
 	return sample_res;
 }
 
+unordered_map<int, double> SdBkCalc::calcSampleShadowBlock(int sample_row, int sample_col, const double DNI) {
+	int helio_sum = solar_scene->helios.size();
+	double gap = (double)helio_sum / (sample_row*sample_col);
+	unordered_map<int, double> sample_res;
+
+#pragma omp parallel for
+	for(int i=0; i<sample_row; ++i)
+		for (int j = 0; j < sample_col; ++j) {
+			int index = (i*sample_col*gap + j*gap);
+			sample_res[index] = _helio_calc(index, DNI);
+		}
+	return sample_res;
+}
+
 double SdBkCalc::_helio_calc(int index, int DNI)
 {
 	Heliostat* helio = solar_scene->helios[index];

@@ -130,12 +130,14 @@
     <ClInclude Include="DataStructure\FieldSegment.h" />
     <ClInclude Include="DataStructure\Heliostat.h" />
     <ClInclude Include="DataStructure\Layout.h" />
+    <ClInclude Include="DataStructure\LsfFieldSegment.h" />
     <ClInclude Include="DataStructure\Receiver.h" />
     <ClInclude Include="DataStructure\SolarScene.h" />
     <ClInclude Include="DataStructure\SPA.h" />
     <ClInclude Include="DataStructure\SunRay.h" />
     <ClInclude Include="FED\FED.h" />
     <ClInclude Include="GaussLegendre\GaussLegendre.h" />
+    <ClInclude Include="LSPIA\LSF.h" />
     <ClInclude Include="LSPIA\LSPIA.h" />
     <ClInclude Include="sdbkCalculator\sdbkCalculator.h" />
   </ItemGroup>
@@ -154,12 +156,14 @@
     <ClCompile Include="DataStructure\FieldSegment.cpp" />
     <ClCompile Include="DataStructure\Heliostat.cpp" />
     <ClCompile Include="DataStructure\Layout.cpp" />
+    <ClCompile Include="DataStructure\LsfFieldSegment.cpp" />
     <ClCompile Include="DataStructure\Receiver.cpp" />
     <ClCompile Include="DataStructure\SolarScene.cpp" />
     <ClCompile Include="DataStructure\SPA.cpp" />
     <ClCompile Include="DataStructure\SunRay.cpp" />
     <ClCompile Include="FED\FED.cpp" />
     <ClCompile Include="GaussLegendre\GaussLegendre.cpp" />
+    <ClCompile Include="LSPIA\LSF.cpp" />
     <ClCompile Include="LSPIA\LSPIA.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="sdbkCalculator\sdbkCalculator.cpp" />

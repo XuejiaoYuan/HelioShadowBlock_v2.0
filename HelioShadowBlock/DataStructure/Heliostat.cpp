@@ -169,6 +169,28 @@ void Heliostat::calcFluxParam(const vector<Receiver*>& recvs)
 	sigma = 1.31;
 }
 
+void Heliostat::calcLsfParam()
+{
+	lsf_param_M = MatrixXd(6, 6);
+	lsf_param_v = MatrixXd(6, 1);
+
+	double pos_x = helio_pos.x();
+	double pos_y = helio_pos.z();
+	lsf_param_v(0, 0) = 1;
+	lsf_param_v(1, 0) = pos_x;
+	lsf_param_v(2, 0) = pos_y;
+	lsf_param_v(3, 0) = pos_x*pos_x;
+	lsf_param_v(4, 0) = pos_x*pos_y;
+	lsf_param_v(5, 0) = pos_y*pos_y;
+
+	lsf_param_M.row(0) = lsf_param_v;
+	lsf_param_M.row(1) = pos_x*lsf_param_v;
+	lsf_param_M.row(2) = pos_y*lsf_param_v;
+	lsf_param_M.row(3) = pos_x*pos_x*lsf_param_v;
+	lsf_param_M.row(4) = pos_x*pos_y*lsf_param_v;
+	lsf_param_M.row(5) = pos_y*pos_y*lsf_param_v;
+}
+
 void Heliostat::initializeSubHelio(const Vector3d&focus_center, const Vector3d&sunray_dir)
 {
 	Vector2d subhelio_gap(0, 0);

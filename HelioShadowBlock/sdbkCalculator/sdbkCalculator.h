@@ -29,6 +29,7 @@ public:
 	vector<MatrixXd*> calcSampleShadowBlock(vector<MatrixXd*>& sample_index, const double DNI);
 	void calcExcludeShadowBlock(const double DNI);
 	//virtual void save_clipper_res(const string save_path, int month, int day, int hour, int minute) {};
+	unordered_map<int, double> calcSampleShadowBlock(int sample_row, int sample_col, const double DNI);
 
 	FieldType field_type;
 	SolarScene* solar_scene;

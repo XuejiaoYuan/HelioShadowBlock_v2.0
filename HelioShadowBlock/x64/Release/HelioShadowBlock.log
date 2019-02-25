@@ -1,12 +1,8 @@
-﻿  main.cpp
-e:\xjyuan\003 zju\002 solar\004 codes\180911_solar\helioshadowblock\helioshadowblock\datastructure\../DataStructure/Heliostat.h(39): warning C4150: 删除指向不完整“SubHelio”类型的指针；没有调用析构函数
-  e:\xjyuan\003 zju\002 solar\004 codes\180911_solar\helioshadowblock\helioshadowblock\datastructure\../DataStructure/Heliostat.h(19): note: 参见“SubHelio”的声明
-main.cpp(47): warning C4244: “初始化”: 从“double”转换到“int”，可能丢失数据
-main.cpp(48): warning C4244: “初始化”: 从“double”转换到“int”，可能丢失数据
+﻿  LsfFieldSegment.cpp
   正在生成代码
-  96 of 7517 functions ( 1.3%) were compiled, the rest were copied from previous compilation.
+  88 of 7517 functions ( 1.2%) were compiled, the rest were copied from previous compilation.
     0 functions were new in current compilation
-    22 functions had inline decision re-evaluated but remain unchanged
+    18 functions had inline decision re-evaluated but remain unchanged
   已完成代码的生成
   HelioShadowBlock.vcxproj -> E:\xjYuan\003 ZJU\002 Solar\004 Codes\180911_Solar\HelioShadowBlock\x64\Release\HelioShadowBlock.exe
   HelioShadowBlock.vcxproj -> E:\xjYuan\003 ZJU\002 Solar\004 Codes\180911_Solar\HelioShadowBlock\x64\Release\HelioShadowBlock.pdb (Full PDB)

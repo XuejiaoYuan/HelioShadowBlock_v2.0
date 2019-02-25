@@ -120,6 +120,12 @@
     <ClInclude Include="DataStructure\FieldSegment.h">
       <Filter>DataStructure</Filter>
     </ClInclude>
+    <ClInclude Include="DataStructure\LsfFieldSegment.h">
+      <Filter>DataStructure</Filter>
+    </ClInclude>
+    <ClInclude Include="LSPIA\LSF.h">
+      <Filter>LSPIA</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DataStructure\Clip\Clipper\clipper.cpp">
@@ -190,6 +196,12 @@
     </ClCompile>
     <ClCompile Include="DataStructure\FieldSegment.cpp">
       <Filter>DataStructure</Filter>
+    </ClCompile>
+    <ClCompile Include="DataStructure\LsfFieldSegment.cpp">
+      <Filter>DataStructure</Filter>
+    </ClCompile>
+    <ClCompile Include="LSPIA\LSF.cpp">
+      <Filter>LSPIA</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

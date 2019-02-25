@@ -2,8 +2,10 @@
 #include "./sdbkCalculator/sdbkCalculator.h"
 #include "./DataStructure/SunRay.h"
 #include "./LSPIA/LSPIA.h"
+#include "./LSPIA/LSF.h"
 #include "./GaussLegendre/GaussLegendre.h"
 #include "./DataStructure/FieldSegment.h"
+#include "./DataStructure/LsfFieldSegment.h"
 #include <iomanip>
 
 int get_index(int r, int c) {
@@ -269,6 +271,24 @@ int main(int argc, char** argv) {
 		lspia.setPreDatas(field_seg);
 		lspia.LSF_surface();
 	}
+
+	//unordered_map<int, double> sample_res;
+	//if (options == "-s_l") {
+	//	sample_res = sdbk_calc->calcSampleShadowBlock(100, 100, sunray.current_DNI);
+	//}
+	elapsed = chrono::duration_cast<chrono::microseconds>(std::chrono::high_resolution_clock::now() - start);
+	time = double(elapsed.count())*chrono::microseconds::period::num / chrono::microseconds::period::den;
+	std::cout << "Sample clipper time: " << time << "s." << endl;
+	start = std::chrono::high_resolution_clock::now();
+	if (options == "-s_l") {
+		LsfFieldSegment lsfSeg(solar_scene);
+		lsfSeg.initFieldSegment();
+		lsfSeg.sample_res = sdbk_calc->calcSampleShadowBlock(100, 100, sunray.current_DNI);
+
+		LSF lsf(lsfSeg);
+
+	}
+	
 
 	elapsed = chrono::duration_cast<chrono::microseconds>(std::chrono::high_resolution_clock::now() - start);
 	time = double(elapsed.count())*chrono::microseconds::period::num / chrono::microseconds::period::den;

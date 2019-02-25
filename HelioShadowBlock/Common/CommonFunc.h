@@ -9,6 +9,7 @@
 #include <omp.h>
 #include <cstdarg>
 #include <iomanip>
+#include <unordered_map>
 using namespace std;
 
 #include <Eigen/Dense>

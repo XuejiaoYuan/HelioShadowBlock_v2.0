@@ -531,3 +531,4 @@ MatrixXd LSPIA::LSF_res(MatrixXd& param, MatrixXd& pos_x, MatrixXd& pos_y)
 	}
 	return res;
 }
+
