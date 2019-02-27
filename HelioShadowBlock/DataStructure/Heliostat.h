@@ -70,6 +70,9 @@ public:
 	Matrix4d local2worldM;		//Heliostat's transform matrixs
 	Matrix4d world2localM;
 	double sd_bk;				// Heliostat's shadow and block ratio
+	double flux_sum;				// flux_sum = 0.5 * S * cos_w * rou * mAA * l_w_ration / pi
+	double total_e;				// (1-sdbk)*flux_sum
+	bool fluxCalc = false;
 	double mAA;					// Heliostat's atomospheric attenuation factor
 	double cos_w;				// Heliostat's incidence cosine efficiency
 	vector<double> cos_phi;		// Receiver cosine efficiencies
@@ -78,7 +81,6 @@ public:
 	double l_w_ratio;			// Heliostat's projection length and width on image plane
 	double sigma;				// Heliostat's sigma
 	double flux_param;			// flux_param = 0.5 * S * cos_w * rou * mAA * l_w_ration / pi
-	double flux_sum;				// flux_sum = 0.5 * S * cos_w * rou * mAA * l_w_ration / pi
 	double max_rela_dis;			// 计算阴影与遮挡时最大无关距离
 	double min_rela_dis;			// 计算阴影与遮挡时最小相关距离
 	double approx_rela_dis;		// 由公式计算得到的阴影与遮挡时最大无关距离

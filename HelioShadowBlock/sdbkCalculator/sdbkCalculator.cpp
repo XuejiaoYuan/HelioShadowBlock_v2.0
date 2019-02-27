@@ -33,18 +33,31 @@ vector<MatrixXd*> SdBkCalc::calcSampleShadowBlock(vector<MatrixXd*>& sample_inde
 	return sample_res;
 }
 
-unordered_map<int, double> SdBkCalc::calcSampleShadowBlock(int sample_row, int sample_col, const double DNI) {
+void SdBkCalc::calcSampleShadowBlock(int sample_row, int sample_col, const double DNI) {
 	int helio_sum = solar_scene->helios.size();
 	double gap = (double)helio_sum / (sample_row*sample_col);
-	unordered_map<int, double> sample_res;
+	//unordered_map<int, double> sample_res;
+	
 
 #pragma omp parallel for
 	for(int i=0; i<sample_row; ++i)
 		for (int j = 0; j < sample_col; ++j) {
 			int index = (i*sample_col*gap + j*gap);
-			sample_res[index] = _helio_calc(index, DNI);
+			_helio_calc(index, DNI);
+			//if (sample_res.count(index)) 
+			//	cout << "duplicate " << index << endl;
+			// sample_res[index] = _helio_calc(index, DNI);
 		}
-	return sample_res;
+	//return sample_res;
+}
+
+void SdBkCalc::saveCalcRes(const string s)
+{
+	fstream outFile(s, ios_base::out);
+	for (auto&h : solar_scene->helios) {
+		outFile << h->helio_pos.x() << ' ' << h->helio_pos.z() << ' ' << h->total_e << endl;
+	}
+	outFile.close();
 }
 
 double SdBkCalc::_helio_calc(int index, int DNI)
@@ -61,11 +74,13 @@ double SdBkCalc::_helio_calc(int index, int DNI)
 	helio->sd_bk = helioClipper(helio, dir, estimate_grids);
 	if (gl != NULL)
 		helio->flux_sum = calcFluxMap(helio, DNI);
+	helio->total_e = (1 - helio->sd_bk)*helio->flux_sum;
+	helio->fluxCalc = true;
 
 	shadow_relative_grid_label_3ddda.clear();
 	block_relative_grid_label_3ddda.clear();
 	estimate_grids.clear();
-	return helio->flux_sum * (1- helio->sd_bk);
+	return helio->total_e;
 }
 
 void SdBkCalc::calcExcludeShadowBlock(const double DNI) {

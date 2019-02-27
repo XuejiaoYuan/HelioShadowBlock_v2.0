@@ -126,6 +126,9 @@
     <ClInclude Include="LSPIA\LSF.h">
       <Filter>LSPIA</Filter>
     </ClInclude>
+    <ClInclude Include="DataStructure\Timer.h">
+      <Filter>DataStructure</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DataStructure\Clip\Clipper\clipper.cpp">
@@ -202,6 +205,9 @@
     </ClCompile>
     <ClCompile Include="LSPIA\LSF.cpp">
       <Filter>LSPIA</Filter>
+    </ClCompile>
+    <ClCompile Include="DataStructure\Timer.cpp">
+      <Filter>DataStructure</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
