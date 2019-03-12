@@ -3,13 +3,6 @@
 #include <ctime>
 
 
-//void SdBkCalc::sample_calc_preprocess(const int sample_row_num, const int sample_col_num, bool calc_s, bool calc_f)
-//{
-//	if (calc_f || field_index == nullptr)
-//		field_index = field_data_pre();
-//	if (calc_s || sample_field_index == nullptr)
-//		sample_field_index = sample_field_data_pre(sample_row_num, sample_col_num);
-//}
 
 vector<MatrixXd*> SdBkCalc::calcSampleShadowBlock(vector<MatrixXd*>& sample_index, const double DNI)
 {
@@ -35,20 +28,14 @@ vector<MatrixXd*> SdBkCalc::calcSampleShadowBlock(vector<MatrixXd*>& sample_inde
 
 void SdBkCalc::calcSampleShadowBlock(int sample_row, int sample_col, const double DNI) {
 	int helio_sum = solar_scene->helios.size();
-	double gap = (double)helio_sum / (sample_row*sample_col);
-	//unordered_map<int, double> sample_res;
-	
+	double gap = (double)helio_sum / (sample_row*sample_col);	
 
 #pragma omp parallel for
 	for(int i=0; i<sample_row; ++i)
 		for (int j = 0; j < sample_col; ++j) {
 			int index = (i*sample_col*gap + j*gap);
 			_helio_calc(index, DNI);
-			//if (sample_res.count(index)) 
-			//	cout << "duplicate " << index << endl;
-			// sample_res[index] = _helio_calc(index, DNI);
 		}
-	//return sample_res;
 }
 
 void SdBkCalc::saveCalcRes(const string s)
@@ -1147,21 +1134,12 @@ double SdBkCalc::calcSingleFluxSum(int helio_index, const double DNI) {
 }
 
 
-void SdBkCalc::calcShadowBlock(const double DNI)
+double SdBkCalc::calcShadowBlock(const double DNI)
 {
 	vector<Heliostat*> helios = solar_scene->helios;
 	vector<Layout*> layouts = solar_scene->layouts;
 	vector<Receiver*> recvs = solar_scene->recvs;
-
-	//int row = layouts[0]->layout_row_col.x();
-	//int col = layouts[0]->layout_row_col.y();
-	//sd_bk_res = new MatrixXd(row, col);
-
-//#ifdef DEBUG
-//	MatrixXd* raytracing_store = new MatrixXd(row, col);
-//#endif // DEBUG
-
-
+	double sum = 0.0;
 #ifdef READFILE
 	fstream inFile("shadowblock_gt_save.txt", ios_base::in);
 	if (inFile.fail())
@@ -1176,36 +1154,11 @@ void SdBkCalc::calcShadowBlock(const double DNI)
 	Vector3d reverse_sunray_dir = -solar_scene->sunray_dir;
 #pragma omp parallel for
 	for (int i = 0; i < helios.size(); i++) {
+		double res  = _helio_calc(i, DNI);
 
-		//auto helio = helios[i];
-		_helio_calc(i, DNI);
-		//set<vector<int>> shadow_relative_grid_label_3ddda, block_relative_grid_label_3ddda;
+#pragma omp atomic
+		sum += res;
 
-		//// 3DDDA + clipper 
-		////Calc the relative heliostats which cause shadowing
-		//calcIntersection3DDDA(helio, reverse_sunray_dir, shadow_relative_grid_label_3ddda);
-
-		////Calc the relactive heliostats which cause blocking
-		//int fc_index = helio->focus_center_index;
-		//Vector3d reflect_dir = (recvs[0]->focus_center[fc_index] - helio->helio_pos).normalized();
-
-		//calcIntersection3DDDA(helio, reflect_dir, block_relative_grid_label_3ddda);
-
-		//vector<Vector3d> dir = { reverse_sunray_dir, reflect_dir };		// from heliostat
-		//if (shadow_relative_grid_label_3ddda.size() != 0 || block_relative_grid_label_3ddda.size() != 0) {
-		//	vector<set<vector<int>>> estimate_grids = { shadow_relative_grid_label_3ddda, block_relative_grid_label_3ddda };
-		//	helio->sd_bk = helioClipper(helio, dir, estimate_grids);
-		//}
-		//else
-		//	helio->sd_bk = 0;
-
-		//if(gl!=NULL)
-		//	helio->flux_sum = calcFluxMap(helio, DNI);
-
-		//double tanpi2zen = reverse_sunray_dir.y() / sqrt(pow(reverse_sunray_dir.x(),2) + pow(reverse_sunray_dir.z(), 2));
-		//double HIh = max(helio->helio_size.x(), helio->helio_size.z());
-		//helio->approx_rela_dis = (HIh*sin(acos(helio->helio_normal.y()))) / tanpi2zen + HIh*helio->helio_normal.y();
-		//cout << helio->sd_bk << endl;
 #ifdef DEBUG
 		// Ray tracing
 		vector<set<vector<int>>> ray_relative_grids(2);
@@ -1248,8 +1201,7 @@ void SdBkCalc::calcShadowBlock(const double DNI)
 	std::cout << "Heliostat total calculate time: " << time << "s." << endl;
 
 #endif // CALC_TIME
-
-
+	
 
 #ifdef OUTPUTRES
 	fstream outFile("shadowblock_clipper_save.txt", ios_base::out);
@@ -1258,8 +1210,7 @@ void SdBkCalc::calcShadowBlock(const double DNI)
 	outFile.close();
 
 #endif // OUTPUTRES
-
-	//return sd_bk_res;
+	return  sum;
 }
 
 void CrossRectSdBkCalc::save_clipper_res(const string save_path, int month, int day, int hour, int minute)
@@ -1294,123 +1245,6 @@ void CrossRectSdBkCalc::get_row_col(const int index, int & r, int & c)
 	r = 2 * (index / g_cnts) + (index%g_cnts) / col;
 	c = index%g_cnts%col;
 }
-
-
-//MatrixXd* CrossRectSdBkCalc::field_data_pre() {
-//	vector<Heliostat*>& helios = solar_scene->helios;
-//	vector<Layout*>& layouts = solar_scene->layouts;
-//	int row = layouts[0]->layout_row_col.x();
-//	int col = layouts[0]->layout_row_col.y();
-//	if (!field_data.empty()) {
-//		delete field_data[0];
-//		delete field_data[1];
-//		field_data.clear();
-//	}
-//
-//	MatrixXd* field_data_x = new MatrixXd(row, col);
-//	MatrixXd* field_data_y = new MatrixXd(row, col);
-//	MatrixXd* field_index = new MatrixXd(row, col);
-//	int h = 0;
-//	int tmp_col;
-//	for (int i = 0; i < row; i++) {
-//		if (i % 2) tmp_col = col - 1;
-//		else tmp_col = col;
-//		for (int j = 0; j < tmp_col; j++) {
-//			(*field_data_x)(i, j) = helios[h]->helio_pos.x();
-//			(*field_data_y)(i, j) = helios[h]->helio_pos.z();
-//			(*field_index)(i, j) = helios[h]->helio_index;
-//			h++;
-//		}
-//	}
-//
-//	field_data.push_back(field_data_x);
-//	field_data.push_back(field_data_y);
-//	return field_index;
-//}
-//
-//
-//MatrixXd* CrossRectSdBkCalc::sample_field_data_pre(const int sample_row_num, const int sample_col_num)
-//{
-//	int row = solar_scene->layouts[0]->layout_row_col.x();
-//	int col = solar_scene->layouts[0]->layout_row_col.y();
-//	if (!sample_field_data.empty()) {
-//		delete sample_field_data[0];
-//		delete sample_field_data[1];
-//		sample_field_data.clear();
-//	}
-//
-//	MatrixXd* sample_f_data_x = new MatrixXd(sample_row_num, sample_col_num);
-//	MatrixXd* sample_f_data_y = new MatrixXd(sample_row_num, sample_col_num);
-//	MatrixXd* sample_index = new MatrixXd(sample_row_num, sample_col_num);
-//	int tmp_col;
-//	int cur_row = 0;
-//	for (int i = 0; i < sample_row_num / 2 - 1; i++) {
-//		int f_i = int(row*i / sample_row_num);
-//		for (int k = 0; k < 2; k++) {
-//			for (int j = 0; j < sample_col_num - 1; j++) {
-//				int f_j = int(col*j / sample_col_num);
-//				(*sample_f_data_x)(cur_row, j) = (*field_data[0])(2 * f_i + k, f_j);
-//				(*sample_f_data_y)(cur_row, j) = (*field_data[1])(2 * f_i + k, f_j);
-//				(*sample_index)(cur_row, j) = (*field_index)(2 * f_i + k, f_j);
-//			}
-//			if (k % 2) tmp_col = col - 2;
-//			else tmp_col = col - 1;
-//			(*sample_f_data_x)(cur_row, sample_col_num - 1) = (*field_data[0])(2 * f_i + k, tmp_col);
-//			(*sample_f_data_y)(cur_row, sample_col_num - 1) = (*field_data[1])(2 * f_i + k, tmp_col);
-//			(*sample_index)(cur_row, sample_col_num - 1) = (*field_index)(2 * f_i + k, tmp_col);
-//			cur_row++;
-//		}
-//	}
-//
-//	for (int i = 0; i < 2; i++) {
-//		for (int j = 0; j < sample_col_num - 1; j++) {
-//			int f_j = int(col*j / sample_col_num);
-//			int row_cnt = row - cur_row;
-//			(*sample_f_data_x)(cur_row, j) = (*field_data[0])(row - 2 + i, f_j);
-//			(*sample_f_data_y)(cur_row, j) = (*field_data[1])(row - 2 + i, f_j);
-//			(*sample_index)(cur_row, j) = (*field_index)(row - 2 + i, f_j);
-//		}
-//		if (cur_row % 2) tmp_col = col - 2;
-//		else tmp_col = col - 1;
-//		(*sample_f_data_x)(cur_row, sample_col_num - 1) = (*field_data[0])(row - 2 + i, tmp_col);
-//		(*sample_f_data_y)(cur_row, sample_col_num - 1) = (*field_data[1])(row - 2 + i, tmp_col);
-//		(*sample_index)(cur_row, sample_col_num - 1) = (*field_index)(row - 2 + i, tmp_col);
-//		cur_row++;
-//	}
-//	sample_field_data.push_back(sample_f_data_x);
-//	sample_field_data.push_back(sample_f_data_y);
-//	return sample_index;
-//}
-//
-//
-//MatrixXd* RectSdBkCalc::sample_field_data_pre(const int sample_row_num, const int sample_col_num)
-//{
-//	int row = solar_scene->layouts[0]->layout_row_col.x();
-//	int col = solar_scene->layouts[0]->layout_row_col.y();
-//	if (!sample_field_data.empty()) {
-//		delete sample_field_data[0];
-//		delete sample_field_data[1];
-//		sample_field_data.clear();
-//	}
-//
-//	MatrixXd* sample_f_data_x = new MatrixXd(sample_row_num, sample_col_num);
-//	MatrixXd* sample_f_data_y = new MatrixXd(sample_row_num, sample_col_num);
-//	MatrixXd* sample_index = new MatrixXd(sample_row_num, sample_col_num);
-//
-//	for (int i = 0; i < sample_row_num; i++) {
-//		int f_i = int(row*i / sample_row_num);
-//		for (int j = 0; j < sample_col_num; j++) {
-//			int f_j = int(col*j / sample_col_num);
-//			(*sample_f_data_x)(i, j) = (*field_data[0])(f_i, f_j);
-//			(*sample_f_data_y)(i, j) = (*field_data[1])(f_i, f_j);
-//			(*sample_index)(i, j) = (*field_index)(f_i, f_j);
-//		}
-//	}
-//
-//	sample_field_data.push_back(sample_f_data_x);
-//	sample_field_data.push_back(sample_f_data_y);
-//	return sample_index;
-//}
 
 
 void RectSdBkCalc::get_row_col(const int index, int& r, int & c)

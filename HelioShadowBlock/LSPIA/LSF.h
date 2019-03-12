@@ -10,7 +10,6 @@ public:
 	void LSF_surface(SolarScene* solar_scene);
 
 private:
-	//LsfFieldSegment field_seg;
 	double calcFittingData(vector<Heliostat*>& helios,
 					double row_gap, double col_gap, double row_start, double col_start);
 

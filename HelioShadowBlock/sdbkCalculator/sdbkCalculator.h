@@ -19,16 +19,12 @@ public:
 		this->field_type = _field_type;
 		this->solar_scene = _solar_scene;
 		this->gl = _gl;
-		//this->clipper_res_store.resize(2);
-		//this->sample_clipper_res_store.resize(2);
 	}
 	double calcSingleShadowBlock(int helio_index);
 	double calcSingleFluxSum(int helio_index, const double DNI);
-	void calcShadowBlock(const double DNI);
-	//void sample_calc_preprocess(const int sample_row_num, const int sample_col_num, bool calc_s = false, bool calc_f = false);
+	double calcShadowBlock(const double DNI);
 	vector<MatrixXd*> calcSampleShadowBlock(vector<MatrixXd*>& sample_index, const double DNI);
 	void calcExcludeShadowBlock(const double DNI);
-	//virtual void save_clipper_res(const string save_path, int month, int day, int hour, int minute) {};
 	void calcSampleShadowBlock(int sample_row, int sample_col, const double DNI);
 	void saveCalcRes(const string s);
 
@@ -36,11 +32,6 @@ public:
 	SolarScene* solar_scene;
 	GaussLegendre* gl;
 
-	//MatrixXd* field_index;					// 定日镜场所有定日镜序号
-	//MatrixXd* sample_field_index;
-	//vector<MatrixXd*> field_data;			// 定日镜场所有定日镜x与z坐标
-	//vector<MatrixXd*> sample_field_data;		// 定日镜场采样定日镜x与z坐标
-	//MatrixXd* sample_sd_bk_res;
 
 protected:
 
@@ -61,10 +52,6 @@ protected:
 
 	void flux_sum_matrix_grid(vector<Vector3d>& _recv_v, vector<Vector2d>& proj_v, const int rows, const int cols, Heliostat* helio, const double cos_phi, const double DNI);
 	void flux_sum_matrix_inte(Vector3d& recv_normal, Vector3d& fc, vector<Vector3d>& _recv_v, Matrix4d& local2world, vector<Vector2d>& proj_v, Heliostat * helio, const double cos_phi, const double DNI);
-	//virtual void get_row_col(const int index, int& r, int& c) = 0;
-	// 采样计算预处理操作
-	//virtual MatrixXd* field_data_pre() = 0;
-	//virtual MatrixXd* sample_field_data_pre(const int sample_row_num, const int sample_col_num) = 0;
 
 };
 
