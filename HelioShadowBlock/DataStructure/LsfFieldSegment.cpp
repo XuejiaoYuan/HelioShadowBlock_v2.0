@@ -1,5 +1,8 @@
 #include "LsfFieldSegment.h"
 
+// [拟合区域分割]
+//		将待拟合区域划分成小区域，保证拟合误差不会过大
+//
 void LsfFieldSegment::initFieldSegment()
 {
 	boundPos.clear();

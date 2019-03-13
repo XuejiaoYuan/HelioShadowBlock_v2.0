@@ -1,32 +1,12 @@
 #include"sdbkCalculator.h"
 #include <random>
 #include <ctime>
+#include "../DataStructure/Timer.h"
 
-
-
-vector<MatrixXd*> SdBkCalc::calcSampleShadowBlock(vector<MatrixXd*>& sample_index, const double DNI)
-{
-	vector<MatrixXd*> sample_res;
-	for (int m = 0; m < sample_index.size(); ++m) {
-		auto m_index = sample_index[m];
-		int row = m_index->rows();
-		int col = m_index->cols();
-		MatrixXd *m_sample_res = new MatrixXd(row, col);
-
-#pragma omp parallel for
-		for (int i = 0; i < row; i++) {
-			for (int j = 0; j < col; j++) {
-				int index = (*m_index)(i, j);
-				(*m_sample_res)(i, j) = _helio_calc(index, DNI);
-			}
-		}
-
-		sample_res.push_back(m_sample_res);
-	}
-	return sample_res;
-}
-
-void SdBkCalc::calcSampleShadowBlock(int sample_row, int sample_col, const double DNI) {
+//
+// [计算采样定日镜能量] 计算每个采样定日镜反射到接收器上课被接收器吸收的能量
+//
+void SdBkCalc::calcSampleEnergy(int sample_row, int sample_col, const double DNI) {
 	int helio_sum = solar_scene->helios.size();
 	double gap = (double)helio_sum / (sample_row*sample_col);	
 
@@ -47,6 +27,10 @@ void SdBkCalc::saveCalcRes(const string s)
 	outFile.close();
 }
 
+
+//
+// [计算单个定日镜能量] 返回单个定日镜反射到接收器上被接收器吸收的能量
+//
 double SdBkCalc::_helio_calc(int index, int DNI)
 {
 	Heliostat* helio = solar_scene->helios[index];
@@ -70,21 +54,10 @@ double SdBkCalc::_helio_calc(int index, int DNI)
 	return helio->total_e;
 }
 
-void SdBkCalc::calcExcludeShadowBlock(const double DNI) {
-	vector<vector<int>>& exclude_helio_index = solar_scene->layouts[0]->exclude_helio_index;
-	vector<vector<double>> ex_helio_res(exclude_helio_index.size(), vector<double>(exclude_helio_index[0].size(), 0));
 
-	for (int m = 0; m < solar_scene->layouts[0]->exclude_helio_index.size(); ++m) {
-#pragma omp parallel for
-		for (int i = 0; i < solar_scene->layouts[0]->exclude_helio_index[m].size(); ++i) {
-			int index = solar_scene->layouts[0]->exclude_helio_index[m][i];
-			ex_helio_res[m][i] = _helio_calc(index, DNI);
-		}
-	}
-	solar_scene->layouts[0]->exclude_helio_res.push_back(ex_helio_res);
-
-}
-
+//
+// [多边形裁剪] 单独处理阴影或遮挡相关定日镜
+//
 double SdBkCalc::helioClipper(Heliostat*helio, const Vector3d&dir, const set<vector<int>>& estimate_grid)
 {
 	vector<Vector3d> helio_v, local_v, tmp_v(4);
@@ -176,6 +149,9 @@ double SdBkCalc::helioClipper(Heliostat*helio, const Vector3d&dir, const set<vec
 	return res;
 }
 
+//
+// [多边形裁剪] 处理阴影和遮挡，考虑阴影遮挡重叠部分
+//
 double SdBkCalc::helioClipper(Heliostat * helio, const vector<Vector3d>& dir, const vector<set<vector<int>>>& estimate_grids)
 {
 #ifdef CALC_TIME
@@ -305,90 +281,94 @@ double SdBkCalc::helioClipper(Heliostat * helio, const vector<Vector3d>& dir, co
 }
 
 
+//
+// [ray tracing] 单独处理阴影或遮挡
 //	使用ray tracing方式计算blocking与shadowing
 //	将定日镜均匀剖分，每个小区域中心点 发出一根光线，与周围定日镜求交
 //	记录产生blocking和shadowing的定日镜的编号
 //	version: CPU
-double SdBkCalc::calcAccurateIntersection(Heliostat * helio, const Vector3d & dir, set<vector<int>>& relative_helio_label)
-{
-	int helio_inner_rows = 20;
-	int helio_inner_cols = 20;
+//double SdBkCalc::calcAccurateIntersection(Heliostat * helio, const Vector3d & dir, set<vector<int>>& relative_helio_label)
+//{
+//	int helio_inner_rows = 20;
+//	int helio_inner_cols = 20;
+//
+//	double total_sum = 0;
+//	int cnt = 0;
+//
+//	vector<Vector3d> subhelio_v;
+//	helio->getSubHelioVertex(subhelio_v);
+//	int subHelio_num = subhelio_v.size() / 4;
+//	for (int i = 0; i < subHelio_num; i++) {
+//		vector<Vector3d> helio_v;
+//		for (int k = 0; k < 4; k++)
+//			helio_v.push_back(subhelio_v[4 * i + k]);
+//		Vector3d row_dir = (helio_v[1] - helio_v[0]) / helio_inner_rows;
+//		Vector3d col_dir = (helio_v[3] - helio_v[0]) / helio_inner_cols;
+//
+//		for (int i = 0; i <= helio_inner_rows; i++) {
+//			for (int j = 0; j <= helio_inner_cols; j++) {
+//				total_sum++;
+//				Vector3d ori_v = helio_v[0] + i*row_dir + j*col_dir;
+//				double tMin = INT_MAX;
+//				Heliostat* hNear = nullptr;
+//				for (auto&h : solar_scene->helios) {
+//					if (h != helio) {
+//						vector<Vector3d> neigh_v = h->vertex;
+//
+//						Vector3d E1 = neigh_v[1] - neigh_v[0];
+//						Vector3d E2 = neigh_v[2] - neigh_v[0];
+//						Vector3d pvec = dir.cross(E2);
+//						double det = E1.dot(pvec);
+//
+//						// ray and triangle are parallel if det is close to 0
+//						if (fabsf(det) < Epsilon) continue;
+//
+//						double invDet = 1 / det;
+//
+//						Vector3d T = ori_v - neigh_v[0];
+//						Vector3d qvec = T.cross(E1);
+//
+//						double t = E2.dot(qvec)*invDet;
+//						if (t < Epsilon) continue;
+//
+//						Vector3d intersect_v = ori_v + dir*t;
+//						int l;
+//						for (l = 0; l < 4; l++) {
+//							Vector3d edg = neigh_v[(l + 1) % 4] - neigh_v[l];
+//							Vector3d line = intersect_v - neigh_v[l];
+//							Vector3d tmp_n = edg.cross(line);
+//							if (tmp_n.dot(Vector3d(0, 1, 0)) < Epsilon)
+//								break;
+//						}
+//						if (l != 4)
+//							continue;
+//
+//						if (t < tMin) {
+//							tMin = t;
+//							hNear = h;
+//						}
+//					}
+//				}
+//				if (hNear != nullptr) {
+//					//vector<int> res = { (int)hNear->helio_label.x(), (int)hNear->helio_label.y(), (int)hNear->helio_label.z() };
+//					vector<int> res(3);
+//					res[0] = (hNear->helio_pos.z() - solar_scene->layouts[0]->layout_first_helio_center.z()) / solar_scene->layouts[0]->helio_interval.z();		// smaller x is, smaller col is
+//					res[1] = (hNear->helio_pos.x() - solar_scene->layouts[0]->layout_first_helio_center.x()) / solar_scene->layouts[0]->helio_interval.x();		// bigger z is, smaller row is
+//					res[2] = 0;
+//					relative_helio_label.insert(res);
+//					cnt++;
+//				}
+//			}
+//		}
+//	}
+//	double res = cnt / total_sum;
+//
+//	return res;
+//}
 
-	double total_sum = 0;
-	int cnt = 0;
-
-	vector<Vector3d> subhelio_v;
-	helio->getSubHelioVertex(subhelio_v);
-	int subHelio_num = subhelio_v.size() / 4;
-	for (int i = 0; i < subHelio_num; i++) {
-		vector<Vector3d> helio_v;
-		for (int k = 0; k < 4; k++)
-			helio_v.push_back(subhelio_v[4 * i + k]);
-		Vector3d row_dir = (helio_v[1] - helio_v[0]) / helio_inner_rows;
-		Vector3d col_dir = (helio_v[3] - helio_v[0]) / helio_inner_cols;
-
-		for (int i = 0; i <= helio_inner_rows; i++) {
-			for (int j = 0; j <= helio_inner_cols; j++) {
-				total_sum++;
-				Vector3d ori_v = helio_v[0] + i*row_dir + j*col_dir;
-				double tMin = INT_MAX;
-				Heliostat* hNear = nullptr;
-				for (auto&h : solar_scene->helios) {
-					if (h != helio) {
-						vector<Vector3d> neigh_v = h->vertex;
-
-						Vector3d E1 = neigh_v[1] - neigh_v[0];
-						Vector3d E2 = neigh_v[2] - neigh_v[0];
-						Vector3d pvec = dir.cross(E2);
-						double det = E1.dot(pvec);
-
-						// ray and triangle are parallel if det is close to 0
-						if (fabsf(det) < Epsilon) continue;
-
-						double invDet = 1 / det;
-
-						Vector3d T = ori_v - neigh_v[0];
-						Vector3d qvec = T.cross(E1);
-
-						double t = E2.dot(qvec)*invDet;
-						if (t < Epsilon) continue;
-
-						Vector3d intersect_v = ori_v + dir*t;
-						int l;
-						for (l = 0; l < 4; l++) {
-							Vector3d edg = neigh_v[(l + 1) % 4] - neigh_v[l];
-							Vector3d line = intersect_v - neigh_v[l];
-							Vector3d tmp_n = edg.cross(line);
-							if (tmp_n.dot(Vector3d(0, 1, 0)) < Epsilon)
-								break;
-						}
-						if (l != 4)
-							continue;
-
-						if (t < tMin) {
-							tMin = t;
-							hNear = h;
-						}
-					}
-				}
-				if (hNear != nullptr) {
-					//vector<int> res = { (int)hNear->helio_label.x(), (int)hNear->helio_label.y(), (int)hNear->helio_label.z() };
-					vector<int> res(3);
-					res[0] = (hNear->helio_pos.z() - solar_scene->layouts[0]->layout_first_helio_center.z()) / solar_scene->layouts[0]->helio_interval.z();		// smaller x is, smaller col is
-					res[1] = (hNear->helio_pos.x() - solar_scene->layouts[0]->layout_first_helio_center.x()) / solar_scene->layouts[0]->helio_interval.x();		// bigger z is, smaller row is
-					res[2] = 0;
-					relative_helio_label.insert(res);
-					cnt++;
-				}
-			}
-		}
-	}
-	double res = cnt / total_sum;
-
-	return res;
-}
-
-
+//
+// [ray tracing] 处理阴影和遮挡，考虑阴影和遮挡重叠部分
+//
 double SdBkCalc::calcAccurateIntersection(Heliostat* helio, const vector<Vector3d>& dir, vector<set<vector<int>>>& relative_helio_label)
 {
 	int helio_inner_rows = 50;
@@ -397,16 +377,10 @@ double SdBkCalc::calcAccurateIntersection(Heliostat* helio, const vector<Vector3
 	double total_sum = 0;
 	int cnt = 0;
 
-	//vector<Vector3d> subhelio_v;
-	//helio->getSubHelioVertex(subhelio_v);
-	//int subHelio_num = subhelio_v.size() / 4;
 	fstream outFile("ray" + to_string(helio->helio_index) + ".txt", ios_base::out);
 	vector<set<Heliostat*>> sd_bk_h(2);
 	for (int i = 0; i < helio->vertex.size(); i++) {
 		vector<Vector3d> helio_v = helio->vertex;
-		//vector<Vector3d> helio_v;
-		//for (int k = 0; k < 4; k++)
-		//	helio_v.push_back(subhelio_v[4 * i + k]);
 		Vector3d row_dir = (helio_v[1] - helio_v[0]) / helio_inner_rows;
 		Vector3d col_dir = (helio_v[3] - helio_v[0]) / helio_inner_cols;
 
@@ -544,7 +518,8 @@ double SdBkCalc::calcAccurateIntersection(Heliostat* helio, const vector<Vector3
 	return res;
 }
 
-
+//
+// [3DDDA] 
 // 使用3DDDA计算产生阴影和遮挡的相关定日镜
 // version: CPU
 void SdBkCalc::calcIntersection3DDDA(Heliostat * helio, const Vector3d & dir, set<vector<int>>& relative_helio_label)
@@ -678,6 +653,9 @@ void SdBkCalc::calcIntersection3DDDA(Heliostat * helio, const Vector3d & dir, se
 }
 
 
+//
+// [计算交点]
+//
 double SdBkCalc::calcIntersectionPoint(const Vector3d & orig, const Vector3d & dir, const Vector3d & A, const Vector3d & B, const Vector3d & C)
 {
 	Vector3d E1 = B - A;
@@ -698,24 +676,22 @@ double SdBkCalc::calcIntersectionPoint(const Vector3d & orig, const Vector3d & d
 	return t;
 }
 
- 
+
+//
+// [计算通量密度]
 // helio: 待计算定日镜
 // dir: 定日镜到接收器的反射光线方向
 double SdBkCalc::calcFluxMap(Heliostat * helio, const double DNI)
 {
 #ifdef CALC_TIME
-	auto start = std::chrono::high_resolution_clock::now();
+	Timer::resetStart();
 #endif // CALC_TIME
-
 
 	int fc_index = helio->focus_center_index;
 	vector<Receiver*> recvs = solar_scene->recvs;
 	Vector3d focus_center = recvs[0]->focus_center[fc_index];
 	Vector3d reverse_dir = (helio->helio_pos - focus_center).normalized();		// The normal of image plane
-	double _flux_sum1 = 0;
-	double _flux_sum2 = 0;
-	double _flux_sum3 = 0;
-	double _flux_sum4 = 0;
+	double _flux_sum = 0;
 
 	Matrix4d world2localM, local2worldM;
 	GeometryFunc::getImgPlaneMatrixs(reverse_dir, focus_center, local2worldM, world2localM, 1);
@@ -732,35 +708,20 @@ double SdBkCalc::calcFluxMap(Heliostat * helio, const double DNI)
 				proj_v.push_back(Vector2d(inter_v.x(), inter_v.z()));
 			
 			}
-				//double _flux_sum_grid1 = _calc_flux_sum(proj_v, recvs[0]->mask_rows, recvs[0]->mask_cols, helio, helio->cos_phi[i], DNI);
-				// double _flux_sum_grid2 = _calc_flux_sum(proj_v, helio, helio->cos_phi[i], DNI);
-				double _flux_sum_grid3 = _multi_inte_flux_sum(proj_v, 2, helio, helio->cos_phi[i], DNI);
-				// double _flux_sum_ray = ray_tracing_flux_sum(recvs[0]->recv_vertex[i], recvs[0]->focus_center[i], recvs[0]->recv_normal_list[i], helio, -reverse_dir, DNI);
-				//_flux_sum1 += _flux_sum_grid1;
-				// _flux_sum2 += _flux_sum_grid2;
-				_flux_sum3 += _flux_sum_grid3;
-				// _flux_sum4 += _flux_sum_ray;
-
-				// flux_sum_matrix_grid(recvs[0]->recv_vertex[i], proj_v, recvs[0]->mask_rows, recvs[0]->mask_cols, helio, helio->cos_phi[i], DNI);
-				// flux_sum_matrix_inte(recvs[0]->recv_normal_list[i], recvs[0]->focus_center[i], recvs[0]->recv_vertex[i], local2worldM, proj_v, helio, helio->cos_phi[i], DNI);
-				// cout << _flux_sum1 << ' ' << _flux_sum2 << ' ' << _flux_sum3 << ' ' << _flux_sum4 << endl;
-			
+			_flux_sum += _multi_inte_flux_sum(proj_v, 2, helio, helio->cos_phi[i], DNI);;
 		}
 	}
-	//cout << _flux_sum1 << ' ' <<_flux_sum2 << ' ' << _flux_sum3 << endl;
-#ifdef CALC_TIME
-	auto elapsed = chrono::duration_cast<chrono::microseconds>(std::chrono::high_resolution_clock::now() - start);
-	auto time = double(elapsed.count())*chrono::microseconds::period::num / chrono::microseconds::period::den;
-	std::cout << "Calculate flux sum time: " << time << "s." << endl;
 
+#ifdef CALC_TIME
+	Timer::printDuration("Calculate flux sum time");
 #endif // CALC_TIME
 
-	//fstream outFile("flux_sum.txt", ios_base::app);
-	//outFile << _flux_sum1 << ' ' << _flux_sum2 << ' ' << _flux_sum3 << endl;
-	return _flux_sum3;
+	return _flux_sum;
 }
 
-
+//
+// [采样计算通量密度] 以区域中心点通量密度代表该区域通量平均通量密度
+//		计算每个点的结果并存入文件中
 void SdBkCalc::flux_sum_matrix_grid(vector<Vector3d>& _recv_v, vector<Vector2d>& proj_v, const int rows, const int cols, Heliostat* helio, const double cos_phi, const double DNI) {
 	vector<Vector2d> recv_v;
 	if (abs(_recv_v[0].x() - _recv_v[1].x())<Epsilon && abs(_recv_v[0].x() - _recv_v[2].x())<Epsilon)
@@ -811,7 +772,6 @@ void SdBkCalc::flux_sum_matrix_grid(vector<Vector3d>& _recv_v, vector<Vector2d>&
 	fstream outFile("grid_" + to_string(helio->helio_index) + ".txt", ios_base::out);
 	for (int i = 0; i < rows; i++) {
 		for (int j = 0; j < cols; j++) {
-			// outFile << recv_x(i, j) << ' ' << recv_y(i, j) << ' ' 
 			outFile << mask_x(i, j) << ' ' << mask_y(i, j) << ' '
 				<< DNI*cos_phi*helio->flux_param * grid_area* gl->flux_func(mask_x(i, j), mask_y(i, j), helio->sigma, helio->l_w_ratio) << endl;
 			sum += DNI*cos_phi*helio->flux_param * grid_area* gl->flux_func(mask_x(i, j), mask_y(i, j), helio->sigma, helio->l_w_ratio);
@@ -822,6 +782,9 @@ void SdBkCalc::flux_sum_matrix_grid(vector<Vector3d>& _recv_v, vector<Vector2d>&
 }
 
 
+//
+// [卷积计算通量密度] 以高斯积分的方式计算区域内的通量密度
+//		计算每个点的结果并存入文件中
 void SdBkCalc::flux_sum_matrix_inte(Vector3d& recv_normal, Vector3d& fc, vector<Vector3d>& _recv_v, Matrix4d& local2world, vector<Vector2d>& proj_v, Heliostat * helio, const double cos_phi, const double DNI) {
 	vector<VectorXd> weight = gl->getW();
 	vector<VectorXd> node = gl->getX();
@@ -876,11 +839,12 @@ void SdBkCalc::flux_sum_matrix_inte(Vector3d& recv_normal, Vector3d& fc, vector<
 }
 
 ///
+// [采样计算通量密度] 以区域中心点通量密度代表该区域通量平均通量密度
 // 对接收器投影面进行均匀分割，统计每个分割面的flux分布结果，并求和
 ///
 double SdBkCalc::_calc_flux_sum(vector<Vector2d>& proj_v, const int rows, const int cols, Heliostat * helio, const double cos_phi, const double DNI)
 {
-	auto start = std::chrono::high_resolution_clock::now();
+	Timer::resetStart();
 
 	MatrixXd mask_x(rows, cols), mask_y(rows, cols), tmp_mask_y(rows, cols);	// 取中点密度作为该grid的密度
 	Vector2d row_gap = (proj_v[2] - proj_v[1]) / cols;
@@ -905,16 +869,17 @@ double SdBkCalc::_calc_flux_sum(vector<Vector2d>& proj_v, const int rows, const 
 	for (int i = 0; i < proj_v.size(); i++)
 		grid_area += proj_v[i].x()*proj_v[(i + 1) % 4].y() - proj_v[i].y()*proj_v[(i + 1) % 4].x();
 	grid_area = fabs(grid_area / 2.0 / rows / cols);
-	// flux_sum = flux_sum * (1 - helio->sd_bk)*DNI*cos_phi*helio->flux_param * grid_area;
 	flux_sum = flux_sum *DNI*cos_phi*helio->flux_param * grid_area;
-	auto elapsed = chrono::duration_cast<chrono::microseconds>(std::chrono::high_resolution_clock::now() - start);
-	auto time = double(elapsed.count())*chrono::microseconds::period::num / chrono::microseconds::period::den;
-	// std::cout << "Calculate flux sum time: " << time << "s." << endl;
+	
+	Timer::printDuration("Calculate flux sum time");
 
 	return flux_sum;
 }
 
 
+//
+// [卷积计算通量密度] 以整体面积作为卷积
+//
 double SdBkCalc::_calc_flux_sum(vector<Vector2d>& proj_v, Heliostat * helio, const double cos_phi, const double DNI)
 {
 	vector<VectorXd> weight = gl->getW();
@@ -930,13 +895,14 @@ double SdBkCalc::_calc_flux_sum(vector<Vector2d>& proj_v, Heliostat * helio, con
 	y(3) = proj_v[1].y();
 
 	double sum = gl->calcInte(x, y, helio->sigma, helio->l_w_ratio);
-	//sum = sum * helio->flux_param * (1 - helio->sd_bk) * DNI * cos_phi;
-	sum = sum * helio->flux_param *  DNI * cos_phi;
+	sum *= helio->flux_param *  DNI * cos_phi;
 
 	return sum;
 }
 
-
+//
+// [卷积计算通量密度] 将区域分割成若干子区域，对每个子区域进行卷积
+//
 double SdBkCalc::_multi_inte_flux_sum(vector<Vector2d>& proj_v, int n, Heliostat* helio, const double cos_phi, const double DNI) {
 	Vector2d row_gap = (proj_v[3] - proj_v[0]) / n;
 	Vector2d col_gap = (proj_v[1] - proj_v[0]) / n;
@@ -957,7 +923,6 @@ double SdBkCalc::_multi_inte_flux_sum(vector<Vector2d>& proj_v, int n, Heliostat
 			sum += gl->calcInte(tmp_x, tmp_y, helio->sigma, helio->l_w_ratio);
 		}
 	}	
-	//sum = sum * helio->flux_param * (1 - helio->sd_bk) * DNI * cos_phi;
 	sum = sum * helio->flux_param *  DNI * cos_phi;
 	return sum;
 }
@@ -980,7 +945,7 @@ inline double random_double() {
 }
 
 ///
-// 使用Ray-Tracing计算接收器上接收到的能量
+// [Ray Tracing计算能量] 使用Ray-Tracing计算接收器上接收到的能量
 ///
 double SdBkCalc::ray_tracing_flux_sum(vector<Vector3d>& recv_v, Vector3d& recv_pos, Vector3d& recv_normal, Heliostat * helio, const Vector3d& dir, const double DNI)
 {
@@ -1040,8 +1005,8 @@ double SdBkCalc::inte_infinite_flux_sum(Heliostat * helio, const Vector3d& recv_
 	return DNI *helio->S *helio->cos_w * helio->rou* cos_phi* mAA;
 }
 
-
-// 以光线跟踪计算结果为groundtruth，检测预测结果是否包含准确结果
+// 
+// [检查3DDDA相关性是否可靠] 以光线跟踪计算结果为groundtruth，检测预测结果是否包含准确结果
 // version: CPU
 double SdBkCalc::checkForRelativeHelio(const set<vector<int>>& accurate_helio, const set<vector<int>>& estimate_helio)
 {
@@ -1066,31 +1031,28 @@ double SdBkCalc::checkForRelativeHelio(const set<vector<int>>& accurate_helio, c
 }
 
 
+//
+// [计算定日镜的阴影遮挡] 计算目标定日镜的阴影与遮挡结果
+//
 double SdBkCalc::calcSingleShadowBlock(int helio_index)
 {
-	vector<Receiver*> recvs = solar_scene->recvs;
-
-	auto helio = this->solar_scene->helios[helio_index];
+	Heliostat* helio = solar_scene->helios[helio_index];
 	set<vector<int>> shadow_relative_grid_label_3ddda, block_relative_grid_label_3ddda;
-	Vector3d reverse_sunray_dir = -solar_scene->sunray_dir;
-	// Vector3d focus_center = recvs[0]->recv_pos + Vector3d(recvs[0]->recv_normal.array() * recvs[0]->recv_size.array());
 	int fc_index = solar_scene->helios[helio_index]->focus_center_index;
-	Vector3d reflect_dir = recvs[0]->focus_center[fc_index] - helio->helio_pos;
+	Vector3d reflect_dir = solar_scene->recvs[0]->focus_center[fc_index] - helio->helio_pos;
+	calcIntersection3DDDA(helio, -solar_scene->sunray_dir, shadow_relative_grid_label_3ddda);
 
-	// 3DDDA + clipper 
-	//Calc the relative heliostats which cause shadowing
-	calcIntersection3DDDA(helio, reverse_sunray_dir, shadow_relative_grid_label_3ddda);
-
-	//Calc the relactive heliostats which cause blocking
-	// Vector3d reflect_dir = (focus_center - helio->helio_pos).normalized();
 	calcIntersection3DDDA(helio, reflect_dir, block_relative_grid_label_3ddda);
-
-	vector<Vector3d> dir = { reverse_sunray_dir, reflect_dir };
+	vector<Vector3d> dir = { -solar_scene->sunray_dir, reflect_dir };
 	vector<set<vector<int>>> estimate_grids = { shadow_relative_grid_label_3ddda, block_relative_grid_label_3ddda };
-	return helioClipper(helio, dir, estimate_grids);
+	helio->sd_bk = helioClipper(helio, dir, estimate_grids);
+
+	return helio->sd_bk;
 }
 
-
+//
+// [计算定日镜的通量密度和] 计算目标定日镜投射到接收器面上的能量和
+//
 double SdBkCalc::calcSingleFluxSum(int helio_index, const double DNI) {
 
 	Heliostat* helio = solar_scene->helios[helio_index];
@@ -1098,10 +1060,7 @@ double SdBkCalc::calcSingleFluxSum(int helio_index, const double DNI) {
 	vector<Receiver*> recvs = solar_scene->recvs;
 	Vector3d focus_center = recvs[0]->focus_center[fc_index];
 	Vector3d reverse_dir = (helio->helio_pos - focus_center).normalized();		// The normal of image plane
-	double _flux_sum1 = 0;
-	double _flux_sum2 = 0;
-	double _flux_sum3 = 0;
-	double _flux_sum4 = 0;
+	double _flux_sum = 0;
 
 	Matrix4d world2localM, local2worldM;
 	GeometryFunc::getImgPlaneMatrixs(reverse_dir, focus_center, local2worldM, world2localM, 1);
@@ -1118,27 +1077,20 @@ double SdBkCalc::calcSingleFluxSum(int helio_index, const double DNI) {
 				proj_v.push_back(Vector2d(inter_v.x(), inter_v.z()));
 
 			}
-			//double _flux_sum_grid1 = _calc_flux_sum(proj_v, recvs[0]->mask_rows, recvs[0]->mask_cols, helio, helio->cos_phi[i], DNI);
-			// double _flux_sum_grid2 = _calc_flux_sum(proj_v, helio, helio->cos_phi[i], DNI);
-			double _flux_sum_grid3 = _multi_inte_flux_sum(proj_v, 2, helio, helio->cos_phi[i], DNI);
-			// double _flux_sum_ray = ray_tracing_flux_sum(recvs[0]->recv_vertex[i], recvs[0]->focus_center[i], recvs[0]->recv_normal_list[i], helio, -reverse_dir, DNI);
-			//_flux_sum1 += _flux_sum_grid1;
-			// _flux_sum2 += _flux_sum_grid2;
-			_flux_sum3 += _flux_sum_grid3;
-			// _flux_sum4 += _flux_sum_ray;
-
+			_flux_sum += _multi_inte_flux_sum(proj_v, 2, helio, helio->cos_phi[i], DNI);
 		}
 	}
 
-	return _flux_sum3;
+	return _flux_sum;
 }
 
 
-double SdBkCalc::calcShadowBlock(const double DNI)
+//
+// [计算所有定日镜反射能量] 计算所有定日镜反射到接收器上，接收器可获得的能量总和
+//
+double SdBkCalc::calcTotalEnergy(const double DNI)
 {
 	vector<Heliostat*> helios = solar_scene->helios;
-	vector<Layout*> layouts = solar_scene->layouts;
-	vector<Receiver*> recvs = solar_scene->recvs;
 	double sum = 0.0;
 #ifdef READFILE
 	fstream inFile("shadowblock_gt_save.txt", ios_base::in);
@@ -1238,21 +1190,6 @@ void CrossRectSdBkCalc::save_clipper_res(const string save_path, int month, int 
 	//outFile.close();
 }
 
-void CrossRectSdBkCalc::get_row_col(const int index, int & r, int & c)
-{
-	int col = solar_scene->layouts[0]->layout_row_col.y();
-	int g_cnts = 2 * col - 1;
-	r = 2 * (index / g_cnts) + (index%g_cnts) / col;
-	c = index%g_cnts%col;
-}
-
-
-void RectSdBkCalc::get_row_col(const int index, int& r, int & c)
-{
-	int col = solar_scene->layouts[0]->layout_row_col.y();
-	r = index / col;
-	c = index%col;
-}
 
 
 void FermatSdBkCalc::save_clipper_res(const string save_path, int month, int day, int hour, int minute)
@@ -1268,3 +1205,117 @@ void FermatSdBkCalc::save_clipper_res(const string save_path, int month, int day
 }
 
 
+
+//
+// [测试所有阴影遮挡预处理函数]
+//
+void SdBkCalcTest::totalTest(const int _helio_index, Vector3d& _sd_dir, Vector3d& _bk_dir) {
+	setDir(_sd_dir, _bk_dir);
+	setTestIndex(_helio_index);
+
+	rayTracingSdBk();
+	normalSdBk();
+	boundingSphereSdBk();
+	neighRowSdBk();
+	improvedNeighSdBk();
+	use3dddaSdBk();
+}
+
+
+// [ray tracing] 处理阴影或遮挡
+//	使用ray tracing方式计算blocking和shadowing
+//	将定日镜均匀剖分，每个小区域中心点 发出一根光线，与周围定日镜求交
+//	记录产生blocking和shadowing的定日镜的编号
+//	version: CPU
+void SdBkCalcTest::rayTracingSdBk() {
+	Timer::resetStart();
+
+	int helio_inner_rows = 20;
+	int helio_inner_cols = 20;
+
+	double total_sum = 0;
+	int cnt = 0;
+
+	auto helio = solar_scene->helios[helio_index];
+	auto helio_v = helio->vertex;
+	Vector3d row_dir = (helio_v[1] - helio_v[0]) / helio_inner_rows;
+	Vector3d col_dir = (helio_v[3] - helio_v[0]) / helio_inner_cols;
+
+	for (int i = 0; i <= helio_inner_rows; i++) {
+		for (int j = 0; j <= helio_inner_cols; j++) {
+			total_sum++;
+			Vector3d ori_v = helio_v[0] + i*row_dir + j*col_dir;
+			if (calcIntersect(ori_v, sd_dir, gt_sd_helio_index))
+				++cnt;
+			else if (calcIntersect(ori_v, bk_dir, gt_bk_helio_index))
+				++cnt;
+		}
+	}
+
+	double res = cnt / total_sum;
+
+	double time = Timer::getDuration();
+	fstream outFile(save_path + "/rayTracing.txt", ios_base::out);
+	outFile << "time: " << time << endl;
+	outFile << "sdbk: " << res << endl;
+	outFile << "cur_index: " << helio_index << endl;
+	outFile << "sd_index: " << endl;
+	for (auto&n : gt_sd_helio_index)
+		outFile << n << endl;
+	outFile << "bk_index: " << endl;
+	for (auto&n : gt_bk_helio_index)
+		outFile << n << endl;
+
+	outFile.close();
+}
+
+//
+// [ray tracing] 计算阴影或遮挡
+//		返回当前起始点发射的光线是否与定日镜相交
+bool SdBkCalcTest::calcIntersect(Vector3d& ori_v, Vector3d& dir, set<int>& index_set) {
+	double tMin = INT_MAX;
+	Heliostat* hNear = nullptr;
+	for (auto&h : solar_scene->helios) {
+		if (h->helio_index != helio_index) {
+			vector<Vector3d> neigh_v = h->vertex;
+
+			Vector3d E1 = neigh_v[1] - neigh_v[0];
+			Vector3d E2 = neigh_v[2] - neigh_v[0];
+			Vector3d pvec = dir.cross(E2);
+			double det = E1.dot(pvec);
+
+			// ray and triangle are parallel if det is close to 0
+			if (fabsf(det) < Epsilon) continue;
+
+			double invDet = 1 / det;
+
+			Vector3d T = ori_v - neigh_v[0];
+			Vector3d qvec = T.cross(E1);
+
+			double t = E2.dot(qvec)*invDet;
+			if (t < Epsilon) continue;
+
+			Vector3d intersect_v = ori_v + dir*t;
+			int l;
+			for (l = 0; l < 4; l++) {
+				Vector3d edg = neigh_v[(l + 1) % 4] - neigh_v[l];
+				Vector3d line = intersect_v - neigh_v[l];
+				Vector3d tmp_n = edg.cross(line);
+				if (tmp_n.dot(Vector3d(0, 1, 0)) < Epsilon)
+					break;
+			}
+			if (l != 4)
+				continue;
+
+			if (t < tMin) {
+				tMin = t;
+				hNear = h;
+			}
+		}
+	}
+	if (hNear != nullptr) {
+		index_set.insert(hNear->helio_index);
+		return true;
+	}
+	return false;
+}

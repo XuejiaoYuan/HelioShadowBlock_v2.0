@@ -94,7 +94,7 @@ int main(int argc, char** argv) {
 					time_param[3] = min;
 					sunray_dir = sunray.changeSunRay(time_param);
 					solar_scene->changeSolarScene(sunray_dir);
-					double res = sdbk_calc->calcShadowBlock(sunray.current_DNI);
+					double res = sdbk_calc->calcTotalEnergy(sunray.current_DNI);
 					outFile << setprecision(12) << sunray.current_altitude << ' ' << sunray.current_azimuth << ' ' << res << endl;
 				}
 			}
@@ -117,7 +117,7 @@ int main(int argc, char** argv) {
 	if (options == "-s_l") {
 
 		Timer::resetStart();
-		sdbk_calc->calcSampleShadowBlock(100, 100, sunray.current_DNI);
+		sdbk_calc->calcSampleEnergy(100, 100, sunray.current_DNI);
 		Timer::printDuration("Calculate Sample Heliostats' energy");
 
 		Timer::resetStart();
@@ -127,7 +127,7 @@ int main(int argc, char** argv) {
 		sdbk_calc->saveCalcRes("lsf_fitting_res.txt");
 
 		Timer::resetStart();
-		sdbk_calc->calcShadowBlock(sunray.current_DNI);
+		sdbk_calc->calcTotalEnergy(sunray.current_DNI);
 		Timer::printDuration("Calculate total heliostats");
 		sdbk_calc->saveCalcRes("total_res.txt");
 	}

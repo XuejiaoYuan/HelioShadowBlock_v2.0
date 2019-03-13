@@ -1,5 +1,11 @@
 #include "LSF.h"
 
+//
+// [最小二乘法LSF拟合曲面]
+//
+//		输入采样点数据，计算拟合曲面参数
+//		拟合曲面使用二次曲面
+//
 void LSF::LSF_surface(SolarScene *solar_scene)
 {
 
@@ -43,6 +49,12 @@ void LSF::LSF_surface(SolarScene *solar_scene)
 	calcFittingData(helios, row_gap, col_gap, row_start, col_start);
 }
 
+
+//
+// [计算拟合曲面数据点]
+//
+//		计算拟合曲面参数后，输入对应点坐标计算拟合结果
+//
 double LSF::calcFittingData(vector<Heliostat*>& helios,
 					double row_gap, double col_gap, double row_start, double col_start)
 {

@@ -22,10 +22,8 @@ public:
 	}
 	double calcSingleShadowBlock(int helio_index);
 	double calcSingleFluxSum(int helio_index, const double DNI);
-	double calcShadowBlock(const double DNI);
-	vector<MatrixXd*> calcSampleShadowBlock(vector<MatrixXd*>& sample_index, const double DNI);
-	void calcExcludeShadowBlock(const double DNI);
-	void calcSampleShadowBlock(int sample_row, int sample_col, const double DNI);
+	double calcTotalEnergy(const double DNI);
+	void calcSampleEnergy(int sample_row, int sample_col, const double DNI);
 	void saveCalcRes(const string s);
 
 	FieldType field_type;
@@ -34,10 +32,9 @@ public:
 
 
 protected:
-
 	double helioClipper(Heliostat*helio, const Vector3d&dir, const set<vector<int>>& estimate_grid);
 	double helioClipper(Heliostat*helio, const vector<Vector3d>&dir, const vector<set<vector<int>>>& estimate_grid);
-	double calcAccurateIntersection(Heliostat* helio, const Vector3d&dir, set<vector<int>>&relative_grid_label);		// used ray tracing calculate accurate relative grids
+	//double calcAccurateIntersection(Heliostat* helio, const Vector3d&dir, set<vector<int>>&relative_grid_label);		// used ray tracing calculate accurate relative grids
 	double calcAccurateIntersection(Heliostat* helio, const vector<Vector3d>& dir, vector<set<vector<int>>>& relative_helio_label);
 	void calcIntersection3DDDA(Heliostat* helio, const Vector3d&dir, set<vector<int>> & relative_grid_label);			// using 3DDDA for relative grid's prediction
 	double checkForRelativeHelio(const set<vector<int>>& accurate_grid, const set<vector<int>>& estimate_grid);
@@ -58,48 +55,27 @@ protected:
 class RectSdBkCalc :public SdBkCalc {
 public:
 	RectSdBkCalc(SolarScene* _solar_scene, GaussLegendre* _gl) : SdBkCalc(RectFieldType, _solar_scene, _gl) {}
-	void sample_calc_preprocess(const int sample_row_num, const int sample_col_num, bool calc_s = false, bool calc_f = false) {};
-private:
-	void get_row_col(const int index, int& r, int& c);
-	MatrixXd* field_data_pre() { return nullptr; }
-	//MatrixXd* sample_field_data_pre(const int sample_row_num, const int sample_col_num);
 
 };
 
 class CrossRectSdBkCalc :public SdBkCalc {
 public:
 	CrossRectSdBkCalc(SolarScene* _solar_scene, GaussLegendre* _gl) :SdBkCalc(CrossRectFieldType, _solar_scene, _gl) {}
-	//void sample_calc_preprocess(const int sample_row_num, const int sample_col_num, bool calc_s = false, bool calc_f = false) {};
 	void save_clipper_res(const string save_path, int month, int day, int hour, int minute);
 
-private:
-	void get_row_col(const int index, int& r, int& c);
-	//MatrixXd* field_data_pre();
-	//MatrixXd* sample_field_data_pre(const int sample_row_num, const int sample_col_num);
 };
 
 class FermatSdBkCalc :public SdBkCalc {
 public:
 	FermatSdBkCalc(SolarScene* _solar_scene, GaussLegendre* _gl):SdBkCalc(FermatFieldType, _solar_scene, _gl){}
 	void save_clipper_res(const string save_path, int month, int day, int hour, int minute);
-	//void sample_calc_preprocess(const int sample_row_num, const int sample_col_num, bool calc_s = false, bool calc_f = false) {};
-
-private:
-	void get_row_col(const int index, int& r, int& c) {}
-	MatrixXd* field_data_pre() { return nullptr; }
-	MatrixXd* sample_field_data_pre(const int sample_row_num, const int sample_col_num) { return nullptr; }
 
 };
 
 class RadialFieldCalc :public SdBkCalc {
 public:
 	RadialFieldCalc(SolarScene* _solar_scene, GaussLegendre* _gl):SdBkCalc(RadialFieldType, _solar_scene, _gl){}
-	//void sample_calc_preprocess(const int sample_row_num, const int sample_col_num, bool calc_s = false, bool calc_f = false) {};
 
-private:
-	void get_row_col(const int index, int& r, int& c) {}
-	MatrixXd* field_data_pre() { return nullptr; }
-	MatrixXd* sample_field_data_pre(const int sample_row_num, const int sample_col_num) { return nullptr; }
 };
 
 class SdBkCalcCreator {
@@ -119,4 +95,26 @@ public:
 			return nullptr;
 		}
 	}
+};
+
+class SdBkCalcTest :public SdBkCalc {
+public:
+	void rayTracingSdBk();
+	void normalSdBk();
+	void boundingSphereSdBk();
+	void neighRowSdBk();
+	void improvedNeighSdBk();
+	void use3dddaSdBk();
+	void totalTest(const int _helio_index, Vector3d& _sd_dir, Vector3d& _bk_dir);
+	void setDir(Vector3d& _sd_dir, Vector3d& _bk_dir) { sd_dir = _sd_dir; bk_dir = _bk_dir; }
+	void setTestIndex(const int _helio_index) { helio_index = _helio_index; }
+	void setSavePath(const string& _save_path) { save_path = _save_path; }
+
+private:
+	bool calcIntersect(Vector3d& ori_v, Vector3d& dir, set<int>& index_set);
+	Vector3d sd_dir, bk_dir;
+	int helio_index;
+	string save_path;
+	set<int> gt_sd_helio_index;		// 通过ray tracing计算得到，实际造成阴影的其他定日镜
+	set<int> gt_bk_helio_index;		// 通过ray tracing计算得到，实际造成遮挡的其他定日镜
 };

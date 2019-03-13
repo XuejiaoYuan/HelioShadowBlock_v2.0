@@ -8,10 +8,14 @@ void Timer::resetStart()
 
 void Timer::printDuration(const string s)
 {
-	auto elapsed = chrono::duration_cast<chrono::microseconds>(std::chrono::high_resolution_clock::now() - start);
-	auto time = double(elapsed.count())*chrono::microseconds::period::num / chrono::microseconds::period::den;
-	std::cout << s << ": " << time << "s." << endl;
+	std::cout << s << ": " << getDuration() << "s." << endl;
 }
 
 
 chrono::time_point<chrono::steady_clock> Timer::start = chrono::high_resolution_clock::now();
+
+double Timer::getDuration() {
+	auto elapsed = chrono::duration_cast<chrono::microseconds>(std::chrono::high_resolution_clock::now() - start);
+	auto time = double(elapsed.count())*chrono::microseconds::period::num / chrono::microseconds::period::den;
+	return time;
+}
