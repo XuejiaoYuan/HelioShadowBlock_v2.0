@@ -282,243 +282,6 @@ double SdBkCalc::helioClipper(Heliostat * helio, const vector<Vector3d>& dir, co
 
 
 //
-// [ray tracing] 单独处理阴影或遮挡
-//	使用ray tracing方式计算blocking与shadowing
-//	将定日镜均匀剖分，每个小区域中心点 发出一根光线，与周围定日镜求交
-//	记录产生blocking和shadowing的定日镜的编号
-//	version: CPU
-//double SdBkCalc::calcAccurateIntersection(Heliostat * helio, const Vector3d & dir, set<vector<int>>& relative_helio_label)
-//{
-//	int helio_inner_rows = 20;
-//	int helio_inner_cols = 20;
-//
-//	double total_sum = 0;
-//	int cnt = 0;
-//
-//	vector<Vector3d> subhelio_v;
-//	helio->getSubHelioVertex(subhelio_v);
-//	int subHelio_num = subhelio_v.size() / 4;
-//	for (int i = 0; i < subHelio_num; i++) {
-//		vector<Vector3d> helio_v;
-//		for (int k = 0; k < 4; k++)
-//			helio_v.push_back(subhelio_v[4 * i + k]);
-//		Vector3d row_dir = (helio_v[1] - helio_v[0]) / helio_inner_rows;
-//		Vector3d col_dir = (helio_v[3] - helio_v[0]) / helio_inner_cols;
-//
-//		for (int i = 0; i <= helio_inner_rows; i++) {
-//			for (int j = 0; j <= helio_inner_cols; j++) {
-//				total_sum++;
-//				Vector3d ori_v = helio_v[0] + i*row_dir + j*col_dir;
-//				double tMin = INT_MAX;
-//				Heliostat* hNear = nullptr;
-//				for (auto&h : solar_scene->helios) {
-//					if (h != helio) {
-//						vector<Vector3d> neigh_v = h->vertex;
-//
-//						Vector3d E1 = neigh_v[1] - neigh_v[0];
-//						Vector3d E2 = neigh_v[2] - neigh_v[0];
-//						Vector3d pvec = dir.cross(E2);
-//						double det = E1.dot(pvec);
-//
-//						// ray and triangle are parallel if det is close to 0
-//						if (fabsf(det) < Epsilon) continue;
-//
-//						double invDet = 1 / det;
-//
-//						Vector3d T = ori_v - neigh_v[0];
-//						Vector3d qvec = T.cross(E1);
-//
-//						double t = E2.dot(qvec)*invDet;
-//						if (t < Epsilon) continue;
-//
-//						Vector3d intersect_v = ori_v + dir*t;
-//						int l;
-//						for (l = 0; l < 4; l++) {
-//							Vector3d edg = neigh_v[(l + 1) % 4] - neigh_v[l];
-//							Vector3d line = intersect_v - neigh_v[l];
-//							Vector3d tmp_n = edg.cross(line);
-//							if (tmp_n.dot(Vector3d(0, 1, 0)) < Epsilon)
-//								break;
-//						}
-//						if (l != 4)
-//							continue;
-//
-//						if (t < tMin) {
-//							tMin = t;
-//							hNear = h;
-//						}
-//					}
-//				}
-//				if (hNear != nullptr) {
-//					//vector<int> res = { (int)hNear->helio_label.x(), (int)hNear->helio_label.y(), (int)hNear->helio_label.z() };
-//					vector<int> res(3);
-//					res[0] = (hNear->helio_pos.z() - solar_scene->layouts[0]->layout_first_helio_center.z()) / solar_scene->layouts[0]->helio_interval.z();		// smaller x is, smaller col is
-//					res[1] = (hNear->helio_pos.x() - solar_scene->layouts[0]->layout_first_helio_center.x()) / solar_scene->layouts[0]->helio_interval.x();		// bigger z is, smaller row is
-//					res[2] = 0;
-//					relative_helio_label.insert(res);
-//					cnt++;
-//				}
-//			}
-//		}
-//	}
-//	double res = cnt / total_sum;
-//
-//	return res;
-//}
-
-//
-// [ray tracing] 处理阴影和遮挡，考虑阴影和遮挡重叠部分
-//
-double SdBkCalc::calcAccurateIntersection(Heliostat* helio, const vector<Vector3d>& dir, vector<set<vector<int>>>& relative_helio_label)
-{
-	int helio_inner_rows = 50;
-	int helio_inner_cols = 50;
-
-	double total_sum = 0;
-	int cnt = 0;
-
-	fstream outFile("ray" + to_string(helio->helio_index) + ".txt", ios_base::out);
-	vector<set<Heliostat*>> sd_bk_h(2);
-	for (int i = 0; i < helio->vertex.size(); i++) {
-		vector<Vector3d> helio_v = helio->vertex;
-		Vector3d row_dir = (helio_v[1] - helio_v[0]) / helio_inner_rows;
-		Vector3d col_dir = (helio_v[3] - helio_v[0]) / helio_inner_cols;
-
-		for (int i = 0; i <= helio_inner_rows; i++) {
-			for (int j = 0; j <= helio_inner_cols; j++) {
-				total_sum++;
-				Vector3d ori_v = helio_v[0] + i*row_dir + j*col_dir;
-				Vector3d proj_ori_v = GeometryFunc::mulMatrix(ori_v, helio->world2localM);
-				outFile << proj_ori_v.x() << ' ' << proj_ori_v.z() << ' ';
-				double tMin = INT_MAX;
-				Heliostat* hNear = nullptr;
-				bool sd = false;
-				for (auto&h : solar_scene->helios) {
-					if (h != helio) {
-						if ((h->helio_pos - helio->helio_pos).norm() > 80)
-							continue;
-
-						vector<Vector3d> neigh_v = h->vertex;
-
-						Vector3d E1 = neigh_v[1] - neigh_v[0];
-						Vector3d E2 = neigh_v[2] - neigh_v[0];
-						Vector3d pvec = dir[0].cross(E2);
-						double det = E1.dot(pvec);
-
-						// ray and triangle are parallel if det is close to 0
-						if (fabsf(det) < Epsilon) continue;
-
-						double invDet = 1 / det;
-
-						Vector3d T = ori_v - neigh_v[0];
-						Vector3d qvec = T.cross(E1);
-
-						double t = E2.dot(qvec)*invDet;
-						if (t < Epsilon) continue;
-
-						Vector3d intersect_v = ori_v + dir[0]*t;
-						int l;
-						for (l = 0; l < 4; l++) {
-							Vector3d edg = neigh_v[(l + 1) % 4] - neigh_v[l];
-							Vector3d line = intersect_v - neigh_v[l];
-							Vector3d tmp_n = edg.cross(line);
-							if (tmp_n.dot(Vector3d(0, 1, 0)) < Epsilon)
-								break;
-						}
-						if (l != 4)
-							continue;
-
-						if (t < tMin) {
-							tMin = t;
-							hNear = h;
-						}
-					}
-				}
-				if (hNear != nullptr) {
-					vector<int> res(3);
-					res[0] = (hNear->helio_pos.z() - solar_scene->layouts[0]->layout_first_helio_center.z()) / solar_scene->layouts[0]->helio_interval.z();		// smaller x is, smaller col is
-					res[1] = (hNear->helio_pos.x() - solar_scene->layouts[0]->layout_first_helio_center.x()) / solar_scene->layouts[0]->helio_interval.x();		// bigger z is, smaller row is
-					res[2] = 0;
-					relative_helio_label[0].insert(res);
-					cnt++;
-					outFile << 1 << endl;
-					sd_bk_h[0].insert(hNear);
-					if (helio->max_rela_dis < tMin)
-						helio->max_rela_dis = tMin;
-				}
-				else {
-					for (auto&h : solar_scene->helios) {
-						
-						if (h != helio) {
-							if ((h->helio_pos - helio->helio_pos).norm() > 80)
-								continue;
-		
-							vector<Vector3d> neigh_v = h->vertex;
-
-							Vector3d E1 = neigh_v[1] - neigh_v[0];
-							Vector3d E2 = neigh_v[2] - neigh_v[0];
-							Vector3d pvec = dir[1].cross(E2);
-							double det = E1.dot(pvec);
-
-							// ray and triangle are parallel if det is close to 0
-							if (fabsf(det) < Epsilon) continue;
-
-							double invDet = 1 / det;
-
-							Vector3d T = ori_v - neigh_v[0];
-							Vector3d qvec = T.cross(E1);
-
-							double t = E2.dot(qvec)*invDet;
-							if (t < Epsilon) continue;
-
-							Vector3d intersect_v = ori_v + dir[1] * t;
-							int l;
-							for (l = 0; l < 4; l++) {
-								Vector3d edg = neigh_v[(l + 1) % 4] - neigh_v[l];
-								Vector3d line = intersect_v - neigh_v[l];
-								Vector3d tmp_n = edg.cross(line);
-								if (tmp_n.dot(Vector3d(0, 1, 0)) < Epsilon)
-									break;
-							}
-							if (l != 4)
-								continue;
-
-							if (t < tMin) {
-								tMin = t;
-								hNear = h;
-							}
-						}
-					}
-					if (hNear != nullptr) {
-						vector<int> res(3);
-						res[0] = (hNear->helio_pos.z() - solar_scene->layouts[0]->layout_first_helio_center.z()) / solar_scene->layouts[0]->helio_interval.z();		// smaller x is, smaller col is
-						res[1] = (hNear->helio_pos.x() - solar_scene->layouts[0]->layout_first_helio_center.x()) / solar_scene->layouts[0]->helio_interval.x();		// bigger z is, smaller row is
-						res[2] = 0;
-						relative_helio_label[1].insert(res);
-						cnt++;
-						outFile << 1 << endl;
-						sd_bk_h[1].insert(hNear);
-						if (helio->max_rela_dis < tMin)
-							helio->max_rela_dis = tMin;
-					}
-					else
-						outFile << 0 << endl;
-				}
-			}
-		}
-	}
-	double res = cnt / total_sum;
-	outFile.close();
-	for (int i = 0; i < sd_bk_h.size(); i++) {
-		cout << endl;
-		for (auto& iter : sd_bk_h[i]) {
-			cout << iter->helio_index << endl;
-		}
-	}
-	return res;
-}
-
-//
 // [3DDDA] 
 // 使用3DDDA计算产生阴影和遮挡的相关定日镜
 // version: CPU
@@ -1108,7 +871,7 @@ double SdBkCalc::calcTotalEnergy(const double DNI)
 	for (int i = 0; i < helios.size(); i++) {
 		double res  = _helio_calc(i, DNI);
 
-#pragma omp atomic
+#pragma omp critical
 		sum += res;
 
 #ifdef DEBUG
@@ -1205,12 +968,20 @@ void FermatSdBkCalc::save_clipper_res(const string save_path, int month, int day
 }
 
 
+//
+// [测试镜场所有定日镜阴影遮挡预处理函数]
+//
+void SdBkCalcTest::totalHeliosTest() {
+	for (int i = 0; i < solar_scene->helios.size(); ++i) {
+		singleHelioTest(i);
+	}
+}
 
 //
-// [测试所有阴影遮挡预处理函数]
+// [测试单个定日镜阴影遮挡预处理函数]
 //
-void SdBkCalcTest::totalTest(const int _helio_index, Vector3d& _sd_dir, Vector3d& _bk_dir) {
-	setDir(_sd_dir, _bk_dir);
+void SdBkCalcTest::singleHelioTest(const int _helio_index) {
+	setDir(-solar_scene->sunray_dir, solar_scene->helios[_helio_index]->helio_normal);
 	setTestIndex(_helio_index);
 
 	rayTracingSdBk();
@@ -1233,7 +1004,7 @@ void SdBkCalcTest::rayTracingSdBk() {
 	int helio_inner_rows = 20;
 	int helio_inner_cols = 20;
 
-	double total_sum = 0;
+	double total_sum = helio_inner_rows *helio_inner_cols;
 	int cnt = 0;
 
 	auto helio = solar_scene->helios[helio_index];
@@ -1241,31 +1012,38 @@ void SdBkCalcTest::rayTracingSdBk() {
 	Vector3d row_dir = (helio_v[1] - helio_v[0]) / helio_inner_rows;
 	Vector3d col_dir = (helio_v[3] - helio_v[0]) / helio_inner_cols;
 
+#pragma omp parallel for
 	for (int i = 0; i <= helio_inner_rows; i++) {
 		for (int j = 0; j <= helio_inner_cols; j++) {
-			total_sum++;
 			Vector3d ori_v = helio_v[0] + i*row_dir + j*col_dir;
-			if (calcIntersect(ori_v, sd_dir, gt_sd_helio_index))
+			if (calcIntersect(ori_v, sd_dir, gt_sd_helio_index)) {
+			#pragma omp critical
 				++cnt;
-			else if (calcIntersect(ori_v, bk_dir, gt_bk_helio_index))
+			}
+			else if (calcIntersect(ori_v, bk_dir, gt_bk_helio_index)) {
+			#pragma omp critical
 				++cnt;
+			}
+				
 		}
 	}
 
 	double res = cnt / total_sum;
 
 	double time = Timer::getDuration();
-	fstream outFile(save_path + "/rayTracing.txt", ios_base::out);
-	outFile << "time: " << time << endl;
-	outFile << "sdbk: " << res << endl;
-	outFile << "cur_index: " << helio_index << endl;
-	outFile << "sd_index: " << endl;
+	fstream outFile(save_path + "/rayTracing_time.txt", ios_base::app || ios_base::out);
+	outFile << time << endl;
+	outFile.close();
+	outFile.open(save_path + "/rayTracing_sdbk.txt", ios_base::app || ios_base::out);
+	outFile << res << endl;
+	outFile.close();
+	outFile.open(save_path + "/rayTracing_sd_index.txt", ios_base::app || ios_base::out);
 	for (auto&n : gt_sd_helio_index)
 		outFile << n << endl;
-	outFile << "bk_index: " << endl;
+	outFile.close();
+	outFile.open(save_path + "/rayTracing_bk_index.txt", ios_base::app || ios_base::out);
 	for (auto&n : gt_bk_helio_index)
 		outFile << n << endl;
-
 	outFile.close();
 }
 
@@ -1275,7 +1053,9 @@ void SdBkCalcTest::rayTracingSdBk() {
 bool SdBkCalcTest::calcIntersect(Vector3d& ori_v, Vector3d& dir, set<int>& index_set) {
 	double tMin = INT_MAX;
 	Heliostat* hNear = nullptr;
-	for (auto&h : solar_scene->helios) {
+
+	for (int i = 0; i < solar_scene->helios.size(); ++i) {
+		auto h = solar_scene->helios[i];
 		if (h->helio_index != helio_index) {
 			vector<Vector3d> neigh_v = h->vertex;
 
@@ -1318,4 +1098,391 @@ bool SdBkCalcTest::calcIntersect(Vector3d& ori_v, Vector3d& dir, set<int>& index
 		return true;
 	}
 	return false;
+}
+
+
+//
+// [法向剔除] 计算两个定日镜之间的法向点积并进行剔除
+//		设置相关定日镜的最远距离，以减少相关定日镜数量
+void SdBkCalcTest::normalSdBk() {
+	Heliostat* cur_h = solar_scene->helios[helio_index];
+	set<int> sd_set, bk_set;
+	int sd_ac = 0;
+	int bk_ac = 0;
+#pragma omp parallel for
+	for (int i = 0; i < solar_scene->helios.size(); ++i) {
+		auto h = solar_scene->helios[i];
+		if (h->helio_index != helio_index) {
+			if (h->helio_normal.dot(sd_dir) > Epsilon) {
+				if (checkHelioDis(sd_dir, cur_h, cur_h->helio_pos, h->helio_pos)) {
+					#pragma omp critical
+					sd_set.insert(h->helio_index);
+					if (gt_sd_helio_index.count(h->helio_index)) {
+					#pragma omp critical
+						++sd_ac;
+					}
+				}
+			}
+			if (h->helio_normal.dot(bk_dir) > Epsilon) {
+				if (checkHelioDis(bk_dir, cur_h, cur_h->helio_pos, h->helio_pos)) {
+					#pragma omp critical
+					bk_set.insert(h->helio_index);
+					if (gt_bk_helio_index.count(h->helio_index)) {
+					#pragma omp critical
+						++bk_ac;
+					}
+				}
+			}
+		}
+	}
+
+	saveTestRes("normal", sd_ac, bk_ac, sd_set, bk_set);
+}
+
+
+//
+// [法向剔除] 法向剔除輔助函數，根據距離排除無關定日鏡
+//
+bool SdBkCalcTest::checkHelioDis(Vector3d& dir, Heliostat* helio, Vector3d& Hloc, Vector3d& HIloc) {
+	double tanpi2zen = dir.y() / sqrt(dir.x()*dir.x() + dir.z()*dir.z());
+	Vector3d HIt = helio->helio_normal;
+	double HIzen = acos(HIt.y());
+	double HIh = helio->helio_size.x();
+	double l_max = (HIloc.y() - Hloc.y() + HIh*sin(HIzen)) / tanpi2zen + HIh*HIt.y();
+	double interaction_limit = 100;
+	l_max = fmin(l_max, interaction_limit*HIh);	//limit to a reasonable number
+	double hdist = (HIloc - Hloc).norm();
+	if (hdist < l_max) return true;
+	else return false;
+}
+
+//
+// [bounding sphere] 通過計算兩個定日鏡包圍盒之間的距离判断是否相关
+//
+void SdBkCalcTest::boundingSphereSdBk() {
+	Heliostat* cur_h = solar_scene->helios[helio_index];
+	set<int> sd_set, bk_set;
+	int sd_ac = 0;
+	int bk_ac = 0;
+	double diameter = sqrt(pow(cur_h->helio_size.x(), 2) + pow(cur_h->helio_size.z(), 2));
+#pragma omp parallel for
+	for (int i = 0; i < solar_scene->helios.size(); ++i) {
+		auto h = solar_scene->helios[i];
+		if (h->helio_index != helio_index) {
+			if(checkBoundingBox(cur_h->helio_pos, h->helio_pos, sd_dir, diameter)) {
+#pragma omp critical
+				sd_set.insert(h->helio_index);
+				if (gt_sd_helio_index.count(h->helio_index)) {
+#pragma omp critical
+					++sd_ac;
+				}
+			}
+			if (checkBoundingBox(cur_h->helio_pos, h->helio_pos, bk_dir, diameter)) {
+#pragma omp critical
+				bk_set.insert(h->helio_index);
+				if (gt_bk_helio_index.count(h->helio_index)) {
+#pragma omp critical
+					++bk_ac;
+				}
+			}
+		}
+	}
+
+	saveTestRes("boundingBox", sd_ac, bk_ac, sd_set, bk_set);
+}
+
+
+//
+// [bounding box] bounding box辅助函数，判断是否有相交的可能性
+//
+bool SdBkCalcTest::checkBoundingBox(Vector3d& Hloc, Vector3d& HIloc, Vector3d& dir, double diameter) {
+	Vector3d dist = HIloc - Hloc;
+	double proj = dist.dot(dir);
+	if (proj < Epsilon) return false;
+	if (sqrt(pow(dist.norm(), 2) - pow(proj, 2) > diameter)) return false;
+	return true;
+}
+
+
+//
+// [neighbor Row] 对当前定日镜仅考虑当前行和相邻两行的定日镜，由东西、南北方向判断是否有可能存在阴影遮挡
+//		论文表述不够清晰，所以在使用东西南北方向判断时根据bounding box
+void SdBkCalcTest::neighRowSdBk() {
+	Heliostat* cur_h = solar_scene->helios[helio_index];
+	set<int> sdbk_set;
+	int sdbk_ac = 0;
+	double diameter = sqrt(pow(cur_h->helio_size.x(), 2) + pow(cur_h->helio_size.z(), 2));
+	int start = 0;
+	int end = 0;
+	getStartEndIndex(cur_h, start, end);
+#pragma omp parallel for
+	for (; start <= end; ++start) {
+		auto h = solar_scene->helios[start];
+		if (checkEffectRegion(Vector3d(1, 0, 0), cur_h->helio_pos, h->helio_pos, diameter) ||
+			checkEffectRegion(Vector3d(-1, 0, 0), cur_h->helio_pos, h->helio_pos, diameter) ||
+			checkEffectRegion(Vector3d(0, 0, 1), cur_h->helio_pos, h->helio_pos, diameter) ||
+			checkEffectRegion(Vector3d(0, 0, -1), cur_h->helio_pos, h->helio_pos, diameter)) {
+#pragma omp critical
+			sdbk_set.insert(h->helio_index);
+			if (gt_sd_helio_index.count(h->helio_index) || gt_bk_helio_index.count(h->helio_index)) {
+#pragma omp critical
+				++sdbk_ac;
+			}
+		}
+		
+	}
+	
+	fstream outFile(save_path + "/neighborRow_pr.txt", ios_base::app || ios_base::out);
+	outFile << sdbk_ac << ' ' << sdbk_set.size() << endl;
+	outFile.close();
+
+	outFile.open(save_path + "/neighborRow_sdbk_index.txt", ios_base::app || ios_base::out);
+	for (auto&n : sdbk_set)
+		outFile << n << endl;
+	outFile.close();
+
+}
+
+
+//
+// [neighbor row] neighbor row的辅助函数，用于确定当前定日镜当前及相邻两行的定日镜起始和终止坐标
+//
+void SdBkCalcTest::getStartEndIndex(Heliostat* helio, int& start, int& end) {
+	vector<Heliostat*>& helios = solar_scene->helios;
+	switch (solar_scene->layouts[0]->layout_type)
+	{
+	case RectLayoutType:
+	case CrossRectLayoutType:
+		double cur_row = helio->helio_pos.z();
+		int cnt = 0;
+		start = helio->helio_index;
+		double gap = 2 * solar_scene->layouts[0]->helio_interval.z();
+		while (start >= 0 && helios[start]->helio_pos.z() >= cur_row - gap) --start;
+		if (start != helio->helio_index)
+			++start;
+		end = helio->helio_index;
+		while (end < helios.size() && helios[end]->helio_pos.z() <= cur_row + gap) ++end;
+		if (end != helio->helio_index)
+			--end;
+		break;
+	case FermatLayoutType:
+		double cur_row = helio->helio_poly_pos.z();
+		vector<MatrixXd*>& helio_index_store = solar_scene->layouts[0]->helio_index_store;
+		int cur_region = 0;
+		int sum = 0;
+		while (helio->helio_index > sum - 1) {
+			int size = helio_index_store[cur_region]->rows() *helio_index_store[cur_region]->cols();
+			sum += size;
+			++cur_region;
+		}
+		sum -= helio_index_store[cur_region]->rows() *helio_index_store[cur_region]->cols();
+		--cur_region;
+		start = helio->helio_index - sum + 1;
+		int row = start / helio_index_store[cur_region]->cols();
+		if (row < 2 && cur_region == 0) start = 0;
+		else {
+			row -= 2;
+			if (row < 0) {
+				--cur_region;
+				row %= helio_index_store[cur_region]->rows();
+			}
+			start = (*helio_index_store[cur_region])(row, 0);
+		}
+		if (row > helio_index_store[cur_region]->rows() - 3 && cur_region == helio_index_store.size() - 1) {
+			end = helios.size() - 1;
+
+		}
+		else {
+			row += 2;
+			if (row > helio_index_store[cur_region]->rows() - 1) {
+				row %= helio_index_store[cur_region]->rows();
+				++cur_region;
+			}
+			int col = helio_index_store[cur_region]->cols() - 1;
+			end = (*helio_index_store[cur_region])(row, col);
+		}
+		//if (row < 2) {
+		//	if (cur_region == 0)
+		//		start = 0;
+		//	else {
+		//		--cur_region;
+		//		row = helio_index_store[cur_region]->rows() - 2 + row;
+		//		start = (*helio_index_store[cur_region])(row, 0);
+		//	}
+		//}
+		//else
+		//	start = (*helio_index_store[cur_region])(row - 2, 0);
+
+		//if (row > helio_index_store[cur_region]->rows() - 3) {
+		//	if (cur_region == helio_index_store.size() - 1)
+		//		end = helios.size() - 1;
+		//	else {
+		//		row = (row + 2)% helio_index_store[cur_region]->rows();
+		//		++cur_region;
+		//		end = (*helio_index_store[cur_region])(row, helio_index_store[cur_region]->cols() - 1);
+		//	}
+		//}
+		//else
+		//	end = (*helio_index_store)
+		break;
+	case RadialLayoutType:
+
+		break;
+	default:
+		break;
+	}
+}
+
+
+//
+// [neighbor row] neighbor row的辅助函数，通过东西和南北的方向确定相关定日镜
+//
+bool SdBkCalcTest::checkEffectRegion(Vector3d dir, Vector3d& Hloc, Vector3d& HIloc, double diameter) {
+	Vector3d dist = HIloc - Hloc;
+	double proj = dist.dot(dir);
+	if (sqrt(pow(dist.norm(), 2) - pow(proj, 2) > diameter)) return false;
+	return true;
+}
+
+//
+// [improved neighbor row] 在neighbor row操作之后，再进行一次剔除操作
+//
+void SdBkCalcTest::improvedNeighSdBk() {
+	Heliostat* cur_h = solar_scene->helios[helio_index];
+	set<int> sd_set, bk_set;
+	int sd_ac = 0, bk_ac = 0;
+	double diameter = sqrt(pow(cur_h->helio_size.x(), 2) + pow(cur_h->helio_size.z(), 2));
+	int start = 0;
+	int end = 0;
+	getStartEndIndex(cur_h, start, end);
+#pragma omp parallel for
+	for (; start <= end; ++start) {
+		auto h = solar_scene->helios[start];
+		if (checkEffectRegion(Vector3d(1, 0, 0), cur_h->helio_pos, h->helio_pos, diameter) ||
+			checkEffectRegion(Vector3d(-1, 0, 0), cur_h->helio_pos, h->helio_pos, diameter) ||
+			checkEffectRegion(Vector3d(0, 0, 1), cur_h->helio_pos, h->helio_pos, diameter) ||
+			checkEffectRegion(Vector3d(0, 0, -1), cur_h->helio_pos, h->helio_pos, diameter)) {
+			if (checkCenterDist(cur_h, h, sd_dir)) {
+				if (gt_sd_helio_index.count(h->helio_index)) {
+#pragma omp critical
+					++sd_ac;
+				}
+#pragma omp critical
+				sd_set.insert(h->helio_index);
+			}
+			if (checkCenterDist(cur_h, h, bk_dir)) {
+				if (gt_bk_helio_index.count(h->helio_index)) {
+#pragma omp critical
+					++bk_ac;
+				}
+#pragma omp critical
+				bk_set.insert(h->helio_index);
+			}
+		}
+
+	}
+
+	saveTestRes("iNeighRow", sd_ac, bk_ac, sd_set, bk_set);
+}
+
+
+//
+// [improved neighbor row] improved neighbor row辅助函数，用于计算投影坐标点，并剔除无关定日镜
+//
+bool SdBkCalcTest::checkCenterDist(Heliostat* H, Heliostat* HI, Vector3d& dir) {
+	vector<Vector3d> helio_v, local_v, tmp_v(4);
+	vector<Vector2d> project_v(4);
+	double t;
+	helio_v = H->vertex;
+	Vector3d reverse_dir = Vector3d(-dir.x(), -dir.y(), -dir.z());
+
+	for (int i = 0; i < helio_v.size(); i++)
+		local_v.push_back(GeometryFunc::mulMatrix(helio_v[i], H->world2localM));
+
+
+	vector<Vector3d> pro(4);
+	helio_v = HI->vertex;
+	int cnt = 0;
+	for (int i = 0; i < helio_v.size(); i++) {
+		t = calcIntersectionPoint(helio_v[i], reverse_dir, H->vertex[0], H->vertex[1], H->vertex[2]);
+		if (t < Epsilon)
+			return false;
+		pro[i].x() = helio_v[i].x() + t*reverse_dir.x();
+		pro[i].y() = helio_v[i].y() + t*reverse_dir.y();
+		pro[i].z() = helio_v[i].z() + t*reverse_dir.z();
+	}
+	double phi_x = INT_MIN;
+	double phi_y = INT_MIN;
+	vector<Vector3d> local_proj_v;
+	if (t >= Epsilon) {
+		Path clip;
+		for (auto v : pro) {
+			local_proj_v.push_back(GeometryFunc::mulMatrix(v, H->world2localM));
+			phi_x = max(local_proj_v.back().x(), phi_x);
+			phi_y = max(local_proj_v.back().z(), phi_y);
+		}
+	}
+	double h_l = H->helio_size.x();
+	double h_w = H->helio_size.z();
+	phi_x = 2 * phi_x / h_l;
+	phi_y = 2 * phi_y / h_w;
+	for (auto& v : local_proj_v) {
+		if (abs(v.x()) > (phi_x + 1) / 2 * h_l || abs(v.z()) > (phi_y + 1) / 2 * h_w) return false;
+	}
+	return true;
+		
+}
+
+
+//
+// [3DDDA] 使用3DDDA计算光线与周围定日镜的关系
+//		使用3DDDA确定相关定日镜所在网格，使用bounding sphere剔除无关定日镜
+void SdBkCalcTest::use3dddaSdBk() {
+	set<int> sd_set, bk_set;
+	int sd_ac = 0;
+	int bk_ac = 0;
+	
+	checkEstimateHelio(sd_dir, sd_set, sd_ac);
+	checkEstimateHelio(bk_dir, bk_set, bk_ac);
+
+
+	saveTestRes("3DDDA_bk", sd_ac, bk_ac, sd_set, bk_set);
+}
+
+//
+// [3DDDA] 3DDDA辅助函数
+//
+void SdBkCalcTest::checkEstimateHelio(Vector3d& dir, set<int>& helio_set, int& ac) {
+	Heliostat* helio = solar_scene->helios[helio_index];
+	set<vector<int>> estimate_grid;
+	calcIntersection3DDDA(helio, dir, estimate_grid);
+	
+	double diameter = sqrt(pow(helio->helio_size.x(), 2) + pow(helio->helio_size.z(), 2));
+
+#pragma omp parallel for
+	for (auto& iter = estimate_grid.begin(); iter != estimate_grid.end(); ++iter) {
+		for (auto& rela_helio : solar_scene->layouts[0]->helio_layout[(*iter)[0]][(*iter)[1]]) {
+			if (rela_helio == helio) continue;
+			if (checkBoundingBox(helio->helio_pos, rela_helio->helio_pos, sd_dir, diameter)) {
+				if (gt_sd_helio_index.count(helio->helio_index)) ++ac;
+				helio_set.insert(rela_helio->helio_index);
+			}
+		}
+	}
+}
+
+void SdBkCalcTest::saveTestRes(const string& file_name, const int sd_ac, const int bk_ac, const set<int>& sd_set, const set<int>& bk_set) {
+	fstream outFile(save_path + "/" + file_name + "_pr.txt", ios_base::app || ios_base::out);
+	outFile << sd_ac << ' ' << sd_set.size() << ' ' << bk_ac << ' ' << bk_set.size() << endl;
+	outFile.close();
+
+	outFile.open(save_path + "/" + file_name + "_sd_index.txt", ios_base::app || ios_base::out);
+	for (auto&n : sd_set)
+		outFile << n << endl;
+	outFile.close();
+
+	outFile.open(save_path + "/" +file_name + "_bk_index.txt", ios_base::app || ios_base::out);
+	for (auto&n : bk_set)
+		outFile << n << endl;
+	outFile.close();
 }

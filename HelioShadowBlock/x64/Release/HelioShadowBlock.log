@@ -1,12 +1,32 @@
-﻿  main.cpp
+﻿  sdbkCalculator.cpp
 e:\xjyuan\003 zju\002 solar\004 codes\180911_solar\helioshadowblock\helioshadowblock\datastructure\../DataStructure/Heliostat.h(40): warning C4150: 删除指向不完整“SubHelio”类型的指针；没有调用析构函数
   e:\xjyuan\003 zju\002 solar\004 codes\180911_solar\helioshadowblock\helioshadowblock\datastructure\../DataStructure/Heliostat.h(19): note: 参见“SubHelio”的声明
-main.cpp(50): warning C4244: “初始化”: 从“double”转换到“int”，可能丢失数据
-main.cpp(51): warning C4244: “初始化”: 从“double”转换到“int”，可能丢失数据
-  正在生成代码
-  61 of 6918 functions ( 0.9%) were compiled, the rest were copied from previous compilation.
-    0 functions were new in current compilation
-    13 functions had inline decision re-evaluated but remain unchanged
-  已完成代码的生成
-  HelioShadowBlock.vcxproj -> E:\xjYuan\003 ZJU\002 Solar\004 Codes\180911_Solar\HelioShadowBlock\x64\Release\HelioShadowBlock.exe
-  HelioShadowBlock.vcxproj -> E:\xjYuan\003 ZJU\002 Solar\004 Codes\180911_Solar\HelioShadowBlock\x64\Release\HelioShadowBlock.pdb (Full PDB)
+sdbkCalculator\sdbkCalculator.cpp(10): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
+sdbkCalculator\sdbkCalculator.cpp(16): warning C4244: “初始化”: 从“double”转换到“int”，可能丢失数据
+sdbkCalculator\sdbkCalculator.cpp(17): warning C4244: “参数”: 从“const double”转换到“int”，可能丢失数据
+sdbkCalculator\sdbkCalculator.cpp(72): warning C4244: “参数”: 从“double”转换到“ClipperLib::cInt”，可能丢失数据
+sdbkCalculator\sdbkCalculator.cpp(76): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
+sdbkCalculator\sdbkCalculator.cpp(106): warning C4244: “参数”: 从“double”转换到“ClipperLib::cInt”，可能丢失数据
+sdbkCalculator\sdbkCalculator.cpp(121): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
+sdbkCalculator\sdbkCalculator.cpp(172): warning C4244: “参数”: 从“double”转换到“ClipperLib::cInt”，可能丢失数据
+sdbkCalculator\sdbkCalculator.cpp(222): warning C4244: “参数”: 从“double”转换到“ClipperLib::cInt”，可能丢失数据
+sdbkCalculator\sdbkCalculator.cpp(238): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
+sdbkCalculator\sdbkCalculator.cpp(338): warning C4244: “初始化”: 从“double”转换到“int”，可能丢失数据
+sdbkCalculator\sdbkCalculator.cpp(339): warning C4244: “初始化”: 从“double”转换到“int”，可能丢失数据
+sdbkCalculator\sdbkCalculator.cpp(341): warning C4244: “初始化”: 从“double”转换到“int”，可能丢失数据
+sdbkCalculator\sdbkCalculator.cpp(342): warning C4244: “初始化”: 从“double”转换到“int”，可能丢失数据
+sdbkCalculator\sdbkCalculator.cpp(343): warning C4244: “初始化”: 从“double”转换到“int”，可能丢失数据
+sdbkCalculator\sdbkCalculator.cpp(344): warning C4244: “初始化”: 从“double”转换到“int”，可能丢失数据
+sdbkCalculator\sdbkCalculator.cpp(430): warning C4244: “参数”: 从“double”转换到“float”，可能丢失数据
+sdbkCalculator\sdbkCalculator.cpp(705): warning C4244: “参数”: 从“time_t”转换到“unsigned int”，可能丢失数据
+sdbkCalculator\sdbkCalculator.cpp(715): warning C4244: “初始化”: 从“double”转换到“int”，可能丢失数据
+sdbkCalculator\sdbkCalculator.cpp(716): warning C4244: “初始化”: 从“double”转换到“int”，可能丢失数据
+sdbkCalculator\sdbkCalculator.cpp(777): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
+sdbkCalculator\sdbkCalculator.cpp(778): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
+sdbkCalculator\sdbkCalculator.cpp(872): warning C4244: “参数”: 从“const double”转换到“int”，可能丢失数据
+sdbkCalculator\sdbkCalculator.cpp(1068): warning C4244: “参数”: 从“double”转换到“float”，可能丢失数据
+sdbkCalculator\sdbkCalculator.cpp(1218): fatal error C1001: 编译器中发生内部错误。
+  (编译器文件“msc1.cpp”，第 1468 行)
+   要解决此问题，请尝试简化或更改上面所列位置附近的程序。
+  请选择 Visual C++
+  “帮助”菜单上的“技术支持”命令，或打开技术支持帮助文件来获得详细信息。

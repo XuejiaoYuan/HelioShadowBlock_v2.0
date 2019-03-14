@@ -34,8 +34,6 @@ public:
 protected:
 	double helioClipper(Heliostat*helio, const Vector3d&dir, const set<vector<int>>& estimate_grid);
 	double helioClipper(Heliostat*helio, const vector<Vector3d>&dir, const vector<set<vector<int>>>& estimate_grid);
-	//double calcAccurateIntersection(Heliostat* helio, const Vector3d&dir, set<vector<int>>&relative_grid_label);		// used ray tracing calculate accurate relative grids
-	double calcAccurateIntersection(Heliostat* helio, const vector<Vector3d>& dir, vector<set<vector<int>>>& relative_helio_label);
 	void calcIntersection3DDDA(Heliostat* helio, const Vector3d&dir, set<vector<int>> & relative_grid_label);			// using 3DDDA for relative grid's prediction
 	double checkForRelativeHelio(const set<vector<int>>& accurate_grid, const set<vector<int>>& estimate_grid);
 	double calcIntersectionPoint(const Vector3d&orig, const Vector3d&dir, const Vector3d&A, const Vector3d&B, const Vector3d&C);
@@ -105,13 +103,21 @@ public:
 	void neighRowSdBk();
 	void improvedNeighSdBk();
 	void use3dddaSdBk();
-	void totalTest(const int _helio_index, Vector3d& _sd_dir, Vector3d& _bk_dir);
-	void setDir(Vector3d& _sd_dir, Vector3d& _bk_dir) { sd_dir = _sd_dir; bk_dir = _bk_dir; }
+	void totalHeliosTest();
+	void singleHelioTest(const int _helio_index);
+	void setDir(Vector3d _sd_dir, Vector3d _bk_dir) { sd_dir = _sd_dir; bk_dir = _bk_dir; }
 	void setTestIndex(const int _helio_index) { helio_index = _helio_index; }
 	void setSavePath(const string& _save_path) { save_path = _save_path; }
 
 private:
 	bool calcIntersect(Vector3d& ori_v, Vector3d& dir, set<int>& index_set);
+	bool checkHelioDis(Vector3d& dir, Heliostat* helio, Vector3d& Hloc, Vector3d& HIloc);
+	bool checkBoundingBox(Vector3d& Hloc, Vector3d& HIloc, Vector3d& dir, double diameter);
+	void getStartEndIndex(Heliostat* helio, int& start, int& end);
+	bool checkEffectRegion(Vector3d dir, Vector3d& HIloc, Vector3d& Hloc, double diameter);
+	bool checkCenterDist(Heliostat* H, Heliostat* HI, Vector3d& dir);
+	void checkEstimateHelio(Vector3d& dir, set<int>& helio_set, int& ac);
+	void saveTestRes(const string& file_name, const int sd_ac, const int bk_ac, const set<int>& sd_set, const set<int>& bk_set);
 	Vector3d sd_dir, bk_dir;
 	int helio_index;
 	string save_path;
